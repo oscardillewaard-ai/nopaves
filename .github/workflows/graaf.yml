@@ -1,6 +1,6 @@
 # Graaf-proef: de vooraf bewerkte routegraaf (regio Delft) wekelijks opnieuw bouwen.
 # Bron: het OpenStreetMap-extract van Geofabrik (Zuid-Holland), BGT en AHN van PDOK.
-# Zie public/onverhard/GRAAF-PROEF.md en tools/graaf/bouw.mjs.
+# Zie public/GRAAF-PROEF.md en tools/graaf/bouw.mjs.
 #
 # Let op: een schema (cron) draait alleen vanaf de standaardbranch. Zolang dit bestand alleen op
 # graaf-proef staat, start je hem met de hand (Actions -> Graaf bouwen -> Run workflow).
@@ -62,16 +62,16 @@ jobs:
           node --max-old-space-size=12000 tools/graaf/bouw.mjs --bron ~/osm/regio.ndjson --versie $VERSIE
 
       - name: Tests
-        run: node --test tools/onverhard/test_web_kern.mjs
+        run: node --test tests/test_web_kern.mjs
 
       - name: Oude versies weg, nieuwe committen
         run: |
-          cd public/onverhard/graaf
+          cd public/graaf
           for d in v*/; do [ "${d%/}" != "$VERSIE" ] && git rm -rq "$d" || true; done
           cd -
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/onverhard/graaf
+          git add public/graaf
           git commit -m "Graaf-proef: graaf $VERSIE (Geofabrik + BGT + AHN)" || exit 0
           git push
 

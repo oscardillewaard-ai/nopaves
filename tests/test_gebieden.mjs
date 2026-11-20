@@ -1,7 +1,7 @@
 // "Rondjes in dit gebied" op vaste plekken: rechtsklik (= lang drukken) op de kaart, menu-item,
 // plannen met de hoofdknop. Meet de tijd van het opzoeken en van het plannen.
-//   (cd public && python3 -m http.server 8765) &
-//   CHROMIUM_PAD=/opt/pw-browsers/chromium node tools/onverhard/test_gebieden.mjs [uit.json]
+//   python3 tools/serve.py &
+//   CHROMIUM_PAD=/opt/pw-browsers/chromium node tests/test_gebieden.mjs [uit.json]
 import { chromium } from 'playwright'
 import fs from 'node:fs'
 
@@ -15,7 +15,7 @@ const GEBIEDEN = [
 ]
 const proxy = process.env.HTTPS_PROXY ? { server: process.env.HTTPS_PROXY, bypass: 'localhost' } : undefined
 const browser = await chromium.launch({ proxy, executablePath: process.env.CHROMIUM_PAD || undefined, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] })
-const basis = process.env.ONVERHARD_URL || 'http://localhost:8765/onverhard/'
+const basis = process.env.ONVERHARD_URL || 'http://localhost:8765/nopaves/'
 const uit = []
 for (const [naam, lat, lon] of GEBIEDEN) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 } })

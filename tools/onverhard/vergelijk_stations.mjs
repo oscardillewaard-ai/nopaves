@@ -1,8 +1,8 @@
 // Stap 5: Naar station met en zonder ringen naast elkaar (Node, echte bronnen).
 //   NODE_USE_ENV_PROXY=1 node tools/onverhard/vergelijk_stations.mjs [uit.json]
 import fs from 'node:fs'
-import { maakPlan } from '../../public/onverhard/bronnen.js'
-import * as M from '../../public/onverhard/meting.js'
+import { maakPlan } from '../../public/bronnen.js'
+import * as M from '../../public/meting.js'
 
 const STARTS = [
   ['Delft Centraal', [52.0116, 4.3571], 15],

@@ -2,9 +2,9 @@
 //   node --max-old-space-size=8000 tools/graaf/voorhaal.mjs [ofm|pbf-elementen.json]
 import { haal, tegelijk, teller } from './haal.mjs'
 import { laadRegio, laadElementen } from './bouw.mjs'
-import * as G from '../../public/onverhard/graaf.js'
-import * as K from '../../public/onverhard/kern.js'
-import * as H from '../../public/onverhard/hoogte.js'
+import * as G from '../../public/graaf.js'
+import * as K from '../../public/kern.js'
+import * as H from '../../public/hoogte.js'
 import { bgtTegelsVoorSeg, segTussen, ahnBlokVan } from './nodig.mjs'
 
 const regio = laadRegio()

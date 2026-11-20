@@ -1,7 +1,7 @@
 // End-to-end-test van de webapp in een headless browser, tegen de echte bronnen.
 //
-//   (cd public && python3 -m http.server 8765) &
-//   node tools/onverhard/test_web_e2e.mjs <map voor screenshots> [python.json] '<hash>' [naam] [mobiel]
+//   python3 tools/serve.py &
+//   node tests/test_web_e2e.mjs <map voor screenshots> [python.json] '<hash>' [naam] [mobiel]
 //
 // Met ONVERHARD_URL=<adres> test je een andere plek dan de lokale server, bv. de live site.
 //
@@ -49,8 +49,8 @@ page.on('requestfinished', async (r) => {
   }
 })
 const t0 = Date.now()
-// ONVERHARD_URL=https://oscardillewaard-ai.github.io/Tezt/onverhard/ test de live site
-const basis = process.env.ONVERHARD_URL || 'http://localhost:8765/onverhard/'
+// ONVERHARD_URL=https://oscardillewaard-ai.github.io/nopaves/ test de live site
+const basis = process.env.ONVERHARD_URL || 'http://localhost:8765/nopaves/'
 await page.goto(`${basis}#${hash}&plan=1`)
 await page.screenshot({ path: path.join(map, naam + '_bezig.png') })
 await page.waitForFunction(() => !document.getElementById('resultaat').hidden || !document.getElementById('fout').hidden,

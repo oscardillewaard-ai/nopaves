@@ -20,8 +20,8 @@ globalThis.fetch = async (u, o) => {
   }
   return r
 }
-const { maakPlan, analyseerRoute, Bgt } = await import('../../public/onverhard/bronnen.js')
-const K = await import('../../public/onverhard/kern.js')
+const { maakPlan, analyseerRoute, Bgt } = await import('../../public/bronnen.js')
+const K = await import('../../public/kern.js')
 
 const GEBIEDEN = {
   meijendel: { naam: 'Meijendel (Den Haag)', start: [52.13081, 4.35323], km: 15, gpx: 'k15.gpx' },

@@ -1,8 +1,8 @@
 // Welke BGT-tegels en AHN-blokken de voorbewerking nodig heeft (zelfde regels als de app):
 // BGT: de tegels van alle meetpunten (om de 5 m, marge SNAP_M), plus ±100 m rond het midden van afgesloten
 // stukken (de natuurtoets voor de toegangskaart). AHN: de 500 m-blokken van alle knopen en tussenhoogtes.
-import * as K from '../../public/onverhard/kern.js'
-import * as H from '../../public/onverhard/hoogte.js'
+import * as K from '../../public/kern.js'
+import * as H from '../../public/hoogte.js'
 
 /** Meetpunten van één segment, zoals K.meetpunten ze voor een stuk legt. */
 export function segMeetpunten(g, s) {

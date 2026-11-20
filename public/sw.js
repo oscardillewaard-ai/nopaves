@@ -1,7 +1,7 @@
 // Network-first: haal altijd de nieuwste versie op als er internet is, val
 // terug op de cache als je offline bent. Plannen zelf heeft internet nodig
 // (BRouter en PDOK); offline zie je alleen de app en je bewaarde punten.
-const CACHE = 'onverhard-v45'
+const CACHE = 'nopaves-app-v46'
 const SHELL = [
   './',
   'index.html',
@@ -47,7 +47,7 @@ self.addEventListener('activate', (event) => {
     caches
       .keys()
       // alleen oude app-caches weg; de datacache (kaarttegels, BGT, AHN) blijft staan
-      .then((keys) => Promise.all(keys.filter((k) => k.startsWith('onverhard-') && k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k.startsWith('nopaves-app-') && k !== CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   )
 })

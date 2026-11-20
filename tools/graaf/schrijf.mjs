@@ -1,4 +1,4 @@
-// Een blok van de vooraf bewerkte graaf in het NPG1-formaat schrijven (lezen: public/onverhard/blokgraaf.js).
+// Een blok van de vooraf bewerkte graaf in het NPG1-formaat schrijven (lezen: public/blokgraaf.js).
 //
 // Opbouw (little-endian): "NPG1", u32 lengte van de kop, kop (JSON, utf-8), opgevuld tot een veelvoud van 4,
 // daarna de rijen hieronder, elk opgevuld tot een veelvoud van 4 bytes. Getallen die langs de graaf op elkaar

@@ -10,7 +10,7 @@ const map = path.resolve('docs/ux-voortgang')
 fs.mkdirSync(map, { recursive: true })
 const proxy = process.env.HTTPS_PROXY ? { server: process.env.HTTPS_PROXY, bypass: 'localhost' } : undefined
 const browser = await chromium.launch({ proxy, executablePath: process.env.CHROMIUM_PAD || undefined, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] })
-const basis = (process.env.ONVERHARD_URL || 'http://localhost:8765/onverhard/') + (query ? `?${query}` : '')
+const basis = (process.env.ONVERHARD_URL || 'http://localhost:8765/nopaves/') + (query ? `?${query}` : '')
 for (const thema of ['licht', 'donker']) {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, colorScheme: thema === 'donker' ? 'dark' : 'light' })
   const page = await ctx.newPage()

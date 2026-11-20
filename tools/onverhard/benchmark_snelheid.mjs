@@ -1,7 +1,7 @@
 // Snelheidsmeting (stap 0 en de hermeting na stap 6): vaste testset, per geval N× koude en N× warme
 // cache, mediaan per fase. De app meet zelf (meting.js); dit script leest window.onverhard.meting.
 //
-//   (cd public && python3 -m http.server 8765) &
+//   python3 tools/serve.py &
 //   CHROMIUM_PAD=/opt/pw-browsers/chromium node tools/onverhard/benchmark_snelheid.mjs uit.json [N=5] [filter] [groep]
 //
 // groep: 'ab' = alleen de A-naar-B-paren (BRouter of eigen router), 'rest' = de andere gevallen, leeg = alles.
@@ -39,7 +39,7 @@ if (filter) GEVALLEN = GEVALLEN.filter(([n]) => n.includes(filter))
 
 const proxy = process.env.HTTPS_PROXY ? { server: process.env.HTTPS_PROXY, bypass: 'localhost' } : undefined
 const browser = await chromium.launch({ proxy, executablePath: process.env.CHROMIUM_PAD || undefined, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] })
-const basis = (process.env.ONVERHARD_URL || 'http://localhost:8765/onverhard/') + (process.env.ONVERHARD_QUERY ? `?${process.env.ONVERHARD_QUERY}` : '')
+const basis = (process.env.ONVERHARD_URL || 'http://localhost:8765/nopaves/') + (process.env.ONVERHARD_QUERY ? `?${process.env.ONVERHARD_QUERY}` : '')
 
 async function eenRun(ctx, hash) {
   const p = await ctx.newPage()

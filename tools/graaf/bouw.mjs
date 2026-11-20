@@ -1,9 +1,9 @@
 // Voorbewerking (graaf-proef): bouw de routegraaf van een regio één keer vooraf, met per wegstuk het
 // ondergrondoordeel (BGT + OSM, dezelfde code als de app), toegang, strand, toegangskaart-gebied en
 // hoogtes (AHN, dezelfde bron en methode als de app), en schrijf hem in blokken (zoom 12) naar
-// public/onverhard/graaf/<versie>/ met een manifest.
+// public/graaf/<versie>/ met een manifest.
 //
-//   node --max-old-space-size=8000 tools/graaf/bouw.mjs [--bron ofm|<elementen.ndjson uit bron_pbf.py>] [--versie v1] [--uit public/onverhard/graaf]
+//   node --max-old-space-size=8000 tools/graaf/bouw.mjs [--bron ofm|<elementen.ndjson uit bron_pbf.py>] [--versie v1] [--uit public/graaf]
 //
 // Bronnen: "ofm" = de OpenFreeMap-kaarttegels (zoom 14) die de app nu ook leest (werkt overal);
 // een .ndjson-bestand = ways uit een OpenStreetMap-extract van Geofabrik (tools/graaf/bron_pbf.py, in de
@@ -16,10 +16,10 @@ import { haal, tegelijk, teller } from './haal.mjs'
 import { ofmElementen, ofmVersie } from './bron_ofm.mjs'
 import { segMeetpunten, segTussen, bgtTegelsVoorSeg, ahnBlokVan } from './nodig.mjs'
 import { schrijfBlok } from './schrijf.mjs'
-import * as G from '../../public/onverhard/graaf.js'
-import * as K from '../../public/onverhard/kern.js'
-import * as H from '../../public/onverhard/hoogte.js'
-import * as T from '../../public/onverhard/osmtegels.js'
+import * as G from '../../public/graaf.js'
+import * as K from '../../public/kern.js'
+import * as H from '../../public/hoogte.js'
+import * as T from '../../public/osmtegels.js'
 import { tagsVanOsm } from './osmtags.mjs'
 
 const HIER = path.dirname(fileURLToPath(import.meta.url))
@@ -120,7 +120,7 @@ async function hoofd() {
   const bronArg = arg('--bron', 'ofm')
   const datum = new Date().toISOString().slice(0, 10)
   const versie = arg('--versie', 'v' + datum.replaceAll('-', ''))
-  const uitBasis = arg('--uit', path.join(HIER, '../../public/onverhard/graaf'))
+  const uitBasis = arg('--uit', path.join(HIER, '../../public/graaf'))
   const regio = laadRegio(arg('--regio', undefined))
   const t0 = Date.now()
   const tijd = {}

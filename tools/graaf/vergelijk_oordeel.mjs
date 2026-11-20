@@ -5,8 +5,8 @@
 //
 //   NODE_USE_ENV_PROXY=1 node --max-old-space-size=8000 tools/graaf/vergelijk_oordeel.mjs uit.json
 import fs from 'node:fs'
-import * as K from '../../public/onverhard/kern.js'
-import { maakPlan } from '../../public/onverhard/bronnen.js'
+import * as K from '../../public/kern.js'
+import { maakPlan } from '../../public/bronnen.js'
 import { vlakkenVoor } from './bouw.mjs'
 import { DELFT, AB } from './regio.mjs'
 

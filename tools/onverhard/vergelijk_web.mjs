@@ -1,4 +1,4 @@
-// Draait de webversie (public/onverhard) in Node tegen de echte bronnen en
+// Draait de webversie (public) in Node tegen de echte bronnen en
 // zet de uitkomst naast die van het Python-script.
 //
 //   python onverhard.py ... -o uit/test --json
@@ -6,7 +6,7 @@
 //
 // (NODE_USE_ENV_PROXY is alleen nodig achter een proxy.)
 import fs from 'node:fs'
-import { maakPlan, details } from '../../public/onverhard/bronnen.js'
+import { maakPlan, details } from '../../public/bronnen.js'
 
 const args = process.argv.slice(2)
 const optie = (naam) => {

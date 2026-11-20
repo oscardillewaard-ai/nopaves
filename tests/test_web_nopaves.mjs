@@ -1,7 +1,7 @@
 // Playwright-test van de Nopav.es-onderdelen (score, laden, kaartlagen, ...), tegen de echte bronnen.
 //
-//   (cd public && python3 -m http.server 8765) &
-//   CHROMIUM_PAD=/opt/pw-browsers/chromium node tools/onverhard/test_web_nopaves.mjs <map voor screenshots> [mobiel|desktop]
+//   python3 tools/serve.py &
+//   CHROMIUM_PAD=/opt/pw-browsers/chromium node tests/test_web_nopaves.mjs <map voor screenshots> [mobiel|desktop]
 import { chromium } from 'playwright'
 import assert from 'node:assert/strict'
 import path from 'node:path'
@@ -18,7 +18,7 @@ const page = await ctx.newPage()
 const fouten = []
 page.on('console', (m) => m.type() === 'error' && fouten.push(m.text()))
 page.on('pageerror', (e) => fouten.push('PAGEERROR ' + e.message))
-const basis = process.env.ONVERHARD_URL || 'http://localhost:8765/onverhard/'
+const basis = process.env.ONVERHARD_URL || 'http://localhost:8765/nopaves/'
 const stap = (tekst) => console.log(`✓ ${soort}: ${tekst}`)
 
 // ---- de kaart zelf: Korrel (vectortegels), met de bronvermelding ----
@@ -511,7 +511,7 @@ assert.deepEqual(fouten.filter((f) => !/Failed to load resource/.test(f)), [], '
     await q.goBack()
     await q.waitForTimeout(400)
     assert.equal(await q.evaluate(() => window.onverhard.sheet.stand()), 'piek', 'Back verkleint eerst het paneel')
-    assert.ok(q.url().includes('/onverhard/'), 'en blijft in de app')
+    assert.ok(q.url().includes('/nopaves/'), 'en blijft in de app')
     await q.evaluate(() => window.onverhard.sheet.zet('vol'))
     await q.waitForTimeout(400)
     assert.ok(await q.locator('#sluitSheet').isVisible(), 'sluitknop in de vol-stand')

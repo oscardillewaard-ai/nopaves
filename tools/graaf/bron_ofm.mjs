@@ -1,7 +1,7 @@
 // Bron "ofm": de OpenStreetMap-kaarttegels van OpenFreeMap (zoom 14), precies wat de app nu leest.
 // Geeft dezelfde elementen als de app ({type:'way', id, tags, geometry, osm}), plus stations en POI's.
 import { haal, tegelijk } from './haal.mjs'
-import * as T from '../../public/onverhard/osmtegels.js'
+import * as T from '../../public/osmtegels.js'
 
 export async function ofmVersie() {
   const tj = await (await fetch('https://tiles.openfreemap.org/planet')).json()

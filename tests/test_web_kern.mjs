@@ -1,12 +1,12 @@
-// Offline tests voor de rekenkern van de webapp (public/onverhard/kern.js).
-// Draaien:  node --test tools/onverhard/test_web_kern.mjs
+// Offline tests voor de rekenkern van de webapp (public/kern.js).
+// Draaien:  node --test tests/test_web_kern.mjs
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import * as K from '../../public/onverhard/kern.js'
-import * as G from '../../public/onverhard/graaf.js'
-import * as T from '../../public/onverhard/osmtegels.js'
-import * as H from '../../public/onverhard/hoogte.js'
-import * as Sheet from '../../public/onverhard/sheet.js'
+import * as K from '../public/kern.js'
+import * as G from '../public/graaf.js'
+import * as T from '../public/osmtegels.js'
+import * as H from '../public/hoogte.js'
+import * as Sheet from '../public/sheet.js'
 import zlib from 'node:zlib'
 
 const vierkant = (x0, y0, x1, y1) => ({ type: 'Polygon', coordinates: [[[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]]] })
@@ -935,7 +935,7 @@ test('groene omwegen: een route die al onverhard is krijgt er geen, en toepassen
   assert.deepEqual(dubbel, [], 'de boog is al gebruikt: dubbel lopen telt niet als omweg')
 })
 
-import * as Teller from '../../public/onverhard/teller.js'
+import * as Teller from '../public/teller.js'
 test('teller: ringbuffer van hooguit 500 regels, tellingen en wissen', () => {
   const opslag = { d: {}, getItem(k) { return this.d[k] ?? null }, setItem(k, v) { this.d[k] = v }, removeItem(k) { delete this.d[k] } }
   for (let i = 0; i < 520; i++) Teller.log(i % 2 ? 'gpx' : 'plan_start', { i }, opslag, 1000 + i)
@@ -965,7 +965,7 @@ test('sheet: de piek past zich aan de plankaart aan, half blijft hoger', () => {
   assert.equal(Sheet.standHoogtes(844, 34).piek, 158 + 34, 'zonder meting de vaste piek')
 })
 
-import * as Gebieden from '../../public/onverhard/gebieden.js'
+import * as Gebieden from '../public/gebieden.js'
 test('gebieden: punt in veelhoek, afsnijden met een cirkel rond de start', () => {
   const vierkantLL = [[52.0, 4.0], [52.0, 4.2], [52.2, 4.2], [52.2, 4.0], [52.0, 4.0]]
   assert.ok(Gebieden.puntInRing([4.1, 52.1], vierkantLL.map(([a, b]) => [b, a])))
@@ -997,7 +997,7 @@ test('gebieden: Natura 2000 zoeken met een nep-antwoord', async () => {
   await assert.rejects(Gebieden.zoekNatura2000(52.1, 4.1, undefined, async () => ({ ok: false, status: 503 })))
 })
 
-import * as DC from '../../public/onverhard/datacache.js'
+import * as DC from '../public/datacache.js'
 test('datacache: welke adressen, hoe vers, en niets in Node', async () => {
   assert.ok(DC.cachebaar('https://tiles.openfreemap.org/planet/20261115_080022_pt/14/8391/5401.pbf'))
   assert.ok(!DC.cachebaar('https://tiles.openfreemap.org/planet'), 'de tegelbeschrijving niet (wisselt elke week)')
@@ -1012,9 +1012,9 @@ test('datacache: welke adressen, hoe vers, en niets in Node', async () => {
   if (typeof caches === 'undefined') assert.equal(await DC.uitCache('https://tiles.openfreemap.org/planet/x/14/1/1.pbf'), null)
 })
 
-// ---------- graaf-proef: vooraf bewerkte graaf (tools/graaf/schrijf.mjs <-> public/onverhard/blokgraaf.js) ----------
-const BG = await import('../../public/onverhard/blokgraaf.js')
-const { schrijfBlok, ONBEKEND_H } = await import('../graaf/schrijf.mjs')
+// ---------- graaf-proef: vooraf bewerkte graaf (tools/graaf/schrijf.mjs <-> public/blokgraaf.js) ----------
+const BG = await import('../public/blokgraaf.js')
+const { schrijfBlok, ONBEKEND_H } = await import('../tools/graaf/schrijf.mjs')
 
 /** Een klein netwerk: een raster van straten en paden, één afgesloten pad, rond Delft. */
 function proefElementen() {

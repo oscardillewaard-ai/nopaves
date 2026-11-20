@@ -379,16 +379,16 @@ bottom sheet met drie standen (piek, half, vol; slepen of tikken op het
 handvat) over een schermvullende kaart. Op piek staat één regel: de score met
 GPX, bewaren en link, of de hoofdknop van de stap.
 
-**Testen**: `node --test tools/onverhard/test_web_kern.mjs` (rekenkern),
-`npx oxlint public/onverhard`, en met de echte bronnen
-`CHROMIUM_PAD=/opt/pw-browsers/chromium node tools/onverhard/test_web_nopaves.mjs <map> [desktop|mobiel]`
+**Testen**: `node --test tests/test_web_kern.mjs` (rekenkern),
+`npx oxlint public`, en met de echte bronnen
+`CHROMIUM_PAD=/opt/pw-browsers/chromium node tests/test_web_nopaves.mjs <map> [desktop|mobiel]`
 (met `cd public && python3 -m http.server 8765` ernaast). De test start Chromium met
 SwiftShader (`--use-angle=swiftshader`), zodat WebGL ook zonder grafische kaart werkt;
 zonder WebGL zou de kaart terugvallen op OpenStreetMap en slaagt de kaarttest niet.
 
 ## Webversie
 
-In `public/onverhard/` van deze repo staat de planner als webapp, gemaakt voor
+In `public/` van deze repo staat de planner als webapp, gemaakt voor
 **trailrunnen**: `https://oscardillewaard-ai.github.io/Tezt/onverhard/`. Alles
 draait in je browser; er is geen eigen server.
 
@@ -666,19 +666,19 @@ die niet reageert de app niet laat vastlopen.
 **Testen van de webversie**
 
 ```
-node --test tools/onverhard/test_web_kern.mjs          # offline: rekenkern, tegellezer, strand, doodlopend
+node --test tests/test_web_kern.mjs          # offline: rekenkern, tegellezer, strand, doodlopend
 NODE_USE_ENV_PROXY=1 node tools/onverhard/vergelijk_web.mjs uit/test.json "51.9921,4.3481" ...   # naast Python leggen
-(cd public && python3 -m http.server 8765) &
-node tools/onverhard/test_web_e2e.mjs <map> uit/test.json 'p=51.9921,4.3481;51.9255,4.4679&trail=0&strand=0'
+python3 tools/serve.py &
+node tests/test_web_e2e.mjs <map> uit/test.json 'p=51.9921,4.3481;51.9255,4.4679&trail=0&strand=0'
 NODE_USE_ENV_PROXY=1 node tools/onverhard/benchmark_rondjes.mjs <map met komoot-gpx> [uit.json] [gebied ...]   # BRouter-rondjes naast Komoot
 NODE_USE_ENV_PROXY=1 node tools/onverhard/benchmark_eigen.mjs <map met komoot-gpx> [uit.json] [gebied ...]     # eigen rondjes naast Komoot
 ```
 
-Sinds de UX- en snelheidsronde (zie `public/onverhard/VOORTGANG.md`) zijn er ook:
+Sinds de UX- en snelheidsronde (zie `public/VOORTGANG.md`) zijn er ook:
 
 ```
 CHROMIUM_PAD=/opt/pw-browsers/chromium node tools/onverhard/screens_ux.mjs <label> [query]          # schermafbeeldingen 390 × 844, licht en donker
-CHROMIUM_PAD=/opt/pw-browsers/chromium node tools/onverhard/test_gebieden.mjs [uit.json]            # Rondjes in een gebied op 6 plekken
+CHROMIUM_PAD=/opt/pw-browsers/chromium node tests/test_gebieden.mjs [uit.json]            # Rondjes in een gebied op 6 plekken
 CHROMIUM_PAD=/opt/pw-browsers/chromium node tools/onverhard/benchmark_snelheid.mjs uit.json [N] [filter] [ab|rest]   # snelheid per fase
 python3 tools/onverhard/tabel_snelheid.py voor.json [na.json]                                    # tabellen uit de benchmark
 NODE_USE_ENV_PROXY=1 node tools/onverhard/vergelijk_stations.mjs [uit.json]                     # Naar station met en zonder ringen
@@ -700,7 +700,7 @@ een eerder opgehaald antwoord (handig als Overpass druk is).
 - Ondergrond: Basisregistratie Grootschalige Topografie (BGT), Kadaster, via [PDOK](https://www.pdok.nl) (CC0): OGC API Features in de Python-tool, vectortegels in de webversie.
 - Luchtfoto: PDOK luchtfoto RGB, Het Waterschapshuis / Beeldmateriaal Nederland (CC BY 4.0).
 - Hoogte: Actueel Hoogtebestand Nederland (AHN, maaiveld 0,5 m), Rijkswaterstaat / Het Waterschapshuis, via [PDOK](https://www.pdok.nl) (CC0).
-- Lettertypes van de webversie: Darker Grotesque, Karla en Overpass Mono (SIL Open Font License 1.1, via Google Fonts; zie `public/onverhard/fonts/OFL-korrel-lettertypen.txt`).
+- Lettertypes van de webversie: Darker Grotesque, Karla en Overpass Mono (SIL Open Font License 1.1, via Google Fonts; zie `public/fonts/OFL-korrel-lettertypen.txt`).
 
 De tool gebruikt de publieke servers van BRouter en PDOK. Wees er zuinig op:
 laat de cache aan en draai geen grote aantallen routes achter elkaar.

@@ -1,7 +1,7 @@
 # Nopav.es: verhuizing naar oscardillewaard-ai/nopaves
 
-Voortgangsbestand van de verhuisopdracht. Vanaf stap B staat dit bestand in nopaves als
-`docs/VERHUIZING.md`. Begint een sessie met "ga verder": lees dit bestand en ga verder bij de eerste stap
+Voortgangsbestand van de verhuisopdracht. Stap A stond in Tezt (`public/onverhard/VERHUIZING.md`);
+vanaf stap B staat dit bestand in nopaves als `docs/VERHUIZING.md`. Begint een sessie met "ga verder": lees dit bestand en ga verder bij de eerste stap
 die niet `klaar` is.
 
 ## Status
@@ -9,7 +9,7 @@ die niet `klaar` is.
 | Stap | Status |
 |---|---|
 | A Integreren | klaar |
-| B Verhuizen | open |
+| B Verhuizen | klaar |
 | C Automatiseren | open |
 | D Live in nopaves | open |
 | E Oude plek doorverwijzen | open |
@@ -66,6 +66,32 @@ vergeleken met de cijfers in VOORTGANG, niet met een verse meting van live in de
 
 **Integratie-SHA**: zie de commit die dit bestand toevoegt (eerstvolgende regel in de geschiedenis van
 `claude/admiring-ritchie-23anos`); de code-SHA vóór dit bestand is `ca17ace`.
+
+## B. Verhuizen
+
+- Geschiedenis met `git filter-repo` uit Tezt gehaald vanaf de integratie-SHA `8f14bcd` (66 commits).
+  Meegenomen paden: `public/onverhard/` (wordt `public/`), `tools/onverhard/`, `tools/graaf/`,
+  `docs/snelheid/`, `docs/ux-voortgang/`, `docs/graaf-proef/`, `.github/workflows/graaf.yml`,
+  `scripts/gen-onverhard-icons.mjs` en `scripts/onverhard-icon.svg`.
+- Let op: de eerste commit in deze geschiedenis (`Onverhard: one length-correction attempt…`) voegt de
+  hele app in één keer toe. De oudere voorgeschiedenis (o.a. `5a9a9bb`, `dc52d18`) staat in Tezt op
+  andere branches (zoals `claude/unpaved-routes-planner-ufzrl8`) en is geen voorouder van de live versie.
+  Die branches blijven in stap F staan of worden met SHA gearchiveerd.
+- Herindeling in één commit daarna: `docs/` (VOORTGANG, GRAAF-PROEF, VERHUIZING, PLAN-nopaves),
+  `tests/` (test_web_kern, test_web_nopaves, test_web_e2e, test_gebieden), `tools/icons/`
+  (pictogramscript), `tools/serve.py` (nieuw). `tools/onverhard/` houdt de Python-planner met zijn eigen
+  `test_onverhard.py` (die importeert `onverhard.py` uit dezelfde map) en de meet- en vergelijkscripts.
+- Paden: imports in tests en tools, workflow, standaard-URL van de tests
+  (`http://localhost:8765/nopaves/`), pictogramscript.
+- De app gebruikte al alleen relatieve paden (service worker `register('sw.js')`, manifest
+  `start_url`/`scope` `./`, graafblokken via `new URL('graaf/', import.meta.url)`): werkt onder `/nopaves/`.
+- **Cache-namen**: oude en nieuwe app delen dezelfde origin (`oscardillewaard-ai.github.io`) en dus
+  dezelfde Cache Storage. De oude service worker wist bij activeren alle caches die met `onverhard-`
+  beginnen. De app-cache heet daarom nu `nopaves-app-v46` en ruimt alleen `nopaves-app-*` op. De
+  datacache (`nopaves-data-v1`, kaarttegels, BGT, AHN) mag gedeeld blijven.
+- `tools/serve.py` serveert `public/` onder `/nopaves/` zoals GitHub Pages; `npm run serve`.
+- `package.json`: alleen `playwright` 1.62.1 en `oxlint` 1.79.0 (dezelfde versies als in Tezt).
+- Tests in de nieuwe indeling: unit 50/50, oxlint schoon, Playwright mobiel en desktop groen.
 
 ## Open punten
 

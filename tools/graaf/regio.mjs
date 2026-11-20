@@ -1,7 +1,7 @@
 // Stap 1: welke kaarttegels (zoom 14) heeft de testset nodig, en welke blokken (zoom 12) zijn dat?
 // Gebruikt dezelfde tegelfuncties als de app (osmtegels.js), zodat de regio past bij wat de router vraagt.
-//   node tools/graaf/regio.mjs            -> overzicht + public/onverhard/graaf/regio.json-voorstel op stdout
-import * as T from '../../public/onverhard/osmtegels.js'
+//   node tools/graaf/regio.mjs            -> overzicht + public/graaf/regio.json-voorstel op stdout
+import * as T from '../../public/osmtegels.js'
 
 export const DELFT = [52.0116, 4.3571]
 export const AB = [

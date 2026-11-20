@@ -7,9 +7,9 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
-const K = await import('../../public/onverhard/kern.js')
-const G = await import('../../public/onverhard/graaf.js')
-const { analyseerRoute, Bgt } = await import('../../public/onverhard/bronnen.js')
+const K = await import('../../public/kern.js')
+const G = await import('../../public/graaf.js')
+const { analyseerRoute, Bgt } = await import('../../public/bronnen.js')
 
 const GEBIEDEN = {
   meijendel: { naam: 'Meijendel (Den Haag)', start: [52.13081, 4.35323], km: 15, gpx: 'k15.gpx' },

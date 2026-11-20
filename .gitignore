@@ -1,0 +1,4 @@
+node_modules/
+test-uitvoer/
+.DS_Store
+__pycache__/
