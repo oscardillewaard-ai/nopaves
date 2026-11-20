@@ -3,6 +3,15 @@
 Alle noemenswaardige wijzigingen aan Nopav.es, in gewone taal. Versies volgen
 [semver](https://semver.org/lang/nl/): groot.klein.reparatie.
 
+## Nog niet uitgebracht
+
+- **De Nopave-router.** De eigen router van Nopav.es heet voortaan de Nopave-router. Gebruik
+  `?router=nopave`; de oude naam `?router=eigen` blijft werken.
+- **Groenere routes rond Delft.** De vooraf bewerkte routekaart weegt paden nu op de officiële ondergrond
+  (BGT) in plaats van alleen op OpenStreetMap. Rondjes en routes naar een station worden daardoor groener.
+- **A naar B met de Nopave-router** kiest uit vijf echt verschillende routes de route met de hoogste
+  Nopav.es-score, hooguit 15% langer dan de kortste.
+
 ## v1.1.0 (2026-11-20): Snel plannen rond Delft
 
 - **Rond Delft plan je veel sneller.** Binnen de regio Delft (van Den Haag tot Rotterdam en van Hoek van
@@ -31,6 +40,6 @@ Alle noemenswaardige wijzigingen aan Nopav.es, in gewone taal. Versies volgen
   krijgt.
 - **Mijn gebruik**: een teller die alleen in je eigen browser bijhoudt wat je doet. Hij wordt nooit
   verstuurd.
-- **Proeven achter een schakelaar** (niet standaard): `?router=eigen` (Nopave-router voor A naar B),
+- **Proeven achter een schakelaar** (niet standaard): `?router=eigen` (eigen router voor A naar B),
   `?stations=ringen` (stations zoeken in ringen) en `?graaf=vooraf` (vooraf bewerkte routegraaf, alleen
   regio Delft).
