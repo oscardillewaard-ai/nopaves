@@ -1309,6 +1309,26 @@ export async function planRondjeEigen(start, km, instel, bgt, aantalOpties, meld
 }
 
 // ---------- A naar B met de eigen router (snelheid, stap 6) ----------
+/** Hoeveel kandidaat-routes de Nopave-router voor A naar B maakt voordat hij kiest. */
+export const AB_KANDIDATEN = 5
+/** Een kandidaat mag hooguit zoveel langer zijn dan de kortste kandidaat (0,15 = 15%). */
+export const AB_LENGTEGRENS = 0.15
+
+/**
+ * Kies uit kandidaten [{an, ...}] op de Nopav.es-score (dezelfde score als in de app), als vangnet na de
+ * kosten: de eerste kandidaat (de goedkoopste volgens de kosten) doet altijd mee; de andere alleen als ze
+ * hooguit 'grens' langer zijn dan de kortste kandidaat. Hoogste score eerst, bij gelijke score de kortste.
+ */
+export function kiesOpScore(kandidaten, grens = AB_LENGTEGRENS) {
+  if (!kandidaten.length) return kandidaten
+  const kortste = Math.min(...kandidaten.map((k) => k.an.lengte))
+  return kandidaten
+    .filter((k, i) => i === 0 || k.an.lengte <= (1 + grens) * kortste + 1)
+    .map((k) => ({ k, score: K.nopavesScore(k.an).score }))
+    .sort((a, b) => b.score - a.score || a.k.an.lengte - b.k.an.lengte)
+    .map(({ k }) => k)
+}
+
 /** Rechte afstand (m) langs alle punten. */
 function rechteAfstand(punten) {
   let m = 0
@@ -1358,7 +1378,9 @@ export async function planRouteEigen(punten, instel, bgt, aantalOpties, meld = (
         knopen = punten.map((p) => G.dichtsteKnoop(gr, ...K.naarRd(p[1], p[0])))
         const ver = knopen.find((k) => k.knoop < 0 || k.afstand > 400)
         if (ver) throw new BronFout(OSM_BRON, ver.knoop < 0 ? 'geen paden in de buurt van een punt' : `het dichtstbijzijnde pad ligt ${Math.round(ver.afstand)} m van een punt`)
-        const routes = await zoekOp('routesLangs', gr, [knopen.map((k) => k.knoop), { aantal: Math.max(1, aantalOpties) }], signal)
+        // Tot AB_KANDIDATEN routes die echt verschillen (stukken die een eerdere kandidaat al gebruikte
+        // worden duurder; meer dan 70% overlap telt niet mee), daarna kiezen op de Nopav.es-score.
+        const routes = await zoekOp('routesLangs', gr, [knopen.map((k) => k.knoop), { aantal: Math.max(AB_KANDIDATEN, aantalOpties), maxOverlap: 0.7 }], signal)
         if (!routes.length) return []
         if (instel.voorlopig && ronde++ === 0) {
           const t0 = G.maakTraject(gr, routes[0].knopen, routes[0].segs, punten)
@@ -1366,11 +1388,11 @@ export async function planRouteEigen(punten, instel, bgt, aantalOpties, meld = (
         }
         const uit = []
         for (const [i, rt] of routes.entries()) {
-          meld(`Ondergrond van route ${LETTERS[i]} controleren`)
+          meld(`Ondergrond van route ${LETTERS[Math.min(i, aantalOpties - 1)]} controleren`)
           const traject = G.maakTraject(gr, rt.knopen, rt.segs, punten)
           uit.push({ traject, an: await analyseerRoute(traject, bgt), knopen: rt.knopen, segs: rt.segs, vast: rt.vast })
         }
-        return uit
+        return kiesOpScore(uit, instel.lengteGrens ?? AB_LENGTEGRENS).slice(0, Math.max(1, aantalOpties))
       },
     })
     if (res.lijst.length) {
@@ -2174,7 +2196,7 @@ export async function maakPlan(opties) {
   if (!plan && !opties.modus && !opties.rondjeKm && opties.punten.length >= 2 && (opties.law ?? 1) === 1 && opties.router !== 'brouter' &&
       (opties.router === 'eigen' || (opties.router === 'auto' && rechteAfstand(opties.punten) <= EIGEN_ROUTER_MAX_M))) {
     try {
-      plan = await planRouteEigen(opties.punten, { ...tekenInstel, voorlopig }, bgt, alternatieven, meld, opties.signal)
+      plan = await planRouteEigen(opties.punten, { ...tekenInstel, voorlopig, lengteGrens: opties.abLengteGrens }, bgt, alternatieven, meld, opties.signal)
       plan.router = 'eigen'
     } catch (fout) {
       if (afgebroken(fout)) throw fout

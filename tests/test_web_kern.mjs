@@ -1117,3 +1117,27 @@ test('graaf-proef: oordeel per meetpunt, toegangskaart, hoogteprofiel en waterpu
   assert.equal(BG.voorafPois(traject)[0].soort, 'water')
   assert.deepEqual(BG.blokkenVoorTegels([[8390, 5410], [8391, 5411], [8395, 5410]]), [[2097, 1352], [2098, 1352]])
 })
+
+// ---------- Nopave-router A naar B: kiezen op de score, met een lengtegrens ----------
+test('kiesOpScore: hoogste Nopav.es-score binnen de lengtegrens, de goedkoopste doet altijd mee', async () => {
+  const { kiesOpScore, AB_LENGTEGRENS } = await import('../public/bronnen.js')
+  // een route van L meter waarvan een deel 'zacht' onverhard pad is en de rest gesloten verharding
+  const an = (L, zacht) => ({
+    lengte: L, dubbel: 0,
+    stukken: [
+      { van: 0, tot: zacht, eind: K.ONVERHARD, tags: ['highway=path'] },
+      { van: zacht, tot: L, eind: K.GESLOTEN, tags: ['highway=residential'] },
+    ],
+  })
+  const goedkoopst = { naam: 'goedkoopst', an: an(5000, 1000) } // 20% zacht
+  const beterKort = { naam: 'beter, 10% langer', an: an(5500, 3000) } // 55% zacht
+  const besteLang = { naam: 'best, 40% langer', an: an(7000, 6000) } // 86% zacht, buiten de grens
+  assert.equal(AB_LENGTEGRENS, 0.15)
+  assert.deepEqual(kiesOpScore([goedkoopst, beterKort, besteLang]).map((k) => k.naam), ['beter, 10% langer', 'goedkoopst'])
+  assert.deepEqual(kiesOpScore([goedkoopst, beterKort, besteLang], 0.5).map((k) => k.naam)[0], 'best, 40% langer')
+  assert.deepEqual(kiesOpScore([goedkoopst, beterKort], 0.05).map((k) => k.naam), ['goedkoopst'])
+  // de goedkoopste blijft kiesbaar, ook als hij zelf buiten de grens van de kortste valt
+  const kortSlecht = { naam: 'kort, slecht', an: an(3000, 0) }
+  assert.equal(kiesOpScore([goedkoopst, kortSlecht], 0.1)[0].naam, 'goedkoopst')
+  assert.deepEqual(kiesOpScore([]), [])
+})
