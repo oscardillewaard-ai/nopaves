@@ -1,8 +1,9 @@
 # Plan: de vooraf bewerkte graaf voor heel Nederland, in één keer
 
-Status: **fase 0 loopt** (2026-11-20). Eerste metingen aan de BGT-download zijn gedaan (hieronder);
-de rest draait in de workflow `fase0.yml` (alle 12 provincies tegelijk). Daarna: dit plan bijwerken met de
-echte cijfers, een planning per fase en een kostenraming, en pas dan bouwen.
+Status: **fase 0 gemeten** (2026-11-20, `fase0.yml` run 4). Alle metingen zijn binnen, behalve de BGT-download
+van Noord-Brabant (verbinding verbroken na 1,77 GB; loopt opnieuw). Conclusie: heel NL past ruim, de
+OSM-kant is licht, en de BGT is het zware deel. Hieronder de cijfers, wat dat aan het plan verandert, een
+planning per fase en een kostenraming. Nog niets gebouwd voor de app.
 
 ## Beslissingen (Oscar, 2026-11-20)
 
@@ -11,145 +12,168 @@ echte cijfers, een planning per fase en een kostenraming, en pas dan bouwen.
 2. De BGT komt via de **PDOK-download** (volledig, daarna dagelijkse wijzigingen), niet meer als losse
    vectortegels.
 3. ~~Utrecht is de eerste proefprovincie.~~ Vervangen door 5: Utrecht (stedelijk) en Drenthe (landelijk)
-   zijn nu de **kalibratieprovincies** in fase 0: daar draait de echte bouw, de andere tien worden daarmee
+   zijn de **kalibratieprovincies** van fase 0: daar draaide de echte bouw, de andere tien zijn daarmee
    omgerekend.
 4. Volgorde: eerst de openstaande Nopave-router-commits afronden (gedaan, v1.2.0), daarna fase 0.
 5. **Heel Nederland in één keer:** alle 12 provincies parallel bouwen, testen en samen live zetten. Geen
    uitrol provincie voor provincie.
 
-## Waarom de huidige opzet niet schaalt
+## De cijfers in één tabel
 
 | | Regio Delft (gemeten) | Heel Nederland | Grens |
 |---|---|---|---|
-| Land | ≈ 1.700 km² (bbox) | 33.700 km² (≈ 20×) | |
-| Graaf gzip | 14,7 MB (1,37 mln wegstukken, 10,75 B per wegstuk) | 130–330 MB (schatting; fase 0 meet het) | Pages-site 1 GB: past |
-| In git per week | +15 MB | +150–330 MB | repo boven 5 GB: GitHub waarschuwt; nopaves is nu 54 MB |
-| Actions-cache (BGT, AHN, extract) | 1,47 GB (runlog) | ~30 GB | 10 GB per repo |
-| Bouw, koude cache | 77 min (run 1) | ~28 uur in één job | 6 uur per job |
-| Bouw, warme cache | 4 min (run 3) | ~1,5 uur | |
-| Actions-minuten | | 12 jobs tegelijk, 2–4 uur per week | openbare repo: gratis (nagekeken) |
-| BGT | 28.540 losse tegels | ~300.000 tegels per ronde | onnodig zware belasting voor PDOK |
+| Wegstukken | 1,37 mln | **14,5 mln (gemeten,** 10,6×) | |
+| Graaf gzip | 14,7 MB (10,75 B per wegstuk) | **155 MB (geraamd** met 10,69 B per wegstuk, gemeten in Utrecht en Drenthe) | Pages-site 1 GB: past ruim |
+| In git per week | +15 MB | 0 (release-bijlage, beslissing 1) | |
+| OSM-extract | Zuid-Holland | **1,41 GB** (Geofabrik) / **1,65 GB** (openstreetmap.fr) | |
+| Knippen in 12 | | **2,7 min (gemeten),** max. 11,0 GB geheugen per portie van 3 | runner 16 GB: niet alle 12 in één keer |
+| Graaf zonder BGT/AHN, grootste provincie | | **0,3 min, 1,6 GB (gemeten,** Zuid-Holland) | |
+| Bouw met BGT-tegels + AHN, koude cache | 77 min | **64 min Utrecht, 80 min Drenthe (gemeten);** max. ~171 min Gelderland (geraamd) | 6 uur per job: past, maar zie BGT |
+| BGT `full/custom`, 5 objecttypes | 28.540 losse tegels | **27,7 GB zip voor 11 provincies (gemeten)** + Noord-Brabant (> 1,77 GB) | runner-schijf ~14 GB |
+| BGT-delta per week, heel NL | | **53 MB zip (gemeten** in run 1 en run 4) | |
+| Actions-minuten fase 0 | | **778 runner-minuten, 2 u 06 min doorlooptijd** | openbare repo: gratis |
 
-## Opzet: alles in één keer
+## Wat fase 0 heeft gemeten
+
+Workflow `.github/workflows/fase0.yml`, run 4 (2026-11-20 17:55–20:01 UTC), alle 12 provincies tegelijk.
+Scripts in `tools/fase0/`. De provinciegrenzen komen van PDOK (Bestuurlijke Gebieden).
+
+### Per provincie
+
+| Provincie | land km² | wegstukken | km weg | km onverhard (OSM zeker) | graaf gz MB | bouw min (koude cache) | BGT zip MB | BGT download min |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Drenthe | 2.633 | 857.264 | 19.448 | 3.438 | **8,8** gemeten | **80** gemeten | 1.635 | 18 |
+| Flevoland | 1.412 | 515.652 | 10.368 | 839 | 5,5 | 42 | 1.411 | 17 |
+| Fryslân | 3.341 | 940.328 | 19.104 | 2.131 | 10 | 77 | 1.713 | 32 |
+| Gelderland | 4.964 | 2.096.901 | 47.507 | 8.045 | 22 | 171 | 6.094 | 90 |
+| Groningen | 2.325 | 528.755 | 13.590 | 1.359 | 5,7 | 43 | 1.543 | 25 |
+| Limburg | 2.148 | 1.068.398 | 23.610 | 3.648 | 11 | 87 | 2.349 | 45 |
+| Noord-Brabant | 4.905 | 1.871.654 | 48.731 | 7.650 | 20 | 153 | > 1.770 (afgebroken) | – |
+| Noord-Holland | 2.662 | 1.797.602 | 34.819 | 3.525 | 19 | 147 | 3.022 | 38 |
+| Overijssel | 3.317 | 1.366.548 | 27.624 | 4.606 | 15 | 112 | 2.914 | 32 |
+| Utrecht | 1.485 | 907.197 | 19.346 | 2.933 | **10** gemeten | **64** gemeten | 2.539 | 56 |
+| Zeeland | 1.781 | 477.041 | 12.843 | 968 | 5,1 | 39 | 683 | 9,6 |
+| Zuid-Holland | 2.700 | 2.063.824 | 41.989 | 3.005 | 22 | 169 | 3.748 | 42 |
+| **Totaal** | 33.673 | **14.491.164** | **318.979** | **42.147** | **155** | | **27.650** + NB | |
+
+Niet vet = geraamd (wegstukken × de verhouding uit Utrecht en Drenthe). Wegstukken, km en BGT zijn voor alle
+provincies gemeten. Land-km² zijn afgeronde CBS-cijfers, overgenomen en niet nagekeken. Een weg over een
+provinciegrens telt in beide provincies mee (osmium `complete_ways`): een kleine dubbeltelling.
+
+### Wat de cijfers zeggen
+
+- **De graaf past ruim.** 155 MB voor heel NL zit onderin de oude schatting (130–330 MB), en de verhouding
+  per wegstuk is overal bijna gelijk (Delft 10,75 B, Utrecht en Drenthe samen 10,69 B). In de Pages-site (1 GB)
+  is er ruimte genoeg. **Het compactere formaat (opzet 4) hoeft dus niet vóór de livegang;** het blijft
+  nuttig voor minder dataverkeer per planning.
+- **De OSM-kant is licht.** Knippen kost 2,7 min. Elementen lezen en de graaf bouwen kosten per provincie
+  hooguit 3,1 min en 1,6 GB. Eén runner kan de 12 provincies zelfs achter elkaar doen.
+- **Knippen moet in porties.** Een portie van 3 provincies gebruikt al 11,0 GB; alle 12 in één run past
+  niet op een runner van 16 GB. Dat verklaart vermoedelijk run 3 (runner gestopt na 30 s).
+- **De BGT is het zware deel.**
+  - *Groot:* de 11 provincies samen geven al 27,7 GB zip, meer dan de kant-en-klare download van heel NL
+    met álle objecttypes (28,0 GB, `full/predefined/bgt-gmllight-nl-nopbp.zip`, elke nacht ververst).
+    Oorzaak: de provincies zijn als rechthoek (bbox) opgevraagd, en die rechthoeken overlappen fors.
+  - *Vooral historie:* in Utrecht is 61% van de objecten een oude versie (4,1 van 6,7 mln), in Drenthe
+    62% (3,0 van 4,8 mln).
+  - *Traag per download, niet per afnemer:* elke download liep op 0,8–1,5 MB/s, ook met 12 tegelijk.
+    PDOK begrenst dus per download. Gelderland deed 6,1 GB in 90 min.
+  - *Kwetsbaar:* de download van Noord-Brabant brak af na 1,77 GB (verbinding verbroken). Een download
+    van uren moet kunnen hervatten.
+  - *Wachttijd:* PDOK had de bestanden in 5–28 min klaar, ook met 12 aanvragen tegelijk.
+- **Het weekvolume is klein:** 53 MB aan delta's voor heel NL per week (werkdagen 9–15 MB, weekend ~20 kB).
+- **De bouw met de oude methode** (BGT-tegels + AHN, koude cache) zou ook passen: geraamd tot ~171 min per
+  provincie. Maar dat zijn ~300.000 tegelverzoeken per ronde bij PDOK, en dat wilde het plan afschaffen.
+  Hoe snel de bouw is met de afgeleide BGT is nog niet gemeten.
+- **Geofabrik is onbetrouwbaar gebleken:** in run 1 gaf Geofabrik 404 op de grenzen, in run 2 weigerde
+  het elke verbinding, en in run 4 viel de knipjob terug op openstreetmap.fr. Twee bronnen is geen luxe.
+
+Ruwe metingen en eerdere losse proeven (de API, het geofilter in vakken van ~5 km, 66% historie in één vak
+rond Delft, één dag delta = 14,8 MB, de kant-en-klare delta van 47 GB is onbruikbaar): zie de geschiedenis van
+dit bestand en de samenvatting in de runs van `fase0.yml`.
+
+## Opzet: alles in één keer (bijgewerkt na fase 0)
 
 ```
-knip (1 job)            NL-extract één keer ophalen, osmium knipt in porties naar 12 provincies
+knip (1 job)            OSM-extract (Geofabrik, anders openstreetmap.fr), osmium knipt in 4 porties van 3
+bgt (1 job, zelden)     BGT voor heel NL ophalen (hervatbaar) en omzetten naar het afgeleide bestand per blok;
+                        wekelijks alleen de delta van die week toepassen
    │
-   ├── bouw × 12        per provincie: OSM-graaf + BGT-vlakken (afgeleid bestand) + AHN, blokken schrijven
-   │                    (alle 12 tegelijk, elk ruim onder de 6 uur; mislukt er één, dan stopt de ronde)
+   ├── bouw × 12        per provincie: graaf + oordeel uit het afgeleide BGT-bestand + AHN, blokken schrijven
    │
-samen (1 job)           manifesten samenvoegen, randblokken tussen provincies oplossen, index per provincie,
-                        de kwaliteitspoort voor álle provincies, release-bijlage, PR met goedgekeurd.txt
+samen (1 job)           randblokken samenvoegen, index per provincie, de kwaliteitspoort voor álle provincies,
+                        release-bijlage, PR met goedgekeurd.txt
 ```
 
 1. **Graaf buiten git.** De wekelijkse bouw zet de blokken als release-bijlage (`graaf-vJJJJMMDD-rN`, tot
-   2 GB per bestand). Na de tests opent de workflow een PR die alleen `public/graaf/goedgekeurd.txt`
-   (de versie) verandert. De deploy haalt die versie op en zet de blokken op dezelfde plek in de Pages-site;
-   de app merkt er niets van. Terugzetten = dat regeltje terugdraaien. Oude bijlagen na 8 weken weg.
-2. **Alle provincies parallel.** Een matrix van 12 jobs die tegelijk draaien, gevoed door één knipjob (één
-   download bij Geofabrik in plaats van twaalf). Blokken op de provinciegrens worden in de samenvoegjob
-   één keer gemaakt (zelfde blok uit twee provincies: de wegstukken samenvoegen op OSM-id). De eerste
-   livegang is **alles of niets**: pas als alle 12 door de poort komen. Daarna geldt per week: mislukt één
-   provincie, dan blijft van die provincie de vorige versie staan en gaat de rest wel door.
-3. **BGT via de PDOK-download.** Eén keer `full/custom` per provincie, alle 12 tegelijk (alleen de
-   objecttypes die de app gebruikt: wegdeel, ondersteunend wegdeel, begroeid en onbegroeid terreindeel,
-   waterdeel voor zee). Daarna wekelijks de `delta/custom` van die week voor heel NL toepassen. Bewaard wordt een
-   eigen afgeleid bestand (ondergrondvlakken per blok, compact en geïndexeerd, zonder historie), als
-   release-bijlage, niet de ruwe BGT en niet in de Actions-cache. Elke paar maanden opnieuw volledig, als
-   controle op gemiste wijzigingen.
-4. **Compacter formaat.** Kleinere blokken in de stad (splitsen op zoom 13 boven ~400 kB), grotere op het
-   land (zoom 11); ketens tussen kruisingen in plaats van losse stukjes; coördinaten op 1e-6°; gedeelde
-   tabellen voor tags en oordeel-uitleg. Verwacht 30–40% kleiner (schatting uit de proef).
-5. **App.** Een index per provincie in plaats van één manifest (1.150 blokken met hash is ~170 kB JSON);
-   stations per blok in plaats van in het manifest; de app ziet zelf of een plek binnen de dekking valt en
-   valt anders terug op de kaarttegels (buiten NL, of als een blok ontbreekt).
+   2 GB per bestand; 155 MB past in één bestand). Na de tests opent de workflow een PR die alleen
+   `public/graaf/goedgekeurd.txt` verandert. De deploy haalt die versie op en zet de blokken in de Pages-site.
+   Terugzetten = dat regeltje terugdraaien. Oude bijlagen na 8 weken weg.
+2. **Alle provincies parallel.** 12 bouwjobs tegelijk, gevoed door één knipjob. Blokken op de provinciegrens
+   maakt de samenvoegjob één keer (wegstukken samenvoegen op OSM-id). De eerste livegang is **alles of
+   niets**; daarna houdt een provincie die mislukt haar vorige versie.
+3. **BGT: één download voor heel NL in plaats van 12 rechthoeken** (gewijzigd na fase 0). De rechthoeken
+   overlappen te veel en zijn samen al groter dan heel NL. Kandidaten, te meten in fase 1:
+   (a) `full/custom` zonder geofilter, 5 objecttypes (één bestand, kleiner dan 28 GB);
+   (b) het kant-en-klare bestand van 28,0 GB, in stukken opgehaald (PDOK ondersteunt `Range`: nagekeken,
+   antwoord 206) zodat het hervat kan worden en meerdere stukken tegelijk kunnen lopen;
+   (c) `full/custom` per provincie met de echte provinciegrens in plaats van de bbox.
+   Bij 1,1 MB/s duurt 20–28 GB in één stroom 5–7 uur: te lang voor één job. Daarom hervatbaar en in stukken.
+   Bij het inlezen gaat de historie (`eindRegistratie`, ~60%) eruit. Bewaard wordt alleen het afgeleide
+   bestand (ondergrondvlakken per blok, zonder historie), als release-bijlage. Wekelijks de delta toepassen
+   (53 MB); elke paar maanden opnieuw volledig.
+4. **Compacter formaat:** na de livegang (zie boven), voor minder dataverkeer per planning.
+5. **App.** Een index per provincie in plaats van één manifest; stations per blok; de app ziet zelf of een
+   plek binnen de dekking valt en valt anders terug op de kaarttegels (buiten NL, of als een blok ontbreekt).
 6. **Eén kwaliteitspoort, per provincie gemeten:** ondergrondoordeel tegen de app ≥ 98% in elke provincie;
-   per provincie ≥ 3 A-naar-B-paren, 2 rondjes en 1 station, waarvan een deel achtergehouden (zoals
-   `tools/graaf/ab_nieuw.mjs`); Playwright groen; Nopave-router op die paren minstens zo goed als BRouter.
-   Alle 12 groen = live.
+   per provincie ≥ 3 A-naar-B-paren, 2 rondjes en 1 station, deels achtergehouden; Playwright groen;
+   Nopave-router op die paren minstens zo goed als BRouter. Alle 12 groen = live.
 7. **Uitrol.** Achter `?graaf=nl` tot de poort voor alle provincies groen is; dan in één keer de standaard.
-   De regio Delft blijft tot dan zoals nu.
 
-## Fase 0: proefmetingen, alle provincies tegelijk
+## Planning per fase
 
-Workflow `.github/workflows/fase0.yml` (start bij een push van de workflow of `tools/fase0/` op een
-andere branch dan main, of handmatig). Niets gaat live; de uitkomst is een samenvatting in de run
-(`$GITHUB_STEP_SUMMARY`, artifact `fase0-samenvatting`).
+Volgorde met afhankelijkheden. De omvang is een schatting in werksessies van Claude met review door Oscar;
+iedere fase eindigt met een PR volgens CLAUDE.md.
 
-| Meting | Waar | Levert op |
-|---|---|---|
-| A. NL-extract één keer ophalen en met osmium in 12 knippen | job `knip` | tijd en geheugen op een gewone runner; één download in plaats van twaalf |
-| B. Per provincie de graaf zoals `bouw.mjs`, zonder BGT en AHN | 12 jobs `osm`, tegelijk | echte wegstukken, km en onverhard-km per provincie, wegstukken per blok |
-| C. De echte bouw (BGT-tegels + AHN) voor Utrecht en Drenthe | in `osm`, alleen kalibratie | gzip en bouwtijd per wegstuk, stedelijk en landelijk; daarmee de raming voor alle 12 |
-| D. BGT `full/custom` per provincie | 12 jobs `bgt`, tegelijk | of PDOK 12 aanvragen tegelijk aankan; wachttijd, grootte, downloadtijd; aandeel historie |
-| E. BGT `delta/custom`, heel NL, 7 dagen | job `delta` | weekvolume aan wijzigingen (gemeten, zie hieronder) |
+| Fase | Wat | Klaar als | Omvang (schatting) |
+|---|---|---|---|
+| 1. BGT-bron | Downloadroute kiezen (3a/b/c meten), hervatbaar ophalen, stromend omzetten naar het afgeleide bestand zonder historie, delta toepassen | heel NL in één workflow binnen 6 uur; oordeel uit het afgeleide bestand ≥ 98% gelijk aan de tegelmethode in Utrecht en Drenthe | 2–3 sessies |
+| 2. Bouw per provincie | `bouw.mjs` leest het afgeleide BGT-bestand; AHN voor heel NL (cache-strategie, zie risico's); matrix van 12 | 12 provincies gebouwd, tijd en grootte gemeten | 2 sessies |
+| 3. Samenvoegen en uitleveren | randblokken, index per provincie, release-bijlage, deploy uit de release, `goedgekeurd.txt` | deploy zet heel NL in de Pages-site; terugzetten getest | 2 sessies |
+| 4. App | index per provincie, dekking per plek, `?graaf=nl`, terugval op tegels | Playwright groen met en zonder `?graaf=nl`, ook buiten NL | 1–2 sessies |
+| 5. Kwaliteitspoort | testparen per provincie (36 A-naar-B, 24 rondjes, 12 stations), oordeel per provincie | alle 12 provincies groen | 2 sessies |
+| 6. Livegang | `?graaf=nl` wordt de standaard; release en CHANGELOG | live; regio Delft-graaf opgeruimd (eerst vastgelegd) | 1 sessie |
 
-De echte bouw draait bewust maar in twee provincies: met de oude methode (BGT-tegels) zou de bouw voor alle
-12 ~300.000 tegelverzoeken bij PDOK doen, en dat wil het plan juist afschaffen. Met de invoer
-`kalibratie: alle` kan het toch.
+Fase 1 is het grootste risico en gaat eerst. Fase 4 kan parallel aan 2 en 3.
 
-Scripts: `tools/fase0/grenzen.mjs` (provinciegrenzen van PDOK als .poly), `poly.mjs` (bbox, regio en RD-geofilter), `osm_stats.mjs`,
-`bgt.mjs` (full en delta), `samenvatting.mjs`. Voor provincies is `laadElementen` in `bouw.mjs` nu regel voor
-regel gaan lezen (een hele provincie past niet in één JavaScript-string); getest met 167 MB en tekens
-als ë en € op de stukgrens.
+## Kostenraming
 
-### Al gemeten (2026-11-20, in de Claude-sessie, via de proxy)
+**In geld: € 0.** GitHub Actions is gratis voor een openbare repo (eerder nagekeken), GitHub Pages en
+release-bijlagen zijn gratis, en PDOK, Geofabrik en openstreetmap.fr zijn gratis open data. Er komt geen
+server bij. De echte kosten zijn tijd en limieten:
 
-- **De API werkt zoals beschreven** (`openapi.json`): `POST full/custom` met `featuretypes`, `format`
-  (`citygml`, `gmllight`, `stufgeo`) en `geofilter` (WKT in RD), dan de status opvragen tot `COMPLETED`,
-  dan een zip. Delta's alleen in `citygml`.
-- **Het geofilter werkt in vakken van ongeveer 5 × 5 km.** Een vraag om 1 km² in Delft gaf objecten van
-  x 81.600–86.700 en y 443.400–448.450 terug. Gevolg: per provincie komt er een rand van hooguit ~5 km
-  van de buren mee. Geen probleem, wel dubbel werk aan de randen.
-- **Daar zit veel historie in.** Van de 109.800 wegdelen in dat vak hebben er 72.387 (66%) een
-  `eindRegistratie`, en bij begroeid terreindeel 26.519 van 50.726 (52%). Bij het inlezen moeten die eruit.
-- **Grootte, stedelijk:** dat vak van ~25 km² rond Delft: 48,7 MB zip, 414 MB GML (5 objecttypes),
-  11–12 s wachten. De download liep hier op 1,1 MB/s (door de proxy van de sessie; op een runner meet D het echt).
-- **Kant-en-klaar voor heel NL** bestaat ook: `full/predefined/bgt-gmllight-nl-nopbp.zip` is **28,0 GB**
-  (alle objecttypes, elke nacht ververst, 20-11 02:11). Dat is een alternatief voor 12 aanvragen, maar met
-  alle objecttypes, dus vooral bruikbaar als D tegenvalt.
-- **De kant-en-klare delta is onbruikbaar:** `delta/predefined/bgt-citygml-nl-delta.zip` is **47,0 GB**
-  (30 dagen, alle typen), groter dan de hele BGT.
-- **Delta op maat werkt goed:** één dag (19-11), heel NL, 5 objecttypes: **14,8 MB zip**, 21 s wachten,
-  193 MB XML, ~32.000 mutaties (`toevoeging`, en `wijziging` met `was` en `wordt`). Er zijn 30 dagen
-  beschikbaar.
-- **Een week aan delta's (E, gemeten in fase0.yml run 1 op een GitHub-runner):** 13–19 november, heel NL,
-  5 objecttypes: **53,4 MB zip**, 83 s wachten en 45 s downloaden in totaal. Op werkdagen 8,7–14,8 MB, in
-  het weekend ~20 kB. Wekelijks bijwerken is dus licht.
-- **PDOK levert ongeveer 1,2 MB/s per download**, ook op de runner (zelfde snelheid als in de sessie). Een
-  provincie van een paar GB duurt dan een half uur tot een uur; 12 tegelijk scheelt dus echt, als PDOK
-  per download begrenst en niet per afnemer. D laat dat zien.
-- **Grenzen:** de `.poly`-bestanden van Geofabrik gaven in run 1 herhaald 404 (Drenthe na vijf
-  pogingen, Flevoland zeven keer niet). Nu komen de grenzen van PDOK (Bestuurlijke Gebieden,
-  `provinciegebied`, alle 12 in één verzoek van 5,4 MB), dezelfde bron als de BGT; osmium leest ze (met
-  gaten) goed. Het NL-extract zelf kwam in run 1 wel binnen.
-- **Knippen in één osmium-run past niet (run 3, vermoeden):** het NL-extract is **1,41 GB**; met alle 12
-  extracts tegelijk (`complete_ways`) stopte de runner na 30 s met een "shutdown signal". Dat is bij
-  GitHub-runners meestal geheugen vol (16 GB), maar de log zegt het niet letterlijk. Nu: 4 porties van 3,
-  met het vrije geheugen elke 10 s in de log.
-- Geofabrik: vanuit de sessie verbrak de server de verbinding (TLS-reset). Waar dat aan ligt is niet
-  uitgezocht; A meet het op een gewone runner.
-
-Nog aanname tot de workflow klaar is: de wegdichtheid buiten de Randstad (dus grootte en bouwtijd voor heel
-NL), de BGT-grootte per provincie, en of PDOK 12 aanvragen tegelijk soepel verwerkt.
-
-Daarna: dit plan bijwerken met de echte cijfers, een planning per fase en een kostenraming, en pas dan bouwen.
+| Post | Raming | Grens | Basis |
+|---|---|---|---|
+| Actions, wekelijkse bouw | ~3–6 runner-uur per week (knip 6 min, 12 × bouw, samen, tests) | geen (openbare repo) | fase 0: 778 runner-min, waarvan 597 BGT-download |
+| Actions, volledige BGT (een paar keer per jaar) | ~6–12 runner-uur per keer | 6 uur per job: in stukken | 27,7 GB in 11 jobs |
+| Release-bijlagen | 155 MB graaf + afgeleide BGT (grootte onbekend) per week, 8 weken bewaard | 2 GB per bestand | graaf: geraamd; BGT: fase 1 |
+| Pages-site | ~155 MB graaf + app | 1 GB | geraamd |
+| Pages-verkeer | ~2 MB per rondje, ~7 MB per station-planning | ~100 GB per maand (zacht) | proef Delft |
+| Belasting PDOK | wekelijks 53 MB delta; een paar keer per jaar ~20–28 GB | fair use | gemeten |
 
 ## Risico's en open vragen
 
-- **Alles tegelijk = alles tegelijk mis.** Eén haperende provincie houdt de eerste livegang tegen. Dat is
-  bewust (beslissing 5); na de eerste livegang valt een provincie die mislukt terug op haar vorige versie.
-- **Belasting voor PDOK:** 12 BGT-aanvragen tegelijk is een paar keer per jaar (daarna alleen delta's,
-  ~100 MB per week). AHN blijft per blok; voor heel NL is dat éénmalig veel en daarna een jaar uit de cache.
-- **Schijf op de runner (~14 GB vrij):** een BGT-zip van een grote provincie kan gigabytes zijn en
-  uitgepakt het tienvoudige. De omzetting moet daarom stromend uit de zip lezen (fase 0 telt al zo).
-- **Pages-verkeer:** ~100 GB per maand (zachte grens). Een station-planning haalt ~7 MB, een rondje ~2 MB
-  (proef). Bij veel gebruikers is dat een grens om in de gaten te houden.
-- **Pages-site 1 GB:** heel NL moet in één keer passen, plus de app. De raming uit fase 0 bepaalt of het
-  compactere formaat (opzet 4) vóór de livegang moet.
-- **Geofabrik hapert soms:** op 2026-11-20 gaf Geofabrik eerst 404 op de grenzen (run 1) en weigerde het
-  daarna 6 minuten lang elke verbinding (run 2). De knipjob valt nu terug op openstreetmap.fr; de wekelijkse
-  bouw valt terug op een recent extract (PR #17). Voor de echte bouw: twee bronnen plus een extract in de
-  release-bijlagen als laatste vangnet.
-- **Kwaliteit buiten de Randstad:** de Nopave-router en het oordeel zijn alleen rond Delft gemeten.
+- **BGT-download van uren** (gemeten: 0,8–1,5 MB/s per download, één afgebroken na 1,77 GB). Hervatbaar
+  ophalen met `Range` is nodig; of meerdere stukken tegelijk sneller gaan, meet fase 1.
+- **AHN voor heel NL** is nog niet gemeten. In de regio Delft zat AHN in de cache van 1,47 GB; voor heel NL
+  past dat niet in de Actions-cache (10 GB). Mogelijke oplossing: de hoogtes uit de vorige graafversie
+  hergebruiken voor ongewijzigde wegstukken.
+- **Alles tegelijk = alles tegelijk mis.** Eén haperende provincie houdt de eerste livegang tegen (bewust,
+  beslissing 5).
+- **Schijf op de runner (~14 GB vrij):** de BGT-download voor heel NL past niet uitgepakt en mogelijk ook
+  niet als zip. De omzetting moet stromend lezen, of per stuk ophalen en direct omzetten.
+- **Geofabrik hapert** (drie keer op 2026-11-20). Twee bronnen plus een extract als release-bijlage als
+  laatste vangnet.
+- **Kwaliteit buiten de Randstad:** de Nopave-router en het oordeel zijn alleen rond Delft gemeten; fase 5.
+- **Pages-verkeer** bij veel gebruikers: in de gaten houden.
 - **Release-bijlagen ophalen in de deploy:** nog niet getest (grootte, tijd, rechten van `GITHUB_TOKEN`).
