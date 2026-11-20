@@ -10,11 +10,11 @@ die niet `klaar` is.
 |---|---|
 | A Integreren | klaar |
 | B Verhuizen | klaar |
-| C Automatiseren | open |
-| D Live in nopaves | open |
-| E Oude plek doorverwijzen | open |
-| F Opruimen | open |
-| G Documentatie | open |
+| C Automatiseren | klaar (branchbeveiliging: Voor Oscar) |
+| D Live in nopaves | klaar (release: zie D3) |
+| E Oude plek doorverwijzen | klaar |
+| F Opruimen | archief klaar; verwijderen: Voor Oscar |
+| G Documentatie | klaar |
 | H Graafproef afmaken | niet nodig (graafproef was af) |
 | I Plugins en skills | open |
 
@@ -93,10 +93,96 @@ vergeleken met de cijfers in VOORTGANG, niet met een verse meting van live in de
 - `package.json`: alleen `playwright` 1.62.1 en `oxlint` 1.79.0 (dezelfde versies als in Tezt).
 - Tests in de nieuwe indeling: unit 50/50, oxlint schoon, Playwright mobiel en desktop groen.
 
+## C. Automatiseren
+
+- PR [#1](https://github.com/oscardillewaard-ai/nopaves/pull/1) (samengevoegd, `65db499`): workflows
+  `test` (unit, oxlint, Playwright telefoon en desktop, bij elke PR en push naar main), `deploy`
+  (`public/` naar GitHub Pages met `actions/deploy-pages`) en `graaf.yml` (wekelijks, biedt nieuwe
+  blokken aan als PR `chore/graaf-vJJJJMMDD` in plaats van naar main te pushen).
+- Pages-bron: stond al goed of is door `actions/configure-pages` gezet; de eerste deploy slaagde
+  (run 44696108003). Ik kon de instelling zelf niet lezen of zetten (geen API-toegang buiten de
+  GitHub-tools in deze omgeving).
+- Graafworkflow uit Tezt: hij stond alleen op `graaf-proef` en op de sessiebranch, niet op de
+  Pages-branch. Hij verdwijnt uit Tezt zodra die branches weg zijn (stap F).
+- Branchbeveiliging: niet mogelijk met de GitHub-tools in deze omgeving → Voor Oscar.
+- Branch na samenvoegen verwijderen: de git-proxy weigert het verwijderen van branches. De
+  sessiebranch `claude/admiring-ritchie-23anos` wordt daarom hergebruikt (na elke merge opnieuw
+  gestart vanaf main). Voor Oscar: "Automatically delete head branches" aanzetten.
+- PR [#2](https://github.com/oscardillewaard-ai/nopaves/pull/2) (samengevoegd, `0e1bbc5`): `fix:` voor de wisselvallige
+  desktoptest. Oorzaak gevonden: de marker van het extra station lag buiten beeld (y 1439 bij een
+  venster van 900 hoog), dus de klik met `force` raakte niets. Nu krijgt de marker zelf de klik.
+  Voor: 2 van 2 rood, na: 2 van 2 groen (plus groen tegen de live site).
+
+## D. Live in nopaves
+
+- https://oscardillewaard-ai.github.io/nopaves/ werkt (app, `sw.js`, manifest, `graaf/actueel.json`
+  geven 200).
+- Playwright tegen de live URL, telefoon en desktop: groen (met de testfix). Gedekt: rondje,
+  station, "Route hierheen", A naar B, lang drukken in Meijendel (rondjes in het gebied), GPX zonder
+  tijden, bewaren en Mijn routes, `?router=eigen`, en `?graaf=vooraf` (rondje, station en A naar B
+  binnen de regio Delft, terugval in Utrecht). Hill repeat: bestaat niet (issue #7).
+- localStorage: sleutels `onverhard.v1`, `onverhard.thema`, `onverhard.routes`, `nopaves.log` en de
+  soortkeuze zijn niet padafhankelijk, en oud en nieuw delen de origin `oscardillewaard-ai.github.io`.
+  Bewaarde routes en instellingen gaan dus mee; niets aangepast.
+- Release v1.0.0: zie hieronder (na de documentatie-PR).
+
+## E. Oude plek doorverwijzen
+
+- Tezt, Pages-branch `claude/gpx-ultrarace-trainingen-zf6zci`, gewone push: `7c885b5..07f22d4`.
+  `public/onverhard/` bestaat nu alleen nog uit `index.html` (doorverwijzing) en `sw.js` (vervanger die
+  de oude caches wist en zichzelf afmeldt). Laatste versie van de oude app: `7c885b55b65dc6eeac38ae063e4fb4de9a5e8943`.
+- De pagina meldt de service worker met scope `/Tezt/onverhard/` af, wist `onverhard-*` (twee keer: de
+  oude worker zet de pagina zelf nog in zijn cache terwijl ze laadt), laat `nopaves-data-*` staan en
+  stuurt door met behoud van querystring en hash. Zonder JavaScript: een gewone link.
+- Getest: lokaal met de oude app plus zijn service worker geïnstalleerd en daarna vervangen
+  (worker weg, `onverhard-v44` weg, datacache blijft, `?soort=rondje&km=10#r=abc` komt aan); de
+  Tezt-build (`npm run build`) en de Tezt-startpagina zonder fouten; en live:
+  `https://oscardillewaard-ai.github.io/Tezt/onverhard/?soort=rondje&km=10#test` →
+  `https://oscardillewaard-ai.github.io/nopaves/?soort=rondje&km=10#test`.
+- `tools/onverhard/` en de pictogramscripts staan nog op de Pages-branch van Tezt (niet gebouwd, niet
+  online). Bewust niet aangeraakt: de opdracht noemde alleen `public/onverhard`. Kan weg in een latere
+  opruimronde.
+
+## F. Opruimen
+
+- `docs/branches-archief.md`: alle branches met naam en SHA, ook eerst vastgelegd in Tezt
+  (`public/onverhard/branches-archief.md` op `claude/admiring-ritchie-23anos`, commit `664e773`).
+- Verwijderen lukt niet vanuit deze omgeving: de git-proxy weigert `git push --delete` en de
+  GitHub-tools hebben geen functie om een branch te verwijderen → Voor Oscar, met de lijst.
+- Twijfel (blijft staan): `ccr-1c8830ae-uawyv2` (9 Nopav.es-commits die niet als zodanig in de
+  integratie zitten). De sessiebranch in Tezt blijft als anker: hij houdt de commits van de
+  weggehaalde branches bereikbaar.
+- nopaves: alleen `main` en de sessiebranch.
+
+## G. Documentatie
+
+- CLAUDE.md, README.md (met bronnen en licenties; BGT en AHN CC0, Natura 2000 Public Domain Mark,
+  luchtfoto CC BY, nagekeken in de PDOK-dienstbeschrijvingen; Locatieserver niet nagekeken),
+  CHANGELOG.md, docs/licentie-keuze.md ("Licentie: nog niet gekozen").
+- Open punten als issues #3–#11 met labels `perf`, `ux`, `bug` en `idee` (labels zijn automatisch
+  aangemaakt).
+
 ## Open punten
 
-- Wisselvallige desktoptest bij "Route hierheen" op een station-marker.
+- Wisselvallige desktoptest bij "Route hierheen": opgelost in PR #2.
+- Overige open punten: GitHub Issues #3–#11.
 
 ## Voor Oscar
 
-(nog niets)
+1. **Branchbeveiliging op main** (github.com/oscardillewaard-ai/nopaves → Settings → Branches →
+   Add branch ruleset, of "Add classic branch protection rule"): Branch name pattern `main` → vink
+   "Require a pull request before merging" aan → vink "Require status checks to pass" aan en kies
+   `test` → laat "Allow force pushes" en "Allow deletions" uit → Create/Save.
+2. **Graaf-PR's toestaan**: Settings → Actions → General → onderaan "Workflow permissions" → vink
+   "Allow GitHub Actions to create and approve pull requests" aan → Save.
+3. **Branches automatisch opruimen**: Settings → General → onderaan "Pull Requests" → vink
+   "Automatically delete head branches" aan.
+4. **Eerste graafbouw**: Actions → Graaf bouwen → Run workflow → branch `main` → Run workflow
+   (duurt tot een paar uur; daarna staat er een PR `chore: graaf v…`). Zie issue #11.
+5. **Branches in Tezt weghalen** (github.com/oscardillewaard-ai/Tezt → Branches → prullenbak bij elke
+   branch): `ccr-c02c1fc3-wix11n`, `claude/unpaved-routes-planner-ufzrl8`, `graaf-proef`, `snelheid`,
+   `terugzet/na-snelheid`, `terugzet/na-ux-1`, `terugzet/na-ux-2`, `terugzet/na-ux-3`,
+   `terugzet/voor-graaf`, `terugzet/voor-ux`, `ux-fase-1`, `ux-fase-2`, `ux-fase-3`. Laat
+   `claude/admiring-ritchie-23anos` in Tezt staan: die houdt de weggehaalde commits bereikbaar.
+   SHA's: docs/branches-archief.md.
+   Twijfel: `ccr-1c8830ae-uawyv2` (zie het archief).
