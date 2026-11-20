@@ -16,9 +16,10 @@ const UI_NIEUW = new URLSearchParams(location.search).get('ui') !== 'oud'
 // A naar B: welke router standaard (snelheid, stap 6; zie VOORTGANG.md). 'auto' = eigen router tot
 // EIGEN_ROUTER_MAX_M, daarboven en bij fouten BRouter.
 const STANDAARD_ROUTER = 'brouter'
-// graaf-proef: de vooraf bewerkte routegraaf (regio Delft). 'vooraf' = blokken gebruiken binnen de regio
-// (buiten de regio of bij een fout: de gewone werking); null = alleen met ?graaf=vooraf. Zie GRAAF-PROEF.md.
-const STANDAARD_GRAAF = null
+// De vooraf bewerkte routegraaf (regio Delft). 'vooraf' = blokken gebruiken binnen de regio (buiten de
+// regio of bij een fout: de gewone werking met kaarttegels en BGT). Standaard sinds v1.1.0; de oude
+// werking blijft bereikbaar met ?graaf=tegels. Zie docs/GRAAF-PROEF.md.
+const STANDAARD_GRAAF = 'vooraf'
 const GRAAF = (() => {
   const q = new URLSearchParams(location.search).get('graaf')
   return q === 'vooraf' ? 'vooraf' : q === 'tegels' ? null : STANDAARD_GRAAF
