@@ -637,7 +637,9 @@ assert.deepEqual(fouten.filter((f) => !/Failed to load resource/.test(f)), [], '
   const v = await cs.newPage()
   const vf = []
   v.on('pageerror', (e) => vf.push('PAGEERROR ' + e.message))
-  await v.goto(basis)
+  // de werking met kaarttegels en BGT (buiten de regio Delft, of met ?graaf=tegels); binnen de regio is
+  // de vooraf bewerkte graaf de standaard (zie het graafblok verderop)
+  await v.goto(`${basis}?graaf=tegels`)
   await v.locator('[data-soort="rondje"]').click()
   await v.locator('#snelkeuzes [data-waarde="10"]').click()
   // stap 2: een start tikken haalt de tegels alvast op
@@ -674,7 +676,7 @@ assert.deepEqual(fouten.filter((f) => !/Failed to load resource/.test(f)), [], '
     return { tegels: k.filter((r) => r.url.includes('openfreemap')).length, bgt: k.filter((r) => r.url.includes('/bgt/')).length, ahn: k.filter((r) => r.url.includes('/ahn/')).length }
   })
   assert.ok(soorten.tegels > 0 && soorten.bgt > 0 && soorten.ahn > 0, `cache: ${JSON.stringify(soorten)}`)
-  stap(`cache: ${soorten.tegels} kaarttegels, ${soorten.bgt} BGT-tegels, ${soorten.ahn} AHN-blokken`)
+  stap(`?graaf=tegels in Delft: cache ${soorten.tegels} kaarttegels, ${soorten.bgt} BGT-tegels, ${soorten.ahn} AHN-blokken`)
 
   // stap 4: rekenen in een worker; Stop breekt echt af
   const werkerGeladen = await v.evaluate(() => performance.getEntriesByType('resource').some((e) => e.name.includes('rekenwerker.js')))
@@ -742,7 +744,7 @@ assert.deepEqual(fouten.filter((f) => !/Failed to load resource/.test(f)), [], '
   await c6.close()
 }
 
-// ---- Graaf-proef: de vooraf bewerkte graaf (?graaf=vooraf), via de knoppen ----
+// ---- De vooraf bewerkte graaf: standaard binnen de regio Delft (sinds v1.1.0), via de knoppen ----
 {
   const opties = mobiel ? { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true } : { viewport: { width: 1440, height: 900 } }
   const cg = await browser.newContext(opties)
@@ -756,8 +758,9 @@ assert.deepEqual(fouten.filter((f) => !/Failed to load resource/.test(f)), [], '
     const b = window.onverhard.meting.rapport().bronnen
     return { graaf: (b.graaf || {}).n || 0, bgt: (b.bgt || {}).n || 0, ahn: (b.ahn || {}).n || 0, bron: window.onverhard.uitslag().graafBron }
   })
-  // rondje: start tikken haalt de blokken alvast op; plannen zonder BGT en AHN
-  await v.goto(`${basis}?graaf=vooraf`)
+  // rondje: start tikken haalt de blokken alvast op; plannen zonder BGT en AHN. Zonder parameter: de
+  // vooraf bewerkte graaf is de standaard binnen de regio.
+  await v.goto(basis)
   await v.locator('[data-soort="rondje"]').click()
   await v.locator('#snelkeuzes [data-waarde="10"]').click()
   await v.evaluate(() => window.onverhard.kaart.fire('click', { latlng: L.latLng(52.0116, 4.3571) }))
@@ -773,7 +776,7 @@ assert.deepEqual(fouten.filter((f) => !/Failed to load resource/.test(f)), [], '
   const r1 = await v.evaluate(() => { const o = window.onverhard.uitslag().opties[0]; return { score: o.score, km: o.km, hoogte: !!(o.hoogte && o.hoogte.afstand.length > 10), stijgen: o.stijgen } })
   assert.ok(r1.score > 0 && r1.km > 7 && r1.hoogte, `rondje: ${JSON.stringify(r1)}`)
   assert.ok(Number(await v.locator('#kern .score b').textContent()) === r1.score, 'score in de tegel')
-  stap(`graaf-proef rondje: ${blokkenInCache} blokken vooraf opgehaald, score ${r1.score}, ${r1.km.toFixed(1)} km, hoogteprofiel, 0 BGT/AHN-verzoeken`)
+  stap(`graaf standaard (zonder parameter) rondje: ${blokkenInCache} blokken vooraf opgehaald, score ${r1.score}, ${r1.km.toFixed(1)} km, hoogteprofiel, 0 BGT/AHN-verzoeken`)
   // station via de segmentknop
   await v.locator('[data-soort="station"]').click()
   await v.locator('#snelkeuzes [data-waarde="15"]').click()
@@ -784,7 +787,7 @@ assert.deepEqual(fouten.filter((f) => !/Failed to load resource/.test(f)), [], '
   assert.equal(b.bron, 'vooraf', 'station uit de vooraf bewerkte graaf')
   const nSt = await v.evaluate(() => window.onverhard.uitslag().opties.length)
   assert.ok(nSt >= 2, `routes naar stations: ${nSt}`)
-  stap(`graaf-proef station: ${nSt} routes, 0 BGT/AHN-verzoeken (${b.bgt}/${b.ahn})`)
+  stap(`graaf standaard station: ${nSt} routes, 0 BGT/AHN-verzoeken (${b.bgt}/${b.ahn})`)
   // buiten de regio: gewoon de huidige werking
   await v.locator('[data-soort="rondje"]').click()
   await v.locator('#snelkeuzes [data-waarde="5"]').click()
@@ -796,7 +799,7 @@ assert.deepEqual(fouten.filter((f) => !/Failed to load resource/.test(f)), [], '
   b = await bronnen()
   assert.equal(b.bron, 'tegels', 'buiten de regio: kaarttegels')
   assert.ok(b.bgt > 0, 'buiten de regio: BGT zoals altijd')
-  stap('graaf-proef buiten de regio (Utrecht): terugval op kaarttegels + BGT')
+  stap('graaf buiten de regio (Utrecht): terugval op kaarttegels + BGT')
   // A naar B met de eigen router op de vooraf bewerkte graaf, en verslepen (verse context: de start in
   // Utrecht van hierboven wordt onthouden, en dat zou terecht een terugval geven)
   await v.close()
