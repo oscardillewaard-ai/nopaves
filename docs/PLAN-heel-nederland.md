@@ -33,7 +33,7 @@ echte cijfers, een planning per fase en een kostenraming, en pas dan bouwen.
 ## Opzet: alles in één keer
 
 ```
-knip (1 job)            NL-extract van Geofabrik één keer ophalen, osmium knipt in één run naar 12 provincies
+knip (1 job)            NL-extract één keer ophalen, osmium knipt in porties naar 12 provincies
    │
    ├── bouw × 12        per provincie: OSM-graaf + BGT-vlakken (afgeleid bestand) + AHN, blokken schrijven
    │                    (alle 12 tegelijk, elk ruim onder de 6 uur; mislukt er één, dan stopt de ronde)
@@ -78,7 +78,7 @@ andere branch dan main, of handmatig). Niets gaat live; de uitkomst is een samen
 
 | Meting | Waar | Levert op |
 |---|---|---|
-| A. NL-extract één keer ophalen en in één osmium-run in 12 knippen | job `knip` | tijd en geheugen op een gewone runner; één download in plaats van twaalf |
+| A. NL-extract één keer ophalen en met osmium in 12 knippen | job `knip` | tijd en geheugen op een gewone runner; één download in plaats van twaalf |
 | B. Per provincie de graaf zoals `bouw.mjs`, zonder BGT en AHN | 12 jobs `osm`, tegelijk | echte wegstukken, km en onverhard-km per provincie, wegstukken per blok |
 | C. De echte bouw (BGT-tegels + AHN) voor Utrecht en Drenthe | in `osm`, alleen kalibratie | gzip en bouwtijd per wegstuk, stedelijk en landelijk; daarmee de raming voor alle 12 |
 | D. BGT `full/custom` per provincie | 12 jobs `bgt`, tegelijk | of PDOK 12 aanvragen tegelijk aankan; wachttijd, grootte, downloadtijd; aandeel historie |
@@ -123,6 +123,10 @@ als ë en € op de stukgrens.
   pogingen, Flevoland zeven keer niet). Nu komen de grenzen van PDOK (Bestuurlijke Gebieden,
   `provinciegebied`, alle 12 in één verzoek van 5,4 MB), dezelfde bron als de BGT; osmium leest ze (met
   gaten) goed. Het NL-extract zelf kwam in run 1 wel binnen.
+- **Knippen in één osmium-run past niet (run 3, vermoeden):** het NL-extract is **1,41 GB**; met alle 12
+  extracts tegelijk (`complete_ways`) stopte de runner na 30 s met een "shutdown signal". Dat is bij
+  GitHub-runners meestal geheugen vol (16 GB), maar de log zegt het niet letterlijk. Nu: 4 porties van 3,
+  met het vrije geheugen elke 10 s in de log.
 - Geofabrik: vanuit de sessie verbrak de server de verbinding (TLS-reset). Waar dat aan ligt is niet
   uitgezocht; A meet het op een gewone runner.
 

@@ -1,7 +1,7 @@
 # Fase 0 van docs/PLAN-heel-nederland.md: proefmetingen voor de graaf van heel Nederland, alle
 # provincies tegelijk. Niets gaat live: de uitkomst is alleen een samenvatting (en artifacts, 7 dagen).
 #
-#  knip       het NL-extract van Geofabrik één keer ophalen en in één osmium-run in 12 provincies knippen
+#  knip       het NL-extract één keer ophalen en met osmium in 12 provincies knippen (porties van 3)
 #  osm (×12)  per provincie de graaf bouwen zoals bouw.mjs, zonder BGT en AHN: knopen, wegstukken, km
 #             (kalibratieprovincies: ook de echte bouw met BGT-tegels en AHN, voor grootte en bouwtijd)
 #  bgt (×12)  per provincie BGT full/custom bij PDOK (5 objecttypes): wachttijd, grootte, downloadtijd
@@ -68,14 +68,24 @@ jobs:
           stat -c %s ~/osm/nl.osm.pbf > uit/nl-bytes.txt
           ls -l ~/osm
 
-      - name: In één run knippen in 12 provincies (osmium extract)
+      # Run 3: osmium met alle 12 extracts in één run liet de runner na 30 s stoppen ("shutdown signal",
+      # vermoedelijk geheugen vol). Daarom in porties van 3 provincies, met het vrije geheugen in de log.
+      - name: Knippen in 12 provincies (osmium extract, 4 porties van 3)
         run: |
-          node -e "
-            const p = require('./tools/fase0/provincies.json').provincies
-            const c = { directory: process.env.HOME + '/osm/prov', extracts: p.map(q => ({ output: q.slug + '.osm.pbf', polygon: { file_name: process.env.HOME + '/osm/poly/' + q.slug + '.poly', file_type: 'poly' } })) }
-            require('fs').writeFileSync(process.env.HOME + '/osm/knip.json', JSON.stringify(c))"
           mkdir -p ~/osm/prov
-          /usr/bin/time -v -o uit/tijd-knip.txt osmium extract --config ~/osm/knip.json --strategy complete_ways ~/osm/nl.osm.pbf
+          ( while true; do echo "geheugen $(date +%T) $(free -m | awk '/Mem:/ {print "gebruikt " $3 " MB, beschikbaar " $7 " MB"}')"; sleep 10; done ) &
+          LOG=$!
+          SLUGS=($(node -p "require('./tools/fase0/provincies.json').provincies.map(p=>p.slug).join(' ')"))
+          for i in 0 3 6 9; do
+            DEEL="${SLUGS[*]:$i:3}"
+            DEEL=$DEEL node -e "
+              const c = { directory: process.env.HOME + '/osm/prov', extracts: process.env.DEEL.split(' ').map(s => ({ output: s + '.osm.pbf', polygon: { file_name: process.env.HOME + '/osm/poly/' + s + '.poly', file_type: 'poly' } })) }
+              require('fs').writeFileSync(process.env.HOME + '/osm/knip.json', JSON.stringify(c))"
+            echo "== portie $i: $DEEL"
+            /usr/bin/time -v -o uit/tijd-knip-$i.txt osmium extract --overwrite --config ~/osm/knip.json --strategy complete_ways ~/osm/nl.osm.pbf
+            grep -E "Elapsed|Maximum resident" uit/tijd-knip-$i.txt
+          done
+          kill $LOG
           ls -l ~/osm/prov | tee uit/provincies-bytes.txt
           nproc > uit/nproc.txt; free -m > uit/geheugen.txt
 

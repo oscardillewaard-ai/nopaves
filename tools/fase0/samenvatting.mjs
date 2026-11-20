@@ -24,7 +24,9 @@ const mb = (b) => (b == null ? '–' : (b / 1e6).toFixed(b < 1e7 ? 1 : 0))
 const min = (s) => (s == null ? '–' : (s / 60).toFixed(s < 600 ? 1 : 0))
 const n = (v) => (v == null ? '–' : v.toLocaleString('nl-NL'))
 
-const knip = { tijd: tijd('fase0-knip', 'tijd-knip.txt'), downloadSeconden: Number(lees('fase0-knip', 'download-seconden.txt')) || null, nlBytes: Number(lees('fase0-knip', 'nl-bytes.txt')) || null, nproc: lees('fase0-knip', 'nproc.txt')?.trim(), bron: lees('fase0-knip', 'bron.txt')?.trim() }
+const porties = [0, 3, 6, 9].map((i) => tijd('fase0-knip', `tijd-knip-${i}.txt`)).filter(Boolean)
+const knipTijd = porties.length ? { seconden: porties.reduce((t, p) => t + p.seconden, 0), rssMB: Math.max(...porties.map((p) => p.rssMB || 0)) } : null
+const knip = { tijd: knipTijd, porties, downloadSeconden: Number(lees('fase0-knip', 'download-seconden.txt')) || null, nlBytes: Number(lees('fase0-knip', 'nl-bytes.txt')) || null, nproc: lees('fase0-knip', 'nproc.txt')?.trim(), bron: lees('fase0-knip', 'bron.txt')?.trim() }
 const rijen = PROV.map((p) => {
   const o = `fase0-osm-${p.slug}`
   const b = `fase0-bgt-${p.slug}`
@@ -56,7 +58,7 @@ const tot = (f) => rijen.reduce((t, r) => t + (f(r) || 0), 0)
 const md = []
 md.push('# Fase 0: proefmetingen heel Nederland', '')
 md.push(`Bron OSM-extract: ${knip.bron || '–'}.`, '')
-md.push(`Knippen (één runner, ${knip.nproc || '?'} kernen): NL-extract ${mb(knip.nlBytes)} MB, download ${min(knip.downloadSeconden)} min, osmium extract naar 12 provincies ${min(knip.tijd?.seconden)} min, max. ${n(knip.tijd?.rssMB)} MB geheugen.`, '')
+md.push(`Knippen (één runner, ${knip.nproc || '?'} kernen): NL-extract ${mb(knip.nlBytes)} MB, download ${min(knip.downloadSeconden)} min, osmium extract naar 12 provincies (${knip.porties.length} porties van 3) ${min(knip.tijd?.seconden)} min, max. ${n(knip.tijd?.rssMB)} MB geheugen per portie.`, '')
 md.push('## Per provincie', '')
 md.push('| Provincie | land km² | wegstukken | km weg | km onverhard (OSM zeker) | graaf gz MB | bouw min | bron_pbf min / MB | graaf min / MB | BGT wacht min | BGT zip MB | BGT download min |')
 md.push('|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|')
