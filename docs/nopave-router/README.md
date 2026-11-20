@@ -1,5 +1,9 @@
 # Nopave-router voor A naar B: diagnose, verbetering en eerlijke test (2026-11-20)
 
+> **Standaard sinds v1.2.0**: binnen de vooraf bewerkte graaf (regio Delft) plant de Nopave-router A naar B;
+> daarbuiten, en als hij geen route vindt, BRouter. `?router=brouter` dwingt BRouter af. De regel staat in
+> `bronnen.js` `nopaveDekt()` (dezelfde zoekellips als de router zelf).
+
 Ruwe metingen in deze map: `brouter-ab.json`, `nopave-ab.json` (10 bekende paren), `brouter-nieuw.json`,
 `nopave-nieuw.json` (7 nieuwe paren uit `tools/graaf/ab_nieuw.mjs`, vastgelegd vóór het afstellen en daarbij
 niet gebruikt). Gemeten met `tools/onverhard/benchmark_snelheid.mjs` (5× koud en 5× warm, mediaan) via de
