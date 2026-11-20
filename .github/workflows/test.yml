@@ -1,0 +1,58 @@
+# Unit-tests, lint en Playwright (telefoon en desktop) bij elke pull request en elke push naar main.
+name: test
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Unit-tests
+        run: npm run test:unit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Chromium voor Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Lokale server (public/ onder /nopaves/)
+        run: |
+          python3 tools/serve.py 8765 &
+          for i in $(seq 1 20); do curl -fs http://localhost:8765/nopaves/ >/dev/null && break; sleep 0.5; done
+
+      - name: Playwright telefoon
+        run: npm run test:mobiel
+
+      - name: Playwright desktop
+        run: npm run test:desktop
+
+      - name: Schermafbeeldingen bewaren
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schermafbeeldingen
+          path: test-uitvoer/
+          retention-days: 7
+          if-no-files-found: ignore

@@ -1,9 +1,11 @@
-# Graaf-proef: de vooraf bewerkte routegraaf (regio Delft) wekelijks opnieuw bouwen.
+# De vooraf bewerkte routegraaf (regio Delft) wekelijks opnieuw bouwen en als pull request aanbieden.
 # Bron: het OpenStreetMap-extract van Geofabrik (Zuid-Holland), BGT en AHN van PDOK.
-# Zie public/GRAAF-PROEF.md en tools/graaf/bouw.mjs.
+# Zie docs/GRAAF-PROEF.md en tools/graaf/bouw.mjs.
 #
-# Let op: een schema (cron) draait alleen vanaf de standaardbranch. Zolang dit bestand alleen op
-# graaf-proef staat, start je hem met de hand (Actions -> Graaf bouwen -> Run workflow).
+# Vereist: Settings -> Actions -> General -> "Allow GitHub Actions to create and approve pull requests".
+# Een PR die met GITHUB_TOKEN is gemaakt start de workflow "test" niet vanzelf: de unit-tests draaien
+# hieronder al; Playwright start je in de PR met "Run workflow" (test, op de PR-branch) of door de PR
+# te sluiten en weer te openen.
 name: Graaf bouwen
 
 on:
@@ -13,7 +15,7 @@ on:
 
 permissions:
   contents: write
-  actions: write
+  pull-requests: write
 
 concurrency:
   group: graaf
@@ -64,20 +66,21 @@ jobs:
       - name: Tests
         run: node --test tests/test_web_kern.mjs
 
-      - name: Oude versies weg, nieuwe committen
+      - name: Oude versies weg, nieuwe versie als pull request
         run: |
           cd public/graaf
           for d in v*/; do [ "${d%/}" != "$VERSIE" ] && git rm -rq "$d" || true; done
           cd -
+          git add public/graaf
+          if git diff --cached --quiet; then echo "Geen wijzigingen in de graaf."; exit 0; fi
+          TAK="chore/graaf-$VERSIE"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/graaf
-          git commit -m "Graaf-proef: graaf $VERSIE (Geofabrik + BGT + AHN)" || exit 0
-          git push
-
-      # een push met GITHUB_TOKEN start geen andere workflows: de site zelf opnieuw laten bouwen
-      - name: Site bijwerken
-        if: github.ref_name == github.event.repository.default_branch
-        run: gh workflow run deploy-pages.yml --ref "${{ github.ref_name }}"
+          git checkout -b "$TAK"
+          git commit -m "chore: graaf $VERSIE (Geofabrik + BGT + AHN)"
+          git push origin "$TAK"
+          gh pr create --base main --head "$TAK" \
+            --title "chore: graaf $VERSIE" \
+            --body "Wekelijkse graafbouw (Geofabrik + BGT + AHN), versie $VERSIE. Unit-tests zijn in de bouw gedraaid. Controleer de workflow test en de grootte van public/graaf voor het samenvoegen."
         env:
           GH_TOKEN: ${{ github.token }}
