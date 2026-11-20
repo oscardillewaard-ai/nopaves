@@ -1,8 +1,57 @@
 # Nopav.es: verhuizing naar oscardillewaard-ai/nopaves
 
+**Opdracht afgerond** (2026-11-20). Wat nog openstaat, kan alleen in de webinterface: zie "Voor Oscar".
+
+## Samenvatting
+
+- **Live**: https://oscardillewaard-ai.github.io/nopaves/ (repo oscardillewaard-ai/nopaves, `main`,
+  workflow `deploy`). De oude plek https://oscardillewaard-ai.github.io/Tezt/onverhard/ verwijst door,
+  met behoud van querystring en hash, en ruimt de oude service worker en caches op.
+- **Release**: [v1.0.0 "Plankaart, sneller en een eigen huis"](https://github.com/oscardillewaard-ai/nopaves/releases/tag/v1.0.0).
+- **Gelijk gebleven**: UX fase 1–3 en snelheid stap 0–6, plus de graafproef achter `?graaf=vooraf`.
+  Na de integratie niet trager (rondje koud 10,4 s, station koud 23,9 s). Unit 50/50, lint schoon,
+  Playwright telefoon en desktop groen, lokaal, in CI en tegen de live site.
+- **Branches**: niets weggehaald; de git-proxy weigert verwijderen. De lijst en alle SHA's staan in
+  [branches-archief.md](branches-archief.md); Oscar haalt ze weg (Voor Oscar, punt 5).
+- **Graafproef**: was af (stap 1–5 klaar), dus stap H was niet nodig. De beslisregels zijn niet gehaald,
+  dus alles blijft achter de vlag. Vervolg in issues #9, #10 en #11.
+- **Plugins en skills**: frontend-design, code-review, playwright, UI Design Review, uxkin (skill) en
+  design laden. code-review en playwright zijn ook uitgevoerd. De uxkin-MCP vraagt een betaald plan en
+  de design-koppelingen worden door de proxy geblokkeerd. De vijf losse kopieën in `.claude/skills/`
+  laden ook. Details in stap I.
+- **Open punten**: issues #3–#11.
+
+
+## Voor Oscar
+
+1. **Branchbeveiliging op main** (github.com/oscardillewaard-ai/nopaves → Settings → Branches →
+   Add branch ruleset, of "Add classic branch protection rule"): Branch name pattern `main` → vink
+   "Require a pull request before merging" aan → vink "Require status checks to pass" aan en kies
+   `test` → laat "Allow force pushes" en "Allow deletions" uit → Create/Save.
+2. **Graaf-PR's toestaan**: Settings → Actions → General → onderaan "Workflow permissions" → vink
+   "Allow GitHub Actions to create and approve pull requests" aan → Save.
+3. **Branches automatisch opruimen**: Settings → General → onderaan "Pull Requests" → vink
+   "Automatically delete head branches" aan.
+4. **Eerste graafbouw**: Actions → Graaf bouwen → Run workflow → branch `main` → Run workflow
+   (duurt tot een paar uur; daarna staat er een PR `chore: graaf v…`). Zie issue #11.
+5. **Branches in Tezt weghalen** (github.com/oscardillewaard-ai/Tezt → Branches → prullenbak bij elke
+   branch): `ccr-c02c1fc3-wix11n`, `claude/unpaved-routes-planner-ufzrl8`, `graaf-proef`, `snelheid`,
+   `terugzet/na-snelheid`, `terugzet/na-ux-1`, `terugzet/na-ux-2`, `terugzet/na-ux-3`,
+   `terugzet/voor-graaf`, `terugzet/voor-ux`, `ux-fase-1`, `ux-fase-2`, `ux-fase-3`. Laat
+   `claude/admiring-ritchie-23anos` in Tezt staan: die houdt de weggehaalde commits bereikbaar.
+   SHA's: docs/branches-archief.md.
+   Twijfel: `ccr-1c8830ae-uawyv2` (zie het archief).
+
+
 Voortgangsbestand van de verhuisopdracht. Stap A stond in Tezt (`public/onverhard/VERHUIZING.md`);
 vanaf stap B staat dit bestand in nopaves als `docs/VERHUIZING.md`. Begint een sessie met "ga verder": lees dit bestand en ga verder bij de eerste stap
 die niet `klaar` is.
+
+6. **Sessiebranch in nopaves weghalen** (na het samenvoegen van de laatste PR): github.com/oscardillewaard-ai/nopaves
+   → Branches → prullenbak bij `claude/admiring-ritchie-23anos`. Met punt 3 gebeurt dit voortaan vanzelf.
+7. **Optioneel, uxkin-voorbeelden**: alleen als je de voorbeelden uit echte apps wilt (betaald plan op
+   uxkin.com/pricing). Daarna in een nieuwe sessie de koppeling laten autoriseren. De skills werken ook
+   zonder.
 
 ## Status
 
@@ -11,12 +60,12 @@ die niet `klaar` is.
 | A Integreren | klaar |
 | B Verhuizen | klaar |
 | C Automatiseren | klaar (branchbeveiliging: Voor Oscar) |
-| D Live in nopaves | klaar (release: zie D3) |
+| D Live in nopaves | klaar (release v1.0.0) |
 | E Oude plek doorverwijzen | klaar |
 | F Opruimen | archief klaar; verwijderen: Voor Oscar |
 | G Documentatie | klaar |
 | H Graafproef afmaken | niet nodig (graafproef was af) |
-| I Plugins en skills | open |
+| I Plugins en skills | klaar (PR `chore: …claude-skills`) |
 
 ## A. Integreren
 
@@ -124,7 +173,10 @@ vergeleken met de cijfers in VOORTGANG, niet met een verse meting van live in de
 - localStorage: sleutels `onverhard.v1`, `onverhard.thema`, `onverhard.routes`, `nopaves.log` en de
   soortkeuze zijn niet padafhankelijk, en oud en nieuw delen de origin `oscardillewaard-ai.github.io`.
   Bewaarde routes en instellingen gaan dus mee; niets aangepast.
-- Release v1.0.0: zie hieronder (na de documentatie-PR).
+- Release v1.0.0: tags pushen weigert de git-proxy ("remote end hung up"), en `gh` werkt in deze
+  omgeving alleen voor zoeken. Daarom een workflow `release` (PR #13, met de hand te starten, tekst uit
+  CHANGELOG.md), gestart via de GitHub-tools: https://github.com/oscardillewaard-ai/nopaves/releases/tag/v1.0.0
+  (tag op `f9a87b5`).
 
 ## E. Oude plek doorverwijzen
 
@@ -162,27 +214,44 @@ vergeleken met de cijfers in VOORTGANG, niet met een verse meting van live in de
 - Open punten als issues #3–#11 met labels `perf`, `ux`, `bug` en `idee` (labels zijn automatisch
   aangemaakt).
 
+## I. Plugins en skills
+
+- `.claude/settings.json` met `frontend-design`, `code-review` en `playwright` uit
+  `claude-plugins-official`. De namen zijn nagekeken in de marketplace-lijst van
+  anthropics/claude-plugins-official: alle drie bestaan zo.
+- Losse kopieën in `.claude/skills/`, met een kop direct na de frontmatter (de frontmatter moet bovenaan
+  blijven, anders laadt de skill niet) en het licentiebestand in de map:
+
+| Skill | Bron | Licentie | Gekopieerd |
+|---|---|---|---|
+| ui-review | uxkin/agent, plugin ui-design-review | MIT, © 2026 UXKIN | ja |
+| ui-polish | uxkin/agent, plugin ui-design-review | MIT, © 2026 UXKIN | ja |
+| no-ui-slop | uxkin/agent, plugin uxkin | MIT, © 2026 UXKIN | ja |
+| accessibility-review | anthropics/knowledge-work-plugins, design | Apache 2.0 | ja |
+| ux-copy | anthropics/knowledge-work-plugins, design | Apache 2.0 | ja |
+
+  De twee design-skills verwijzen naar `CONNECTORS.md` van hun plugin; dat bestand is niet
+  meegekopieerd (alleen een hint over koppelingen).
+
+**Wat werkt in deze cloudsessie (getest 2026-11-20)**
+
+| Onderdeel | Laadt | Getest |
+|---|---|---|
+| frontend-design (skill) | ja, in de skilllijst | niet uitgevoerd |
+| code-review (`/code-review`) | ja | uitgevoerd op PR #2: liep zonder fout, gaf geen bevindingen terug ("(none)"); niet na te gaan of de diff echt is bekeken |
+| playwright (MCP) | ja | live app geopend op 390 × 844 en schermafbeelding gemaakt (`docs/schermafbeeldingen/v1.0.0-telefoon.png`) |
+| ui-review, ui-polish, ui-compare (UI Design Review) | ja, in de skilllijst | niet uitgevoerd |
+| no-ui-slop (uxkin) | ja, in de skilllijst | niet uitgevoerd |
+| uxkin-MCP (voorbeelden uit echte apps) | nee: vraagt een inlog (betaald plan, $9,99/maand of $99 eenmalig) | `uxkin.com` is toegestaan in de omgeving; de server antwoordt 401 |
+| design (accessibility-review, ux-copy, enz.) | ja, in de skilllijst | niet uitgevoerd |
+| design-MCP-koppelingen (Slack, Figma, Notion, …) | nee: de proxy blokkeert die hosts | niet nodig voor Nopav.es |
+| losse kopieën in `.claude/skills/` | ja: alle vijf (accessibility-review, no-ui-slop, ui-polish, ui-review, ux-copy) verschenen als projectskills in deze sessie zodra de map in de checkout stond | frontmatter gecontroleerd; niet uitgevoerd |
+
+In deze sessie kwamen de plugins via de accountinstellingen, niet via `.claude/settings.json`. Of de
+officiële plugins in een nieuwe cloudsessie ook via dat bestand laden, blijkt pas bij de eerste
+nieuwe sessie in nopaves.
+
 ## Open punten
 
 - Wisselvallige desktoptest bij "Route hierheen": opgelost in PR #2.
 - Overige open punten: GitHub Issues #3–#11.
-
-## Voor Oscar
-
-1. **Branchbeveiliging op main** (github.com/oscardillewaard-ai/nopaves → Settings → Branches →
-   Add branch ruleset, of "Add classic branch protection rule"): Branch name pattern `main` → vink
-   "Require a pull request before merging" aan → vink "Require status checks to pass" aan en kies
-   `test` → laat "Allow force pushes" en "Allow deletions" uit → Create/Save.
-2. **Graaf-PR's toestaan**: Settings → Actions → General → onderaan "Workflow permissions" → vink
-   "Allow GitHub Actions to create and approve pull requests" aan → Save.
-3. **Branches automatisch opruimen**: Settings → General → onderaan "Pull Requests" → vink
-   "Automatically delete head branches" aan.
-4. **Eerste graafbouw**: Actions → Graaf bouwen → Run workflow → branch `main` → Run workflow
-   (duurt tot een paar uur; daarna staat er een PR `chore: graaf v…`). Zie issue #11.
-5. **Branches in Tezt weghalen** (github.com/oscardillewaard-ai/Tezt → Branches → prullenbak bij elke
-   branch): `ccr-c02c1fc3-wix11n`, `claude/unpaved-routes-planner-ufzrl8`, `graaf-proef`, `snelheid`,
-   `terugzet/na-snelheid`, `terugzet/na-ux-1`, `terugzet/na-ux-2`, `terugzet/na-ux-3`,
-   `terugzet/voor-graaf`, `terugzet/voor-ux`, `ux-fase-1`, `ux-fase-2`, `ux-fase-3`. Laat
-   `claude/admiring-ritchie-23anos` in Tezt staan: die houdt de weggehaalde commits bereikbaar.
-   SHA's: docs/branches-archief.md.
-   Twijfel: `ccr-1c8830ae-uawyv2` (zie het archief).
