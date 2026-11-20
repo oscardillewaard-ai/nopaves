@@ -1,0 +1,42 @@
+# Maakt een GitHub Release met tag op main, met de tekst uit CHANGELOG.md.
+# Starten: Actions -> release -> Run workflow -> versie (bv. v1.0.0) en titel.
+# De versie moet als kop "## vX.Y.Z" in CHANGELOG.md staan.
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      versie:
+        description: 'Versie, bv. v1.0.0'
+        required: true
+      titel:
+        description: 'Titel, bv. Plankaart, sneller en een eigen huis'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Tekst uit CHANGELOG.md
+        env:
+          VERSIE: ${{ inputs.versie }}
+        run: |
+          [[ "$VERSIE" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Versie moet vX.Y.Z zijn"; exit 1; }
+          awk -v v="## $VERSIE" 'index($0, v) == 1 { aan = 1; next } /^## / && aan { exit } aan' CHANGELOG.md > notities.md
+          [ -s notities.md ] || { echo "Geen kop '## $VERSIE' in CHANGELOG.md"; exit 1; }
+          cat notities.md
+
+      - name: Release maken
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSIE: ${{ inputs.versie }}
+          TITEL: ${{ inputs.titel }}
+        run: |
+          gh release create "$VERSIE" --target "$(git rev-parse HEAD)" --title "$VERSIE: $TITEL" --notes-file notities.md
