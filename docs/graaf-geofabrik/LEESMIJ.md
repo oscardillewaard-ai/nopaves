@@ -9,3 +9,6 @@ Ruwe cijfers bij docs/GRAAF-PROEF.md, sectie "Na de proef: graaf uit het Geofabr
 
 Gemeten in de cloudomgeving van Claude Code (desktop-Chromium headless, via de proxy), 5× koud en
 5× warm per paar, mediaan, achter elkaar en niet tegelijk met tests.
+- `standaard-rest.json`: rondje, station, gebied en tekenen met de nieuwe standaard (vooraf, graaf
+  `v20261120-r4`), `benchmark_snelheid.mjs … 5 '' rest`.
+- `tegels-rest.json`: idem met `ONVERHARD_QUERY='graaf=tegels'` (de oude werking).

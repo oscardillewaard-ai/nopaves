@@ -605,3 +605,19 @@ Delft Centraal 61/50, 51,99 4,38 55/44), lager op 3 van 10 (Rijswijk Buiten 32/3
 52,10 4,30 51/54). Groene omwegen worden daardoor minder vaak gevonden (2 van 20 routes tegen 5 van 20):
 de routes zijn meestal al groener. De omwegtest in Playwright draait daarom op `?graaf=tegels`.
 
+**Snelheid, standaard (vooraf, `v20261120-r4`) tegen `?graaf=tegels`** (5× koud en 5× warm, mediaan,
+seconden; `docs/graaf-geofabrik/standaard-rest.json` en `tegels-rest.json`):
+
+| Geval | Cache | Route A | Totaal | Score | Onverhard + half |
+|---|---|---|---|---|---|
+| rondje-10 Delft Centraal | koud | 4,3 → 3,0 | 10,8 → 3,2 | 50 → 61 | 54,3% → 66,7% |
+| rondje-10 Delft Centraal | warm | 3,8 → 3,3 | 5,7 → 3,5 | 50 → 61 | 54,3% → 66,7% |
+| station-15 Delft Centraal | koud | 8,7 → 2,0 | 24,8 → 2,5 | 58 → 54 | 61% → 63,1% |
+| station-15 Delft Centraal | warm | 6,7 → 1,8 | 10,2 → 2,2 | 58 → 54 | 61% → 63,1% |
+| gebied Delftse Hout | koud | 1,7 → 1,8 | 4,3 → 4,6 | 0 → 0 | gelijk (geen graaf) |
+| tekenen | koud | 1,8 → 1,7 | 2,7 → 2,6 | 94 → 94 | gelijk (geen graaf) |
+
+Kanttekening: bij station-15 is route A groener (63,1% tegen 61%) maar scoort lager (54 tegen 58): een
+andere route, met meer heen en terug of een langer verhard stuk. "In gebied" en "tekenen" gebruiken de
+graaf niet; de kleine verschillen zijn ruis.
+
