@@ -39,20 +39,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
       - run: sudo apt-get update -q && sudo apt-get install -yq osmium-tool time
 
-      - name: NL-extract en provinciegrenzen ophalen (Geofabrik)
+      # Grenzen van PDOK (Bestuurlijke Gebieden): de .poly-bestanden van Geofabrik gaven in run 1 herhaald 404.
+      - name: NL-extract (Geofabrik) en provinciegrenzen (PDOK) ophalen
         run: |
           mkdir -p ~/osm/poly uit
           T0=$(date +%s)
           curl -fsSL --retry 6 --retry-delay 60 --retry-all-errors --max-redirs 10 -o ~/osm/nl.osm.pbf https://download.geofabrik.de/europe/netherlands-latest.osm.pbf
           echo $(( $(date +%s) - T0 )) > uit/download-seconden.txt
+          node tools/fase0/grenzen.mjs ~/osm/poly
           for p in $(node -p "require('./tools/fase0/provincies.json').provincies.map(p=>p.slug).join(' ')"); do
-            curl -fsSL --retry 6 --retry-delay 30 --retry-all-errors -o ~/osm/poly/$p.poly https://download.geofabrik.de/europe/netherlands/$p.poly
             node tools/fase0/poly.mjs ~/osm/poly/$p.poly uit/grens/$p
           done
           stat -c %s ~/osm/nl.osm.pbf > uit/nl-bytes.txt
@@ -69,13 +70,13 @@ jobs:
           ls -l ~/osm/prov | tee uit/provincies-bytes.txt
           nproc > uit/nproc.txt; free -m > uit/geheugen.txt
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: provincies-pbf
           path: ~/osm/prov/
           retention-days: 2
           compression-level: 0
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: fase0-knip
           path: uit/
@@ -90,19 +91,19 @@ jobs:
       matrix:
         provincie: [drenthe, flevoland, friesland, gelderland, groningen, limburg, noord-brabant, noord-holland, overijssel, utrecht, zeeland, zuid-holland]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
       - run: pip install osmium && sudo apt-get install -yq time
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: provincies-pbf
           path: ~/osm/prov
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: fase0-knip
           path: knip
@@ -128,7 +129,7 @@ jobs:
           du -sb ~/graaf/fase0-$P | cut -f1 > uit/graaf-bytes.txt
           du -sb ~/.cache/nopaves-graaf/* > uit/cache-bytes.txt || true
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: fase0-osm-${{ matrix.provincie }}
@@ -144,11 +145,11 @@ jobs:
       matrix:
         provincie: [drenthe, flevoland, friesland, gelderland, groningen, limburg, noord-brabant, noord-holland, overijssel, utrecht, zeeland, zuid-holland]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: fase0-knip
           path: knip
@@ -168,7 +169,7 @@ jobs:
             done
           fi
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: fase0-bgt-${{ matrix.provincie }}
@@ -179,12 +180,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
       - run: mkdir -p uit && node tools/fase0/bgt.mjs delta 7 uit/delta.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: fase0-delta
@@ -196,16 +197,16 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           pattern: fase0-*
           path: res
       - run: node tools/fase0/samenvatting.mjs res samenvatting.md samenvatting.json && cat samenvatting.md >> $GITHUB_STEP_SUMMARY && cat samenvatting.md
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: fase0-samenvatting
           path: samenvatting.*

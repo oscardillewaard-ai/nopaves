@@ -1,4 +1,4 @@
-// Fase 0 (docs/PLAN-heel-nederland.md): grenzen van een provincie uit het .poly-bestand van Geofabrik.
+// Fase 0 (docs/PLAN-heel-nederland.md): grenzen van een provincie uit haar .poly-bestand (grenzen.mjs, PDOK).
 //
 //   node tools/fase0/poly.mjs <slug>.poly <map>
 //
@@ -25,7 +25,7 @@ export function leesPoly(tekst) {
 export function regioVanBbox(naam, [w, s, e, n]) {
   const [x0, y0] = T.tegelXY(n, w, 12)
   const [x1, y1] = T.tegelXY(s, e, 12)
-  return { naam, omschrijving: `Fase 0: bbox van ${naam} (Geofabrik-poly)`, zoom: 12, blokken_x: [x0, x1], blokken_y: [y0, y1], bbox_lonlat: [w, s, e, n] }
+  return { naam, omschrijving: `Fase 0: bbox van ${naam} (poly)`, zoom: 12, blokken_x: [x0, x1], blokken_y: [y0, y1], bbox_lonlat: [w, s, e, n] }
 }
 
 export function rdWkt([w, s, e, n]) {

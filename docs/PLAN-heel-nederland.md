@@ -82,13 +82,13 @@ andere branch dan main, of handmatig). Niets gaat live; de uitkomst is een samen
 | B. Per provincie de graaf zoals `bouw.mjs`, zonder BGT en AHN | 12 jobs `osm`, tegelijk | echte wegstukken, km en onverhard-km per provincie, wegstukken per blok |
 | C. De echte bouw (BGT-tegels + AHN) voor Utrecht en Drenthe | in `osm`, alleen kalibratie | gzip en bouwtijd per wegstuk, stedelijk en landelijk; daarmee de raming voor alle 12 |
 | D. BGT `full/custom` per provincie | 12 jobs `bgt`, tegelijk | of PDOK 12 aanvragen tegelijk aankan; wachttijd, grootte, downloadtijd; aandeel historie |
-| E. BGT `delta/custom`, heel NL, 7 dagen | job `delta` | weekvolume aan wijzigingen |
+| E. BGT `delta/custom`, heel NL, 7 dagen | job `delta` | weekvolume aan wijzigingen (gemeten, zie hieronder) |
 
 De echte bouw draait bewust maar in twee provincies: met de oude methode (BGT-tegels) zou de bouw voor alle
 12 ~300.000 tegelverzoeken bij PDOK doen, en dat wil het plan juist afschaffen. Met de invoer
 `kalibratie: alle` kan het toch.
 
-Scripts: `tools/fase0/poly.mjs` (grenzen, regio en RD-geofilter uit de Geofabrik-poly), `osm_stats.mjs`,
+Scripts: `tools/fase0/grenzen.mjs` (provinciegrenzen van PDOK als .poly), `poly.mjs` (bbox, regio en RD-geofilter), `osm_stats.mjs`,
 `bgt.mjs` (full en delta), `samenvatting.mjs`. Voor provincies is `laadElementen` in `bouw.mjs` nu regel voor
 regel gaan lezen (een hele provincie past niet in één JavaScript-string); getest met 167 MB en tekens
 als ë en € op de stukgrens.
@@ -111,8 +111,18 @@ als ë en € op de stukgrens.
 - **De kant-en-klare delta is onbruikbaar:** `delta/predefined/bgt-citygml-nl-delta.zip` is **47,0 GB**
   (30 dagen, alle typen), groter dan de hele BGT.
 - **Delta op maat werkt goed:** één dag (19-11), heel NL, 5 objecttypes: **14,8 MB zip**, 21 s wachten,
-  193 MB XML, ~32.000 mutaties (`toevoeging`, en `wijziging` met `was` en `wordt`). Er zijn ~30 dagen
-  beschikbaar. Een week: zie E.
+  193 MB XML, ~32.000 mutaties (`toevoeging`, en `wijziging` met `was` en `wordt`). Er zijn 30 dagen
+  beschikbaar.
+- **Een week aan delta's (E, gemeten in fase0.yml run 1 op een GitHub-runner):** 13–19 november, heel NL,
+  5 objecttypes: **53,4 MB zip**, 83 s wachten en 45 s downloaden in totaal. Op werkdagen 8,7–14,8 MB, in
+  het weekend ~20 kB. Wekelijks bijwerken is dus licht.
+- **PDOK levert ongeveer 1,2 MB/s per download**, ook op de runner (zelfde snelheid als in de sessie). Een
+  provincie van een paar GB duurt dan een half uur tot een uur; 12 tegelijk scheelt dus echt, als PDOK
+  per download begrenst en niet per afnemer. D laat dat zien.
+- **Grenzen:** de `.poly`-bestanden van Geofabrik gaven in run 1 herhaald 404 (Drenthe na vijf
+  pogingen, Flevoland zeven keer niet). Nu komen de grenzen van PDOK (Bestuurlijke Gebieden,
+  `provinciegebied`, alle 12 in één verzoek van 5,4 MB), dezelfde bron als de BGT; osmium leest ze (met
+  gaten) goed. Het NL-extract zelf kwam in run 1 wel binnen.
 - Geofabrik: vanuit de sessie verbrak de server de verbinding (TLS-reset). Waar dat aan ligt is niet
   uitgezocht; A meet het op een gewone runner.
 
