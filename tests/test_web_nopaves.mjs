@@ -746,6 +746,41 @@ assert.deepEqual(fouten.filter((f) => !/Failed to load resource/.test(f)), [], '
   await c6.close()
 }
 
+// ---- v1.2.0: A naar B zonder parameter = de Nopave-router binnen de regio Delft, BRouter daarbuiten ----
+{
+  const opties = mobiel ? { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true } : { viewport: { width: 1440, height: 900 } }
+  // elk geval in een verse context: de laatste start en soort worden onthouden
+  const planAB = async (query, a, b) => {
+    const cr = await browser.newContext(opties)
+    const r = await cr.newPage()
+    const rf = []
+    r.on('pageerror', (x) => rf.push('PAGEERROR ' + x.message))
+    let brouter = 0
+    r.on('request', (q) => { if (/brouter\.de/.test(q.url())) brouter += 1 })
+    await r.goto(`${basis}${query}`)
+    await r.locator('[data-soort="route"]').click()
+    await r.evaluate(([la, lo]) => window.onverhard.kaart.fire('click', { latlng: L.latLng(la, lo) }), a)
+    await r.waitForTimeout(450)
+    await r.evaluate(([la, lo]) => window.onverhard.kaart.fire('click', { latlng: L.latLng(la, lo) }), b)
+    await r.locator('#planKnop').click()
+    await r.waitForFunction(() => (!document.getElementById('resultaat').hidden && !window.onverhard.bezig()) || !!document.getElementById('fout').textContent, null, { timeout: 300000 })
+    assert.equal(await r.locator('#fout').textContent(), '')
+    const uit = await r.evaluate(() => ({ router: window.onverhard.uitslag().router, km: window.onverhard.krijgPlan().opties[0].km }))
+    assert.deepEqual(rf, [])
+    await cr.close()
+    return { ...uit, brouter }
+  }
+  const delft = await planAB('', [52.0116, 4.3571], [52.0170, 4.3830])
+  assert.equal(delft.router, 'nopave', 'A naar B in de regio Delft: standaard de Nopave-router')
+  assert.equal(delft.brouter, 0, 'in de regio Delft geen BRouter-verzoeken')
+  const utrecht = await planAB('', [52.0907, 5.1214], [52.0850, 5.1500])
+  assert.equal(utrecht.router, 'brouter', 'A naar B buiten de regio: BRouter')
+  assert.ok(utrecht.brouter > 0, 'buiten de regio wel BRouter-verzoeken')
+  const dwing = await planAB('?router=brouter', [52.0116, 4.3571], [52.0170, 4.3830])
+  assert.equal(dwing.router, 'brouter', '?router=brouter dwingt BRouter af, ook in de regio')
+  stap(`A naar B zonder parameter: Delft ${delft.km.toFixed(2)} km met de Nopave-router (0 BRouter-verzoeken), Utrecht met BRouter, ?router=brouter dwingt BRouter af`)
+}
+
 // ---- De vooraf bewerkte graaf: standaard binnen de regio Delft (sinds v1.1.0), via de knoppen ----
 {
   const opties = mobiel ? { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true } : { viewport: { width: 1440, height: 900 } }

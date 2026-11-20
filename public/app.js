@@ -13,9 +13,10 @@ import { voorafOphalen, haalTegels, bekijkRoute, haalOpeningstijden, importeerGp
 const SLEUTEL = 'onverhard.v1'
 // UX fase 2: de plankaart is de standaard; de oude interface blijft (tijdelijk) bereikbaar met ?ui=oud.
 const UI_NIEUW = new URLSearchParams(location.search).get('ui') !== 'oud'
-// A naar B: welke router standaard (snelheid, stap 6; zie VOORTGANG.md). 'auto' = Nopave-router tot
-// NOPAVE_ROUTER_MAX_M, daarboven en bij fouten BRouter. ?router=nopave (oude naam ?router=eigen werkt ook).
-const STANDAARD_ROUTER = 'brouter'
+// A naar B: welke router standaard. 'auto' = de Nopave-router waar de vooraf bewerkte graaf het gebied dekt
+// (regio Delft), daarbuiten en bij fouten BRouter. ?router=nopave of ?router=brouter dwingt er een af (de oude
+// naam ?router=eigen werkt ook). Zie docs/nopave-router/README.md.
+const STANDAARD_ROUTER = 'auto' // v1.2.0: binnen de vooraf bewerkte graaf de Nopave-router, daarbuiten BRouter
 /** ?router=nopave | brouter | auto; ?router=eigen is de oude naam van nopave. */
 const routerKeuze = () => {
   const q = new URLSearchParams(location.search).get('router')

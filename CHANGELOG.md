@@ -3,8 +3,12 @@
 Alle noemenswaardige wijzigingen aan Nopav.es, in gewone taal. Versies volgen
 [semver](https://semver.org/lang/nl/): groot.klein.reparatie.
 
-## Nog niet uitgebracht
+## v1.2.0 (2026-11-20): De Nopave-router
 
+- **Van A naar B rond Delft rekent Nopav.es nu zelf.** Binnen de regio Delft plant de Nopave-router je route
+  van A naar B, in plaats van BRouter. Dat gaat 3 tot 9 keer sneller (meestal binnen 1 à 3 seconden), en op
+  17 proefroutes scoorde hij gelijk of hoger op 16. Buiten de regio blijft BRouter rekenen. Wil je toch
+  BRouter: voeg `?router=brouter` toe aan het adres.
 - **De Nopave-router.** De eigen router van Nopav.es heet voortaan de Nopave-router. Gebruik
   `?router=nopave`; de oude naam `?router=eigen` blijft werken.
 - **Groenere routes rond Delft.** De vooraf bewerkte routekaart weegt paden nu op de officiële ondergrond

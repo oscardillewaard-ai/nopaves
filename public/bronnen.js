@@ -1309,6 +1309,21 @@ export async function planRondjeEigen(start, km, instel, bgt, aantalOpties, meld
 }
 
 // ---------- A naar B met de Nopave-router (snelheid, stap 6) ----------
+/**
+ * Dekt de vooraf bewerkte graaf het gebied waarin de Nopave-router eerst zoekt (dezelfde ellips langs elk
+ * stuk als planRouteNopave: 1,4 × de afstand + 600 m)? Dan is hij daar de standaard voor A naar B.
+ */
+export async function nopaveDekt(punten, signal) {
+  const tegels = new Map()
+  for (let i = 1; i < punten.length; i++) for (const t of T.tegelsLangs(punten[i - 1], punten[i], { factor: 1.4, extra: 600 })) tegels.set(t.join('/'), t)
+  try {
+    return !!(await voorafBlokUrls([...tegels.values()], signal))
+  } catch (fout) {
+    if (afgebroken(fout)) throw fout
+    return false
+  }
+}
+
 /** Hoeveel kandidaat-routes de Nopave-router voor A naar B maakt voordat hij kiest. */
 export const AB_KANDIDATEN = 5
 /** Een kandidaat mag hooguit zoveel langer zijn dan de kortste kandidaat (0,15 = 15%). */
@@ -1329,17 +1344,6 @@ export function kiesOpScore(kandidaten, grens = AB_LENGTEGRENS) {
     .map(({ k }) => k)
 }
 
-/** Rechte afstand (m) langs alle punten. */
-function rechteAfstand(punten) {
-  let m = 0
-  for (let i = 1; i < punten.length; i++) {
-    const [ax, ay] = K.naarRd(punten[i - 1][1], punten[i - 1][0])
-    const [bx, by] = K.naarRd(punten[i][1], punten[i][0])
-    m += Math.hypot(bx - ax, by - ay)
-  }
-  return m
-}
-export const NOPAVE_ROUTER_MAX_M = 25000 // boven deze rechte afstand: BRouter (zie VOORTGANG.md, stap 6)
 
 /**
  * Van A naar B (met tussenpunten) op de paden uit de kaarttegels, met dezelfde voorkeuren als een
@@ -2191,10 +2195,11 @@ export async function maakPlan(opties) {
       vooraf.push('Paden niet op te halen; via BRouter gerekend')
     }
   }
-  // A naar B met de Nopave-router: op verzoek, of als standaard (zie NOPAVE_ROUTER_MAX_M); niet met
+  // A naar B met de Nopave-router: op verzoek (?router=nopave), of als standaard ('auto') waar de vooraf
+  // bewerkte graaf het hele gebied tussen start en eind dekt (zie nopaveDekt; daarbuiten BRouter); niet met
   // een LAW-voorkeur (die kent alleen BRouter). Mislukt hij, dan alsnog BRouter.
   if (!plan && !opties.modus && !opties.rondjeKm && opties.punten.length >= 2 && (opties.law ?? 1) === 1 && opties.router !== 'brouter' &&
-      (opties.router === 'nopave' || opties.router === 'eigen' || (opties.router === 'auto' && rechteAfstand(opties.punten) <= NOPAVE_ROUTER_MAX_M))) {
+      (opties.router === 'nopave' || opties.router === 'eigen' || (opties.router === 'auto' && tekenInstel.vooraf && (await nopaveDekt(opties.punten, opties.signal))))) {
     try {
       plan = await planRouteNopave(opties.punten, { ...tekenInstel, voorlopig, lengteGrens: opties.abLengteGrens }, bgt, alternatieven, meld, opties.signal)
       plan.router = 'nopave'
