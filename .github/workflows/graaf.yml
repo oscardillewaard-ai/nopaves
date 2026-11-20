@@ -3,9 +3,10 @@
 # Zie docs/GRAAF-PROEF.md en tools/graaf/bouw.mjs.
 #
 # Vereist: Settings -> Actions -> General -> "Allow GitHub Actions to create and approve pull requests".
-# Een PR die met GITHUB_TOKEN is gemaakt start de workflow "test" niet vanzelf: de unit-tests draaien
-# hieronder al; Playwright start je in de PR met "Run workflow" (test, op de PR-branch) of door de PR
-# te sluiten en weer te openen.
+# Vóór de PR draaien hier de echte tests op de net gebouwde graaf: unit-tests, het ondergrondoordeel
+# tegen de app (eis >= 98%, zoals docs/GRAAF-PROEF.md) en Playwright telefoon en desktop (met de
+# ?graaf=vooraf-stappen). Faalt er iets, dan komt er geen PR. Een PR die met GITHUB_TOKEN is gemaakt
+# start "test" niet vanzelf; daarom start deze workflow "test" daarna zelf op de PR-branch.
 name: Graaf bouwen
 
 on:
@@ -16,6 +17,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: write
 
 concurrency:
   group: graaf
@@ -59,12 +61,30 @@ jobs:
 
       - name: Graaf bouwen
         run: |
-          VERSIE=v$(date -u +%Y%m%d)
+          # uniek per run: blokken staan onder hun versie in de datacache van de browser, dus een
+          # tweede bouw op dezelfde dag mag nooit dezelfde map gebruiken
+          VERSIE=v$(date -u +%Y%m%d)-r${GITHUB_RUN_NUMBER}
+          if git ls-tree -d --name-only HEAD "public/graaf/$VERSIE" | grep -q .; then echo "Versie $VERSIE bestaat al"; exit 1; fi
           echo "VERSIE=$VERSIE" >> $GITHUB_ENV
           node --max-old-space-size=12000 tools/graaf/bouw.mjs --bron ~/osm/regio.ndjson --versie $VERSIE
 
-      - name: Tests
-        run: node --test tests/test_web_kern.mjs
+      - run: npm ci
+
+      - name: Unit-tests
+        run: npm run test:unit
+
+      - name: Ondergrondoordeel tegen de app (eis >= 98%)
+        run: NODE_USE_ENV_PROXY=1 OORDEEL_MIN=98 node --max-old-space-size=8000 tools/graaf/vergelijk_oordeel.mjs oordeel.json
+
+      - name: Chromium voor Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Playwright telefoon en desktop op de nieuwe graaf
+        run: |
+          python3 tools/serve.py 8765 &
+          for i in $(seq 1 20); do curl -fs http://localhost:8765/nopaves/graaf/actueel.json | grep -q "\"$VERSIE\"" && break; sleep 0.5; done
+          npm run test:mobiel
+          npm run test:desktop
 
       - name: Oude versies weg, nieuwe versie als pull request
         run: |
@@ -81,6 +101,7 @@ jobs:
           git push origin "$TAK"
           gh pr create --base main --head "$TAK" \
             --title "chore: graaf $VERSIE" \
-            --body "Wekelijkse graafbouw (Geofabrik + BGT + AHN), versie $VERSIE. Unit-tests zijn in de bouw gedraaid. Controleer de workflow test en de grootte van public/graaf voor het samenvoegen."
+            --body "$(printf 'Wekelijkse graafbouw (Geofabrik + BGT + AHN), versie %s.\n\nIn de bouw gedraaid op deze graaf: unit-tests, ondergrondoordeel tegen de app (%s%% van %s km gelijk, eis 98%%), Playwright telefoon en desktop. De workflow test draait hierna op deze branch.' "$VERSIE" "$(node -p "require('./oordeel.json').gelijkPct")" "$(node -p "require('./oordeel.json').km")")"
+          gh workflow run test.yml --ref "$TAK"
         env:
           GH_TOKEN: ${{ github.token }}
