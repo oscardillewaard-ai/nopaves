@@ -46,11 +46,20 @@ jobs:
       - run: sudo apt-get update -q && sudo apt-get install -yq osmium-tool time
 
       # Grenzen van PDOK (Bestuurlijke Gebieden): de .poly-bestanden van Geofabrik gaven in run 1 herhaald 404.
-      - name: NL-extract (Geofabrik) en provinciegrenzen (PDOK) ophalen
+      - name: NL-extract (Geofabrik, anders openstreetmap.fr) en provinciegrenzen (PDOK) ophalen
         run: |
           mkdir -p ~/osm/poly uit
           T0=$(date +%s)
-          curl -fsSL --retry 6 --retry-delay 60 --retry-all-errors --max-redirs 10 -o ~/osm/nl.osm.pbf https://download.geofabrik.de/europe/netherlands-latest.osm.pbf
+          # Geofabrik eerst; in run 2 weigerde Geofabrik 6 minuten lang elke verbinding, dus daarna
+          # openstreetmap.fr (zelfde OSM-data, andere aanbieder). Welke bron het werd, staat in bron.txt.
+          OK=""
+          for URL in https://download.geofabrik.de/europe/netherlands-latest.osm.pbf \
+                     https://download.openstreetmap.fr/extracts/europe/netherlands-latest.osm.pbf; do
+            if curl -fsSL --retry 3 --retry-delay 30 --retry-all-errors --max-redirs 10 -o ~/osm/nl.osm.pbf "$URL"; then OK=$URL; break; fi
+            echo "::warning::$URL niet bereikbaar, volgende bron"
+          done
+          [ -n "$OK" ] || { echo "::error::Geen OSM-extract te halen (Geofabrik en openstreetmap.fr)"; exit 1; }
+          echo "$OK" > uit/bron.txt
           echo $(( $(date +%s) - T0 )) > uit/download-seconden.txt
           node tools/fase0/grenzen.mjs ~/osm/poly
           for p in $(node -p "require('./tools/fase0/provincies.json').provincies.map(p=>p.slug).join(' ')"); do

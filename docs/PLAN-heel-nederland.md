@@ -143,7 +143,9 @@ Daarna: dit plan bijwerken met de echte cijfers, een planning per fase en een ko
   (proef). Bij veel gebruikers is dat een grens om in de gaten te houden.
 - **Pages-site 1 GB:** heel NL moet in één keer passen, plus de app. De raming uit fase 0 bepaalt of het
   compactere formaat (opzet 4) vóór de livegang moet.
-- **Geofabrik hapert soms;** de knipjob probeert opnieuw; de wekelijkse bouw valt terug op een recent
-  extract (PR #17).
+- **Geofabrik hapert soms:** op 2026-11-20 gaf Geofabrik eerst 404 op de grenzen (run 1) en weigerde het
+  daarna 6 minuten lang elke verbinding (run 2). De knipjob valt nu terug op openstreetmap.fr; de wekelijkse
+  bouw valt terug op een recent extract (PR #17). Voor de echte bouw: twee bronnen plus een extract in de
+  release-bijlagen als laatste vangnet.
 - **Kwaliteit buiten de Randstad:** de Nopave-router en het oordeel zijn alleen rond Delft gemeten.
 - **Release-bijlagen ophalen in de deploy:** nog niet getest (grootte, tijd, rechten van `GITHUB_TOKEN`).
