@@ -1,0 +1,638 @@
+{
+ "gelijkPct": 99.6,
+ "km": 330.2,
+ "resultaten": [
+  {
+   "geval": "rondje-10 Delft Centraal",
+   "route": "A",
+   "km": 9.32,
+   "gelijkPct": 100,
+   "scoreVooraf": 61,
+   "scoreApp": 61,
+   "zachtVooraf": 66.7,
+   "zachtApp": 66.7
+  },
+  {
+   "geval": "rondje-10 Delft Centraal",
+   "route": "B",
+   "km": 10.2,
+   "gelijkPct": 100,
+   "scoreVooraf": 60,
+   "scoreApp": 60,
+   "zachtVooraf": 66.2,
+   "zachtApp": 66.2
+  },
+  {
+   "geval": "station-15 Delft Centraal",
+   "route": "A",
+   "km": 16.64,
+   "gelijkPct": 99.48,
+   "scoreVooraf": 54,
+   "scoreApp": 54,
+   "zachtVooraf": 63.1,
+   "zachtApp": 62.8
+  },
+  {
+   "geval": "station-15 Delft Centraal",
+   "route": "B",
+   "km": 12.34,
+   "gelijkPct": 99.62,
+   "scoreVooraf": 51,
+   "scoreApp": 52,
+   "zachtVooraf": 60.6,
+   "zachtApp": 61
+  },
+  {
+   "geval": "station-15 Delft Centraal",
+   "route": "C",
+   "km": 11.17,
+   "gelijkPct": 99.51,
+   "scoreVooraf": 53,
+   "scoreApp": 54,
+   "zachtVooraf": 64.1,
+   "zachtApp": 64.5
+  },
+  {
+   "geval": "station-15 Delft Centraal",
+   "route": "D",
+   "km": 11.83,
+   "gelijkPct": 99.46,
+   "scoreVooraf": 31,
+   "scoreApp": 31,
+   "zachtVooraf": 34.1,
+   "zachtApp": 34.1
+  },
+  {
+   "geval": "rondje-10 Meijendel",
+   "route": "A",
+   "km": 10.61,
+   "gelijkPct": 100,
+   "scoreVooraf": 91,
+   "scoreApp": 91,
+   "zachtVooraf": 98.3,
+   "zachtApp": 98.3
+  },
+  {
+   "geval": "rondje-10 Meijendel",
+   "route": "B",
+   "km": 10.5,
+   "gelijkPct": 100,
+   "scoreVooraf": 89,
+   "scoreApp": 89,
+   "zachtVooraf": 96.9,
+   "zachtApp": 96.9
+  },
+  {
+   "geval": "ab-kort-1 Delftse Hout",
+   "route": "A",
+   "km": 2.28,
+   "gelijkPct": 100,
+   "scoreVooraf": 58,
+   "scoreApp": 58,
+   "zachtVooraf": 56.8,
+   "zachtApp": 56.8
+  },
+  {
+   "geval": "ab-kort-1 Delftse Hout",
+   "route": "B",
+   "km": 2.31,
+   "gelijkPct": 100,
+   "scoreVooraf": 53,
+   "scoreApp": 53,
+   "zachtVooraf": 52.2,
+   "zachtApp": 52.2
+  },
+  {
+   "geval": "ab-kort-2 Den Hoorn",
+   "route": "A",
+   "km": 4.5,
+   "gelijkPct": 98.09,
+   "scoreVooraf": 38,
+   "scoreApp": 37,
+   "zachtVooraf": 37.7,
+   "zachtApp": 36.7
+  },
+  {
+   "geval": "ab-kort-2 Den Hoorn",
+   "route": "B",
+   "km": 3.72,
+   "gelijkPct": 100,
+   "scoreVooraf": 22,
+   "scoreApp": 22,
+   "zachtVooraf": 25.2,
+   "zachtApp": 25.2
+  },
+  {
+   "geval": "ab-kort-3 Delfgauw",
+   "route": "A",
+   "km": 5.2,
+   "gelijkPct": 100,
+   "scoreVooraf": 49,
+   "scoreApp": 49,
+   "zachtVooraf": 49,
+   "zachtApp": 49
+  },
+  {
+   "geval": "ab-kort-3 Delfgauw",
+   "route": "B",
+   "km": 4.85,
+   "gelijkPct": 100,
+   "scoreVooraf": 35,
+   "scoreApp": 35,
+   "zachtVooraf": 37.2,
+   "zachtApp": 37.2
+  },
+  {
+   "geval": "ab-kort-4 Nootdorp",
+   "route": "A",
+   "km": 6.44,
+   "gelijkPct": 100,
+   "scoreVooraf": 57,
+   "scoreApp": 57,
+   "zachtVooraf": 59.8,
+   "zachtApp": 59.8
+  },
+  {
+   "geval": "ab-kort-4 Nootdorp",
+   "route": "B",
+   "km": 7.04,
+   "gelijkPct": 100,
+   "scoreVooraf": 50,
+   "scoreApp": 50,
+   "zachtVooraf": 54.2,
+   "zachtApp": 54.2
+  },
+  {
+   "geval": "ab-kort-5 Schipluiden",
+   "route": "A",
+   "km": 6.04,
+   "gelijkPct": 100,
+   "scoreVooraf": 21,
+   "scoreApp": 21,
+   "zachtVooraf": 24.7,
+   "zachtApp": 24.7
+  },
+  {
+   "geval": "ab-kort-5 Schipluiden",
+   "route": "B",
+   "km": 7.23,
+   "gelijkPct": 98.81,
+   "scoreVooraf": 32,
+   "scoreApp": 31,
+   "zachtVooraf": 32.9,
+   "zachtApp": 32.3
+  },
+  {
+   "geval": "ab-lang-1 Rotterdam Centraal",
+   "route": "A",
+   "km": 15.75,
+   "gelijkPct": 99.75,
+   "scoreVooraf": 24,
+   "scoreApp": 24,
+   "zachtVooraf": 28,
+   "zachtApp": 28
+  },
+  {
+   "geval": "ab-lang-1 Rotterdam Centraal",
+   "route": "B",
+   "km": 19.71,
+   "gelijkPct": 99.57,
+   "scoreVooraf": 42,
+   "scoreApp": 42,
+   "zachtVooraf": 49.1,
+   "zachtApp": 49.4
+  },
+  {
+   "geval": "ab-lang-2 Scheveningen",
+   "route": "A",
+   "km": 14.86,
+   "gelijkPct": 99.05,
+   "scoreVooraf": 18,
+   "scoreApp": 17,
+   "zachtVooraf": 19.7,
+   "zachtApp": 19.4
+  },
+  {
+   "geval": "ab-lang-2 Scheveningen",
+   "route": "B",
+   "km": 16.54,
+   "gelijkPct": 99.41,
+   "scoreVooraf": 20,
+   "scoreApp": 20,
+   "zachtVooraf": 22.9,
+   "zachtApp": 22.8
+  },
+  {
+   "geval": "ab-lang-3 Zoetermeer",
+   "route": "A",
+   "km": 12.93,
+   "gelijkPct": 99.64,
+   "scoreVooraf": 49,
+   "scoreApp": 50,
+   "zachtVooraf": 59.6,
+   "zachtApp": 59.9
+  },
+  {
+   "geval": "ab-lang-3 Zoetermeer",
+   "route": "B",
+   "km": 14.83,
+   "gelijkPct": 100,
+   "scoreVooraf": 55,
+   "scoreApp": 55,
+   "zachtVooraf": 60,
+   "zachtApp": 60
+  },
+  {
+   "geval": "ab-lang-4 Maassluis",
+   "route": "A",
+   "km": 15.62,
+   "gelijkPct": 99.13,
+   "scoreVooraf": 32,
+   "scoreApp": 32,
+   "zachtVooraf": 35.9,
+   "zachtApp": 35.9
+  },
+  {
+   "geval": "ab-lang-4 Maassluis",
+   "route": "B",
+   "km": 22.42,
+   "gelijkPct": 99.01,
+   "scoreVooraf": 52,
+   "scoreApp": 52,
+   "zachtVooraf": 59.7,
+   "zachtApp": 59.3
+  },
+  {
+   "geval": "ab-lang-5 Leiden Centraal",
+   "route": "A",
+   "km": 26.28,
+   "gelijkPct": 99.87,
+   "scoreVooraf": 49,
+   "scoreApp": 49,
+   "zachtVooraf": 54.5,
+   "zachtApp": 54.5
+  },
+  {
+   "geval": "ab-lang-5 Leiden Centraal",
+   "route": "B",
+   "km": 29.07,
+   "gelijkPct": 99.68,
+   "scoreVooraf": 51,
+   "scoreApp": 51,
+   "zachtVooraf": 59,
+   "zachtApp": 58.8
+  }
+ ],
+ "grootsteVerschillen": [
+  {
+   "geval": "ab-lang-5 Leiden Centraal",
+   "route": "B",
+   "m": 50,
+   "vooraf": "onverhard",
+   "app": "open verharding",
+   "tags": "highway=path surface=unpaved",
+   "voorafUitleg": "de officiële kaart heeft hier niets",
+   "appUitleg": "wegdeel, voetpad: open verharding (tegels)",
+   "plek": [
+    52.15414,
+    4.48636
+   ]
+  },
+  {
+   "geval": "ab-lang-2 Scheveningen",
+   "route": "A",
+   "m": 49,
+   "vooraf": "onverhard",
+   "app": "gesloten verharding",
+   "tags": "highway=footway surface=unpaved",
+   "voorafUitleg": "geen pad geregistreerd; lijn ligt in begroeid terreindeel: loofbos (griend en hakhout)",
+   "appUitleg": "wegdeel, voetpad: gesloten verharding (asfalt)",
+   "plek": [
+    52.09544,
+    4.28879
+   ]
+  },
+  {
+   "geval": "ab-lang-1 Rotterdam Centraal",
+   "route": "B",
+   "m": 48,
+   "vooraf": "open verharding",
+   "app": "onverhard",
+   "tags": "highway=path surface=unpaved foot=yes",
+   "voorafUitleg": "wegdeel, rijbaan lokale weg: open verharding op 1,4 m van de lijn",
+   "appUitleg": "geen pad geregistreerd; lijn ligt in begroeid terreindeel: groenvoorziening (gras- en kruidachtigen)",
+   "plek": [
+    51.934,
+    4.42135
+   ]
+  },
+  {
+   "geval": "ab-lang-2 Scheveningen",
+   "route": "A",
+   "m": 48,
+   "vooraf": "gesloten verharding",
+   "app": "open verharding",
+   "tags": "highway=cycleway surface=paved",
+   "voorafUitleg": "wegdeel, fietspad: gesloten verharding (asfalt)",
+   "appUitleg": "wegdeel, fietspad: open verharding (tegels)",
+   "plek": [
+    52.05535,
+    4.33894
+   ]
+  },
+  {
+   "geval": "station-15 Delft Centraal",
+   "route": "B",
+   "m": 47,
+   "vooraf": "gesloten verharding",
+   "app": "onverhard",
+   "tags": "highway=footway surface=unpaved",
+   "voorafUitleg": "wegdeel, voetpad: gesloten verharding (asfalt)",
+   "appUitleg": "geen pad geregistreerd; lijn ligt in begroeid terreindeel: houtwal",
+   "plek": [
+    52.04545,
+    4.45044
+   ]
+  },
+  {
+   "geval": "station-15 Delft Centraal",
+   "route": "C",
+   "m": 47,
+   "vooraf": "gesloten verharding",
+   "app": "onverhard",
+   "tags": "highway=footway surface=unpaved",
+   "voorafUitleg": "wegdeel, voetpad: gesloten verharding (asfalt)",
+   "appUitleg": "geen pad geregistreerd; lijn ligt in begroeid terreindeel: houtwal",
+   "plek": [
+    52.04545,
+    4.45044
+   ]
+  },
+  {
+   "geval": "station-15 Delft Centraal",
+   "route": "D",
+   "m": 47,
+   "vooraf": "open verharding",
+   "app": "gesloten verharding",
+   "tags": "highway=footway surface=paved",
+   "voorafUitleg": "wegdeel, voetpad: open verharding (tegels)",
+   "appUitleg": "wegdeel, rijbaan lokale weg: gesloten verharding (asfalt)",
+   "plek": [
+    52.08902,
+    4.36885
+   ]
+  },
+  {
+   "geval": "ab-lang-3 Zoetermeer",
+   "route": "A",
+   "m": 47,
+   "vooraf": "gesloten verharding",
+   "app": "onverhard",
+   "tags": "highway=footway surface=unpaved",
+   "voorafUitleg": "wegdeel, voetpad: gesloten verharding (asfalt)",
+   "appUitleg": "geen pad geregistreerd; lijn ligt in begroeid terreindeel: houtwal",
+   "plek": [
+    52.04545,
+    4.45044
+   ]
+  },
+  {
+   "geval": "ab-lang-4 Maassluis",
+   "route": "A",
+   "m": 46,
+   "vooraf": "open verharding",
+   "app": "onverhard",
+   "tags": "highway=footway surface=unpaved",
+   "voorafUitleg": "wegdeel, voetpad: open verharding",
+   "appUitleg": "geen pad geregistreerd; lijn ligt in begroeid terreindeel: groenvoorziening (gras- en kruidachtigen)",
+   "plek": [
+    51.92382,
+    4.26344
+   ]
+  },
+  {
+   "geval": "ab-lang-2 Scheveningen",
+   "route": "A",
+   "m": 45,
+   "vooraf": "open verharding",
+   "app": "gesloten verharding",
+   "tags": "highway=unclassified surface=paved",
+   "voorafUitleg": "wegdeel, rijbaan lokale weg: open verharding (gebakken klinkers)",
+   "appUitleg": "wegdeel, rijbaan lokale weg: gesloten verharding (asfalt)",
+   "plek": [
+    52.07459,
+    4.31506
+   ]
+  },
+  {
+   "geval": "ab-lang-4 Maassluis",
+   "route": "A",
+   "m": 45,
+   "vooraf": "gesloten verharding",
+   "app": "open verharding",
+   "tags": "highway=footway surface=unpaved",
+   "voorafUitleg": "wegdeel, voetpad: gesloten verharding (asfalt)",
+   "appUitleg": "wegdeel, voetpad: open verharding (tegels)",
+   "plek": [
+    51.92636,
+    4.27053
+   ]
+  },
+  {
+   "geval": "ab-lang-4 Maassluis",
+   "route": "A",
+   "m": 45,
+   "vooraf": "onverhard",
+   "app": "gesloten verharding",
+   "tags": "highway=footway surface=unpaved",
+   "voorafUitleg": "geen pad geregistreerd; lijn ligt in begroeid terreindeel: groenvoorziening (gras- en kruidachtigen)",
+   "appUitleg": "wegdeel, voetpad: gesloten verharding (asfalt)",
+   "plek": [
+    51.92569,
+    4.26816
+   ]
+  },
+  {
+   "geval": "ab-lang-4 Maassluis",
+   "route": "B",
+   "m": 45,
+   "vooraf": "onverhard",
+   "app": "half verhard",
+   "tags": "highway=path surface=unpaved foot=yes",
+   "voorafUitleg": "geen pad geregistreerd; lijn ligt in begroeid terreindeel: gemengd bos",
+   "appUitleg": "wegdeel, voetpad: half verhard op 2,9 m van de lijn",
+   "plek": [
+    51.93118,
+    4.3344
+   ]
+  },
+  {
+   "geval": "ab-lang-4 Maassluis",
+   "route": "B",
+   "m": 45,
+   "vooraf": "gesloten verharding",
+   "app": "open verharding",
+   "tags": "highway=footway surface=unpaved",
+   "voorafUitleg": "wegdeel, voetpad: gesloten verharding (asfalt)",
+   "appUitleg": "wegdeel, voetpad: open verharding (tegels)",
+   "plek": [
+    51.92636,
+    4.27053
+   ]
+  },
+  {
+   "geval": "ab-lang-4 Maassluis",
+   "route": "B",
+   "m": 45,
+   "vooraf": "onverhard",
+   "app": "gesloten verharding",
+   "tags": "highway=footway surface=unpaved",
+   "voorafUitleg": "geen pad geregistreerd; lijn ligt in begroeid terreindeel: groenvoorziening (gras- en kruidachtigen)",
+   "appUitleg": "wegdeel, voetpad: gesloten verharding (asfalt)",
+   "plek": [
+    51.92569,
+    4.26816
+   ]
+  },
+  {
+   "geval": "station-15 Delft Centraal",
+   "route": "A",
+   "m": 43,
+   "vooraf": "onverhard",
+   "app": "half verhard",
+   "tags": "highway=path",
+   "voorafUitleg": "geen pad geregistreerd; lijn ligt in begroeid terreindeel: groenvoorziening (bosplantsoen)",
+   "appUitleg": "wegdeel, voetpad: half verhard (grind) op 0,0 m van de lijn",
+   "plek": [
+    51.99364,
+    4.3418
+   ]
+  },
+  {
+   "geval": "station-15 Delft Centraal",
+   "route": "A",
+   "m": 43,
+   "vooraf": "onverhard",
+   "app": "open verharding",
+   "tags": "highway=path",
+   "voorafUitleg": "geen pad geregistreerd; lijn ligt in begroeid terreindeel: groenvoorziening (gras- en kruidachtigen)",
+   "appUitleg": "wegdeel, voetpad: open verharding (sierbestrating) op 0,0 m van de lijn",
+   "plek": [
+    51.99356,
+    4.34143
+   ]
+  },
+  {
+   "geval": "ab-kort-2 Den Hoorn",
+   "route": "A",
+   "m": 43,
+   "vooraf": "onverhard",
+   "app": "half verhard",
+   "tags": "highway=path",
+   "voorafUitleg": "geen pad geregistreerd; lijn ligt in begroeid terreindeel: groenvoorziening (bosplantsoen)",
+   "appUitleg": "wegdeel, voetpad: half verhard (grind) op 0,0 m van de lijn",
+   "plek": [
+    51.99364,
+    4.3418
+   ]
+  },
+  {
+   "geval": "ab-kort-2 Den Hoorn",
+   "route": "A",
+   "m": 43,
+   "vooraf": "onverhard",
+   "app": "open verharding",
+   "tags": "highway=path",
+   "voorafUitleg": "geen pad geregistreerd; lijn ligt in begroeid terreindeel: groenvoorziening (gras- en kruidachtigen)",
+   "appUitleg": "wegdeel, voetpad: open verharding (sierbestrating) op 0,0 m van de lijn",
+   "plek": [
+    51.99356,
+    4.34143
+   ]
+  },
+  {
+   "geval": "ab-kort-5 Schipluiden",
+   "route": "B",
+   "m": 43,
+   "vooraf": "onverhard",
+   "app": "half verhard",
+   "tags": "highway=path",
+   "voorafUitleg": "geen pad geregistreerd; lijn ligt in begroeid terreindeel: groenvoorziening (bosplantsoen)",
+   "appUitleg": "wegdeel, voetpad: half verhard (grind) op 0,0 m van de lijn",
+   "plek": [
+    51.99364,
+    4.3418
+   ]
+  },
+  {
+   "geval": "ab-kort-5 Schipluiden",
+   "route": "B",
+   "m": 43,
+   "vooraf": "onverhard",
+   "app": "open verharding",
+   "tags": "highway=path",
+   "voorafUitleg": "geen pad geregistreerd; lijn ligt in begroeid terreindeel: groenvoorziening (gras- en kruidachtigen)",
+   "appUitleg": "wegdeel, voetpad: open verharding (sierbestrating) op 0,0 m van de lijn",
+   "plek": [
+    51.99356,
+    4.34143
+   ]
+  },
+  {
+   "geval": "ab-lang-4 Maassluis",
+   "route": "B",
+   "m": 43,
+   "vooraf": "onverhard",
+   "app": "half verhard",
+   "tags": "highway=path",
+   "voorafUitleg": "geen pad geregistreerd; lijn ligt in begroeid terreindeel: groenvoorziening (bosplantsoen)",
+   "appUitleg": "wegdeel, voetpad: half verhard (grind) op 0,0 m van de lijn",
+   "plek": [
+    51.99364,
+    4.3418
+   ]
+  },
+  {
+   "geval": "ab-lang-4 Maassluis",
+   "route": "B",
+   "m": 43,
+   "vooraf": "onverhard",
+   "app": "open verharding",
+   "tags": "highway=path",
+   "voorafUitleg": "geen pad geregistreerd; lijn ligt in begroeid terreindeel: groenvoorziening (gras- en kruidachtigen)",
+   "appUitleg": "wegdeel, voetpad: open verharding (sierbestrating) op 0,0 m van de lijn",
+   "plek": [
+    51.99356,
+    4.34143
+   ]
+  },
+  {
+   "geval": "ab-lang-5 Leiden Centraal",
+   "route": "B",
+   "m": 43,
+   "vooraf": "half verhard",
+   "app": "onverhard",
+   "tags": "highway=footway surface=unpaved",
+   "voorafUitleg": "geen pad geregistreerd; lijn ligt in onbegroeid terreindeel: half verhard (schelpen)",
+   "appUitleg": "geen pad geregistreerd; lijn ligt in begroeid terreindeel: groenvoorziening (gras- en kruidachtigen)",
+   "plek": [
+    52.1413,
+    4.4895
+   ]
+  },
+  {
+   "geval": "ab-lang-2 Scheveningen",
+   "route": "B",
+   "m": 40,
+   "vooraf": "half verhard",
+   "app": "open verharding",
+   "tags": "highway=footway surface=unpaved",
+   "voorafUitleg": "wegdeel, voetpad: half verhard",
+   "appUitleg": "wegdeel, voetpad: open verharding (tegels)",
+   "plek": [
+    52.09106,
+    4.31628
+   ]
+  }
+ ]
+}
