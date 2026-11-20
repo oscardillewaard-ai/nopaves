@@ -17,8 +17,8 @@
   dus alles blijft achter de vlag. Vervolg in issues #9, #10 en #11.
 - **Plugins en skills**: frontend-design, code-review, playwright, UI Design Review, uxkin (skill) en
   design laden. code-review en playwright zijn ook uitgevoerd. De uxkin-MCP vraagt een betaald plan en
-  de design-koppelingen worden door de proxy geblokkeerd. Losse kopieën in `.claude/skills/`. Details
-  in stap I.
+  de design-koppelingen worden door de proxy geblokkeerd. De vijf losse kopieën in `.claude/skills/`
+  laden ook. Details in stap I.
 - **Open punten**: issues #3–#11.
 
 
@@ -245,7 +245,7 @@ vergeleken met de cijfers in VOORTGANG, niet met een verse meting van live in de
 | uxkin-MCP (voorbeelden uit echte apps) | nee: vraagt een inlog (betaald plan, $9,99/maand of $99 eenmalig) | `uxkin.com` is toegestaan in de omgeving; de server antwoordt 401 |
 | design (accessibility-review, ux-copy, enz.) | ja, in de skilllijst | niet uitgevoerd |
 | design-MCP-koppelingen (Slack, Figma, Notion, …) | nee: de proxy blokkeert die hosts | niet nodig voor Nopav.es |
-| losse kopieën in `.claude/skills/` | niet te testen in deze sessie: projectskills laden bij de start van een sessie in deze repo | frontmatter gecontroleerd |
+| losse kopieën in `.claude/skills/` | ja: alle vijf (accessibility-review, no-ui-slop, ui-polish, ui-review, ux-copy) verschenen als projectskills in deze sessie zodra de map in de checkout stond | frontmatter gecontroleerd; niet uitgevoerd |
 
 In deze sessie kwamen de plugins via de accountinstellingen, niet via `.claude/settings.json`. Of de
 officiële plugins in een nieuwe cloudsessie ook via dat bestand laden, blijkt pas bij de eerste
