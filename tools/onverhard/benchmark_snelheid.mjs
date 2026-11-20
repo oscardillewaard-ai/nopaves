@@ -4,10 +4,11 @@
 //   python3 tools/serve.py &
 //   CHROMIUM_PAD=/opt/pw-browsers/chromium node tools/onverhard/benchmark_snelheid.mjs uit.json [N=5] [filter] [groep]
 //
-// groep: 'ab' = alleen de A-naar-B-paren (BRouter of eigen router), 'rest' = de andere gevallen, leeg = alles.
+// groep: 'ab' = alleen de A-naar-B-paren (BRouter of Nopave-router), 'rest' = de andere gevallen, leeg = alles,
+// 'nieuw' = de nieuwe A-naar-B-paren uit tools/graaf/ab_nieuw.mjs (niet gebruikt bij het afstellen).
 // Koud = een nieuwe browsercontext (lege HTTP-cache en lege Cache Storage). Warm = dezelfde context na
 // één opwarmronde, met elke keer de pagina opnieuw geladen (geheugen leeg, caches gevuld).
-// ONVERHARD_QUERY=router=eigen voegt ?router=eigen toe (stap 6).
+// ONVERHARD_QUERY=router=nopave voegt ?router=nopave toe (stap 6; de oude naam router=eigen werkt ook).
 import { chromium } from 'playwright'
 import fs from 'node:fs'
 
@@ -33,6 +34,10 @@ let GEVALLEN = [
   ['gebied Delftse Hout (voorbeeld, 8 km)', 'modus=gebied&t=52.03342,4.33407;52.03751,4.34372;52.03553,4.34544;52.03183,4.34393;52.03104,4.33986;52.02946,4.33814;52.03183,4.33385&p=52.03262,4.33428&rondje=8'],
   ['tekenen (voorbeeld)', 'modus=tekenen&t=52.03289,4.33514;52.03421,4.33814;52.03553,4.34115;52.03632,4.34286;52.03421,4.34372;52.03236,4.34115'],
 ]
+if (groep === 'nieuw') {
+  const { AB_NIEUW } = await import('../graaf/ab_nieuw.mjs')
+  GEVALLEN = AB_NIEUW.map(({ naam, van, naar }) => [`nieuw ${naam}`, `p=${van.join(',')};${naar.join(',')}`])
+}
 if (groep === 'ab') GEVALLEN = GEVALLEN.filter(([n]) => n.startsWith('ab-'))
 if (groep === 'rest') GEVALLEN = GEVALLEN.filter(([n]) => !n.startsWith('ab-'))
 if (filter) GEVALLEN = GEVALLEN.filter(([n]) => n.includes(filter))

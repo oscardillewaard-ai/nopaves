@@ -93,7 +93,7 @@ export function leesBlok(buffer) {
 
 /**
  * Voeg gelezen blokken samen tot een graaf zoals graaf.js bouwGraaf hem geeft (zelfde velden, zelfde
- * kostenfunctie), plus g.vooraf met het oordeel en de hoogtes. opbouw: {trail, alles, kaartje, strandMijden}.
+ * kostenfunctie, maar met het eindoordeel per wegstuk in plaats van de OSM-klasse), plus g.vooraf met het oordeel en de hoogtes. opbouw: {trail, alles, kaartje, strandMijden}.
  * Wat de app nu in een tweede zoekronde doet (strand en afgesloten stukken buiten de natuur mijden), zit
  * hier meteen in de kosten: dat oordeel is vooraf bekend.
  */
@@ -196,7 +196,10 @@ export function bouwVoorafGraaf(blokken, { trail = true, alles = false, kaartje 
       const c = kaart[b.naar[s]]
       if (a === c) continue
       const info = tagInfo[ti]
-      let f = (alles ? ALLES_FACTOR[info.highway] || 1 : K.kostenfactor(info.klasse, tagLijst[ti], trail)) * (afgesloten ? 1.3 : 1)
+      // Kosten met het eindoordeel (BGT + OSM) van dit wegstuk, dezelfde klasse die de Nopav.es-score telt;
+      // de OSM-klasse noemt bv. fietspaden met surface=unpaved onverhard terwijl de BGT asfalt zegt.
+      const eind = K.KLASSEN[b.klasse[s]] || info.klasse
+      let f = (alles ? ALLES_FACTOR[info.highway] || 1 : K.kostenfactor(eind, tagLijst[ti], trail)) * (afgesloten ? 1.3 : 1)
       if (strandMijden && (v & VLAG.STRAND)) f *= STRAND_FACTOR
       if (kaartje && afgesloten && !(v & VLAG.NATUUR)) f *= STRAND_FACTOR // erf of bedrijfsterrein, geen waterleidingduin
       if (f >= STRAND_FACTOR) aantalStrand++

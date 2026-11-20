@@ -1220,7 +1220,7 @@ async function rondesMetGraaf({ elementen, opbouw, instel, bgt, meld, signal, te
 }
 
 /**
- * Een rondje met de eigen routeplanner: haal de paden in de buurt op, zoek
+ * Een rondje met de Nopave-router: haal de paden in de buurt op, zoek
  * honderden rondjes op de graaf (dat kost minder dan een seconde) en leg de
  * beste langs de officiële kaart. Vindt die strand of afgesloten stukken
  * buiten de natuur die OpenStreetMap niet als zodanig kent, dan zoeken we nog
@@ -1305,10 +1305,30 @@ export async function planRondjeEigen(start, km, instel, bgt, aantalOpties, meld
     richting: null, rek: kronkel ? 'kronkel' : 'lus', km: k.lengte / 1000, afwijking: 0, osm: 0, score: k.score,
     zacht: K.zachtAandeel(k.an, 'eind'), paadjes: K.paadjesAandeel(k.an), strand: K.strandMeter(k.an), dubbel: k.an.dubbel, voldoet: true,
   }))
-  return { opties, waarschuwingen, doel, uitleg, eigen: true, gezocht, graaf, graafBron: vooraf ? 'vooraf' : 'tegels' }
+  return { opties, waarschuwingen, doel, uitleg, nopave: true, gezocht, graaf, graafBron: vooraf ? 'vooraf' : 'tegels' }
 }
 
-// ---------- A naar B met de eigen router (snelheid, stap 6) ----------
+// ---------- A naar B met de Nopave-router (snelheid, stap 6) ----------
+/** Hoeveel kandidaat-routes de Nopave-router voor A naar B maakt voordat hij kiest. */
+export const AB_KANDIDATEN = 5
+/** Een kandidaat mag hooguit zoveel langer zijn dan de kortste kandidaat (0,15 = 15%). */
+export const AB_LENGTEGRENS = 0.15
+
+/**
+ * Kies uit kandidaten [{an, ...}] op de Nopav.es-score (dezelfde score als in de app), als vangnet na de
+ * kosten: de eerste kandidaat (de goedkoopste volgens de kosten) doet altijd mee; de andere alleen als ze
+ * hooguit 'grens' langer zijn dan de kortste kandidaat. Hoogste score eerst, bij gelijke score de kortste.
+ */
+export function kiesOpScore(kandidaten, grens = AB_LENGTEGRENS) {
+  if (!kandidaten.length) return kandidaten
+  const kortste = Math.min(...kandidaten.map((k) => k.an.lengte))
+  return kandidaten
+    .filter((k, i) => i === 0 || k.an.lengte <= (1 + grens) * kortste + 1)
+    .map((k) => ({ k, score: K.nopavesScore(k.an).score }))
+    .sort((a, b) => b.score - a.score || a.k.an.lengte - b.k.an.lengte)
+    .map(({ k }) => k)
+}
+
 /** Rechte afstand (m) langs alle punten. */
 function rechteAfstand(punten) {
   let m = 0
@@ -1319,14 +1339,14 @@ function rechteAfstand(punten) {
   }
   return m
 }
-export const EIGEN_ROUTER_MAX_M = 25000 // boven deze rechte afstand: BRouter (zie VOORTGANG.md, stap 6)
+export const NOPAVE_ROUTER_MAX_M = 25000 // boven deze rechte afstand: BRouter (zie VOORTGANG.md, stap 6)
 
 /**
  * Van A naar B (met tussenpunten) op de paden uit de kaarttegels, met dezelfde voorkeuren als een
  * rondje. Tegels in een ellips per deel met de punten als brandpunten (grote as ~1,4 × de rechte
  * afstand); geen route? dan stapsgewijs een grotere ellips. Geeft {opties, ...} zoals planRondjeEigen.
  */
-export async function planRouteEigen(punten, instel, bgt, aantalOpties, meld = () => {}, signal) {
+export async function planRouteNopave(punten, instel, bgt, aantalOpties, meld = () => {}, signal) {
   const waarschuwingen = []
   const opbouw = { trail: instel.trail, alles: instel.alles, kaartje: instel.kaartje, strandMijden: instel.strandMijden, extraStranden: [], mijdPunten: [], snap: 1.5 }
   const opRing = (lijst) => {
@@ -1358,7 +1378,9 @@ export async function planRouteEigen(punten, instel, bgt, aantalOpties, meld = (
         knopen = punten.map((p) => G.dichtsteKnoop(gr, ...K.naarRd(p[1], p[0])))
         const ver = knopen.find((k) => k.knoop < 0 || k.afstand > 400)
         if (ver) throw new BronFout(OSM_BRON, ver.knoop < 0 ? 'geen paden in de buurt van een punt' : `het dichtstbijzijnde pad ligt ${Math.round(ver.afstand)} m van een punt`)
-        const routes = await zoekOp('routesLangs', gr, [knopen.map((k) => k.knoop), { aantal: Math.max(1, aantalOpties) }], signal)
+        // Tot AB_KANDIDATEN routes die echt verschillen (stukken die een eerdere kandidaat al gebruikte
+        // worden duurder; meer dan 70% overlap telt niet mee), daarna kiezen op de Nopav.es-score.
+        const routes = await zoekOp('routesLangs', gr, [knopen.map((k) => k.knoop), { aantal: Math.max(AB_KANDIDATEN, aantalOpties), maxOverlap: 0.7 }], signal)
         if (!routes.length) return []
         if (instel.voorlopig && ronde++ === 0) {
           const t0 = G.maakTraject(gr, routes[0].knopen, routes[0].segs, punten)
@@ -1366,11 +1388,11 @@ export async function planRouteEigen(punten, instel, bgt, aantalOpties, meld = (
         }
         const uit = []
         for (const [i, rt] of routes.entries()) {
-          meld(`Ondergrond van route ${LETTERS[i]} controleren`)
+          meld(`Ondergrond van route ${LETTERS[Math.min(i, aantalOpties - 1)]} controleren`)
           const traject = G.maakTraject(gr, rt.knopen, rt.segs, punten)
           uit.push({ traject, an: await analyseerRoute(traject, bgt), knopen: rt.knopen, segs: rt.segs, vast: rt.vast })
         }
-        return uit
+        return kiesOpScore(uit, instel.lengteGrens ?? AB_LENGTEGRENS).slice(0, Math.max(1, aantalOpties))
       },
     })
     if (res.lijst.length) {
@@ -1379,8 +1401,8 @@ export async function planRouteEigen(punten, instel, bgt, aantalOpties, meld = (
       break
     }
   }
-  if (!gevonden) throw new BronFout('de eigen router', 'geen route gevonden tussen deze punten')
-  return { opties: gevonden, waarschuwingen, doel: null, uitleg: [], eigen: true, graaf: g, graafBron }
+  if (!gevonden) throw new BronFout('de Nopave-router', 'geen route gevonden tussen deze punten')
+  return { opties: gevonden, waarschuwingen, doel: null, uitleg: [], nopave: true, graaf: g, graafBron }
 }
 
 // ---------- Naar een station: routes vanaf een plek naar treinstations in de buurt ----------
@@ -1502,7 +1524,7 @@ export async function planStations(instel, bgt, aantal, meld = () => {}, signal)
   }
   return {
     opties: opties.map((k) => ({ traject: k.traject, an: k.an, knopen: k.knopen, segs: k.segs, station: k.station })),
-    waarschuwingen, doel, uitleg: [], eigen: true, graaf,
+    waarschuwingen, doel, uitleg: [], nopave: true, graaf,
     stations: lijst.map((k) => ({ ...k.kandidaat, km: k.lengte / 1000 })),
     stationData: data,
     tegelsPaden: tegels.size,
@@ -1642,7 +1664,7 @@ export async function planGebied(instel, bgt, aantalOpties, meld, signal) {
   if (opties[0].ronden > 1) {
     waarschuwingen.push(`${opties[0].ronden} rondjes van ca. ${(opties[0].an.lengte / opties[0].ronden / 1000).toFixed(1).replace('.', ',')} km`)
   }
-  return { opties, waarschuwingen, doel, eigen: true, uitleg: [], graaf: g }
+  return { opties, waarschuwingen, doel, nopave: true, uitleg: [], graaf: g }
 }
 
 /** Een route door elke straat (of elk pad) binnen een getekend gebied. */
@@ -1666,7 +1688,7 @@ export async function planStraten(instel, bgt, meld, signal) {
   const km1 = (m) => (m / 1000).toFixed(1).replace('.', ',')
   const waarschuwingen = []
   if (gemist > 50) waarschuwingen.push(`${km1(gemist)} km onbereikbaar, zit er niet in`)
-  return { opties: [{ traject, an, dubbel: r.extraMeter / r.meter, knopen: r.knopen, segs: r.segs }], waarschuwingen, doel: r.meter, eigen: true, uitleg: [], graaf: g }
+  return { opties: [{ traject, an, dubbel: r.extraMeter / r.meter, knopen: r.knopen, segs: r.segs }], waarschuwingen, doel: r.meter, nopave: true, uitleg: [], graaf: g }
 }
 
 /** Een route over echte paden langs een getekende lijn. */
@@ -1683,7 +1705,7 @@ export async function planTekening(instel, bgt, meld, signal) {
   const an = await analyseerRoute(traject, bgt)
   const waarschuwingen = []
   if (r.afwijkend > 0.25) waarschuwingen.push(`${Math.round(100 * r.afwijkend)}% ligt >40 m van je lijn (geen paden dichterbij)`)
-  return { opties: [{ traject, an, knopen: r.knopen, segs: r.segs }], waarschuwingen, doel: r.meter, eigen: true, uitleg: [], graaf: g }
+  return { opties: [{ traject, an, knopen: r.knopen, segs: r.segs }], waarschuwingen, doel: r.meter, nopave: true, uitleg: [], graaf: g }
 }
 
 // ---------- Water onderweg ----------
@@ -1992,7 +2014,7 @@ export async function pasRouteAan(uitslag, optie, { i0, punt, loslaten = null, w
 }
 
 /**
- * Groene omwegen langs de route van deze optie (alleen waar de route op het eigen netwerk ligt: niet
+ * Groene omwegen langs de route van deze optie (alleen waar de route op het netwerk van de Nopave-router ligt: niet
  * bij BRouter-uitslagen, en niet bij 'elke straat', waar dubbel lopen de bedoeling is). Geeft
  * [{ia, ib, knopen, segs, extraM, winstOnverhardM, puntenWinst, lijn: [[lat, lon], ...]}].
  */
@@ -2169,16 +2191,16 @@ export async function maakPlan(opties) {
       vooraf.push('Paden niet op te halen; via BRouter gerekend')
     }
   }
-  // A naar B met de eigen router: op verzoek, of als standaard (zie EIGEN_ROUTER_MAX_M); niet met
+  // A naar B met de Nopave-router: op verzoek, of als standaard (zie NOPAVE_ROUTER_MAX_M); niet met
   // een LAW-voorkeur (die kent alleen BRouter). Mislukt hij, dan alsnog BRouter.
   if (!plan && !opties.modus && !opties.rondjeKm && opties.punten.length >= 2 && (opties.law ?? 1) === 1 && opties.router !== 'brouter' &&
-      (opties.router === 'eigen' || (opties.router === 'auto' && rechteAfstand(opties.punten) <= EIGEN_ROUTER_MAX_M))) {
+      (opties.router === 'nopave' || opties.router === 'eigen' || (opties.router === 'auto' && rechteAfstand(opties.punten) <= NOPAVE_ROUTER_MAX_M))) {
     try {
-      plan = await planRouteEigen(opties.punten, { ...tekenInstel, voorlopig }, bgt, alternatieven, meld, opties.signal)
-      plan.router = 'eigen'
+      plan = await planRouteNopave(opties.punten, { ...tekenInstel, voorlopig, lengteGrens: opties.abLengteGrens }, bgt, alternatieven, meld, opties.signal)
+      plan.router = 'nopave'
     } catch (fout) {
       if (afgebroken(fout)) throw fout
-      vooraf.push('Eigen router vond geen route; via BRouter gerekend')
+      vooraf.push('Nopave-router vond geen route; via BRouter gerekend')
     }
   }
   if (plan) {
@@ -2194,12 +2216,12 @@ export async function maakPlan(opties) {
       meld(`Route ${LETTERS[i]} samenstellen`)
       o.an = await analyseerRoute(o.traject, bgt)
     }
-    if ((br.strandMijden || br.kaartje) && bgt && !plan.eigen) await zonderOngewenst(o, br, bgt, meld, LETTERS[i], plan.doel)
-    else if (plan.eigen && bgt) await markeerOngewenst(o.an, br, bgt)
+    if ((br.strandMijden || br.kaartje) && bgt && !plan.nopave) await zonderOngewenst(o, br, bgt, meld, LETTERS[i], plan.doel)
+    else if (plan.nopave && bgt) await markeerOngewenst(o.an, br, bgt)
     if (lijst.some((x) => K.zelfdeTraject(x.traject, o.traject))) continue
     const optie = optieVan(o, LETTERS[i])
     if (o.station) optie.station = o.station
-    // versleepbaar: de route op het eigen netwerk (niet bij elke straat), met start en finish vast
+    // versleepbaar: de route op het netwerk van de Nopave-router (niet bij elke straat), met start en finish vast
     if (plan.graaf && o.knopen && o.knopen.length === o.traject.coords.length) {
       optie.knopen = o.knopen
       optie.segs = o.segs
@@ -2263,7 +2285,7 @@ export async function maakPlan(opties) {
     meldingen,
     verzoeken: br.verzoeken + (bgt ? bgt.verzoeken : 0),
     graaf: plan.graaf || null, // om de route te kunnen verslepen
-    router: plan.router || (plan.eigen ? 'eigen' : 'brouter'),
+    router: plan.router || (plan.nopave ? 'nopave' : 'brouter'),
     graafBron: plan.graafBron || null, // graaf-proef: 'vooraf' of 'tegels'
     modus: opties.modus || null,
     stations: plan.stations || null, // kandidaat-stations (modus 'station')

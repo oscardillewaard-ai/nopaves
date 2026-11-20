@@ -703,7 +703,7 @@ assert.deepEqual(fouten.filter((f) => !/Failed to load resource/.test(f)), [], '
   await cs.close()
 }
 
-// ---- Snelheid stap 6: A naar B met de eigen router, versleepbaar ----
+// ---- Snelheid stap 6: A naar B met de Nopave-router (?router=nopave), versleepbaar ----
 {
   const opties = mobiel ? { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true } : { viewport: { width: 1440, height: 900 } }
   const c6 = await browser.newContext(opties)
@@ -712,7 +712,7 @@ assert.deepEqual(fouten.filter((f) => !/Failed to load resource/.test(f)), [], '
   e.on('pageerror', (x) => ef.push('PAGEERROR ' + x.message))
   let brouter = 0
   e.on('request', (r) => { if (/brouter\.de/.test(r.url())) brouter += 1 })
-  await e.goto(`${basis}?router=eigen`)
+  await e.goto(`${basis}?router=nopave`)
   await e.locator('[data-soort="route"]').click()
   await e.evaluate(() => window.onverhard.kaart.fire('click', { latlng: L.latLng(52.0116, 4.3571) }))
   await e.waitForTimeout(450)
@@ -721,9 +721,9 @@ assert.deepEqual(fouten.filter((f) => !/Failed to load resource/.test(f)), [], '
   await e.waitForFunction(() => (!document.getElementById('resultaat').hidden && !window.onverhard.bezig()) || !!document.getElementById('fout').textContent, null, { timeout: 300000 })
   assert.equal(await e.locator('#fout').textContent(), '')
   const info = await e.evaluate(() => ({ router: window.onverhard.uitslag().router, knopen: !!window.onverhard.uitslag().opties[0].knopen, km: window.onverhard.krijgPlan().opties[0].km }))
-  assert.equal(info.router, 'eigen', 'A naar B met de eigen router')
+  assert.equal(info.router, 'nopave', 'A naar B met de Nopave-router')
   assert.equal(brouter, 0, 'geen BRouter-verzoeken')
-  assert.ok(info.knopen, 'de route ligt op het eigen netwerk (versleepbaar)')
+  assert.ok(info.knopen, 'de route ligt op het netwerk van de Nopave-router (versleepbaar)')
   // verslepen: een punt halverwege de route 80 px opzij trekken (alleen met een muis)
   if (!mobiel) {
     const voor = await e.evaluate(() => window.onverhard.krijgPlan().traject.coords.length)
@@ -740,8 +740,8 @@ assert.deepEqual(fouten.filter((f) => !/Failed to load resource/.test(f)), [], '
     for (let i = 1; i <= 8; i++) await e.mouse.move(vak.x + pt.x + i * 10, vak.y + pt.y - i * 6)
     await e.mouse.up()
     await e.waitForFunction((n) => window.onverhard.krijgPlan().traject.coords.length !== n, voor, { timeout: 30000 })
-    stap(`eigen router: A naar B ${info.km.toFixed(2)} km zonder BRouter; route versleept`)
-  } else stap(`eigen router: A naar B ${info.km.toFixed(2)} km zonder BRouter, op het eigen netwerk`)
+    stap(`Nopave-router: A naar B ${info.km.toFixed(2)} km zonder BRouter; route versleept`)
+  } else stap(`Nopave-router: A naar B ${info.km.toFixed(2)} km zonder BRouter, op zijn eigen netwerk`)
   assert.deepEqual(ef, [])
   await c6.close()
 }
@@ -802,14 +802,14 @@ assert.deepEqual(fouten.filter((f) => !/Failed to load resource/.test(f)), [], '
   assert.equal(b.bron, 'tegels', 'buiten de regio: kaarttegels')
   assert.ok(b.bgt > 0, 'buiten de regio: BGT zoals altijd')
   stap('graaf buiten de regio (Utrecht): terugval op kaarttegels + BGT')
-  // A naar B met de eigen router op de vooraf bewerkte graaf, en verslepen (verse context: de start in
+  // A naar B met de Nopave-router op de vooraf bewerkte graaf, via de oude naam ?router=eigen (alias), en verslepen (verse context: de start in
   // Utrecht van hierboven wordt onthouden, en dat zou terecht een terugval geven)
   await v.close()
   const cg2 = await browser.newContext(opties)
   v = await cg2.newPage()
   v.on('pageerror', (x) => vf.push('PAGEERROR ' + x.message))
   v.on('request', (r) => { if (/brouter\.de/.test(r.url())) brouter += 1 })
-  await v.goto(`${basis}?graaf=vooraf&router=eigen`)
+  await v.goto(`${basis}?router=eigen`)
   await v.locator('[data-soort="route"]').click()
   await v.evaluate(() => window.onverhard.kaart.fire('click', { latlng: L.latLng(52.0116, 4.3571) }))
   await v.waitForTimeout(450)
@@ -820,7 +820,7 @@ assert.deepEqual(fouten.filter((f) => !/Failed to load resource/.test(f)), [], '
   b = await bronnen()
   const ab = await v.evaluate(() => ({ router: window.onverhard.uitslag().router, knopen: !!window.onverhard.uitslag().opties[0].knopen }))
   assert.equal(b.bron, 'vooraf')
-  assert.equal(ab.router, 'eigen')
+  assert.equal(ab.router, 'nopave', '?router=eigen werkt nog als oude naam van de Nopave-router')
   assert.equal(brouter, 0, 'geen BRouter-verzoeken')
   assert.ok(ab.knopen, 'versleepbaar')
   if (!mobiel) {
@@ -840,8 +840,8 @@ assert.deepEqual(fouten.filter((f) => !/Failed to load resource/.test(f)), [], '
     await v.waitForFunction((n) => window.onverhard.krijgPlan().traject.coords.length !== n, voor, { timeout: 30000 })
     const naSlepen = await bronnen()
     assert.equal(naSlepen.bgt, 0, 'verslepen op de vooraf bewerkte graaf: geen BGT')
-    stap('graaf-proef A naar B: eigen router op de vooraf bewerkte graaf, zonder BRouter; versleept zonder BGT')
-  } else stap('graaf-proef A naar B: eigen router op de vooraf bewerkte graaf, zonder BRouter')
+    stap('graaf A naar B: ?router=eigen (oude naam) geeft de Nopave-router op de vooraf bewerkte graaf, zonder BRouter; versleept zonder BGT')
+  } else stap('graaf A naar B: ?router=eigen (oude naam) geeft de Nopave-router op de vooraf bewerkte graaf, zonder BRouter')
   assert.deepEqual(vf, [])
   await cg.close()
   await cg2.close()

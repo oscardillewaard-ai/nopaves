@@ -22,7 +22,7 @@ export function nodigeTegels() {
     const p = [DELFT[0] + (r * Math.cos((hoek * Math.PI) / 180)) / 111320, DELFT[1] + (r * Math.sin((hoek * Math.PI) / 180)) / (111320 * Math.cos((DELFT[0] * Math.PI) / 180))]
     zet(T.tegelsLangs(DELFT, p))
   }
-  for (const b of AB) zet(T.tegelsLangs(DELFT, b, { factor: 1.4, extra: 600 })) // eigen router, eerste ellips
+  for (const b of AB) zet(T.tegelsLangs(DELFT, b, { factor: 1.4, extra: 600 })) // Nopave-router, eerste ellips
   for (const [la, lo, km] of MEIJENDEL) zet(T.tegelsRond(la, lo, 0.38 * km * 1000))
   return [...m.values()]
 }
