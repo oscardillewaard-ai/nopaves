@@ -1,7 +1,7 @@
 // Graaf-proef stap 4: tabellen en beslisregels uit de metingen (markdown op stdout).
 //   node tools/graaf/tabel_proef.mjs docs/graaf-proef
 // Verwacht in die map: huidig-rest.json, vooraf-rest.json (rondje + station), brouter-ab.json,
-// eigen-ab.json (?router=eigen), vooraf-ab.json (?graaf=vooraf&router=eigen), oordeel.json.
+// eigen-ab.json (?router=eigen, de oude naam van ?router=nopave), vooraf-ab.json (?graaf=vooraf&router=eigen), oordeel.json.
 import fs from 'node:fs'
 import path from 'node:path'
 
@@ -51,7 +51,7 @@ for (const { naam, mode, data } of rijen) {
 }
 
 // ---------- Beslisregel 1: ?graaf=vooraf standaard binnen de regio ----------
-// testgevallen: rondje en station (huidig tegen vooraf) en de 10 paren met de eigen router (tegels tegen vooraf)
+// testgevallen: rondje en station (huidig tegen vooraf) en de 10 paren met de Nopave-router (tegels tegen vooraf)
 const paren = []
 for (const n of Object.keys(huidigRest)) if (voorafRest[n]) paren.push([n, huidigRest[n], voorafRest[n]])
 for (const n of Object.keys(eigen)) if (voorafAb[n]) paren.push([n, eigen[n], voorafAb[n]])
@@ -75,8 +75,8 @@ console.log(`Ondergrondoordeel gelijk: ${oordeel.gelijkPct ?? '–'}% van ${oord
 const regel1 = kernSnel && scoreOk >= Math.ceil(0.9 * paren.length) && (oordeel.gelijkPct ?? 0) >= 98
 console.log(`REGEL1: ${regel1 ? 'GEHAALD' : 'NIET GEHAALD'}`)
 
-// ---------- Beslisregel 2: eigen router (vooraf) tegen BRouter ----------
-console.log('\n#### Beslisregel 2: A naar B, eigen router met de vooraf bewerkte graaf tegen BRouter\n')
+// ---------- Beslisregel 2: Nopave-router (vooraf) tegen BRouter ----------
+console.log('\n#### Beslisregel 2: A naar B, Nopave-router met de vooraf bewerkte graaf tegen BRouter\n')
 console.log('| Paar | Wachttijd koud BRouter → eigen (s) | warm (s) | Lengte (km) | Onverhard+half | Score | Verboden (m) | Sneller | Score ≥ |')
 console.log('|---|---|---|---|---|---|---|---|---|')
 let sneller = 0

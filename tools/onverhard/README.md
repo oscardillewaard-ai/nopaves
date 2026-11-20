@@ -682,11 +682,11 @@ CHROMIUM_PAD=/opt/pw-browsers/chromium node tests/test_gebieden.mjs [uit.json]  
 CHROMIUM_PAD=/opt/pw-browsers/chromium node tools/onverhard/benchmark_snelheid.mjs uit.json [N] [filter] [ab|rest]   # snelheid per fase
 python3 tools/onverhard/tabel_snelheid.py voor.json [na.json]                                    # tabellen uit de benchmark
 NODE_USE_ENV_PROXY=1 node tools/onverhard/vergelijk_stations.mjs [uit.json]                     # Naar station met en zonder ringen
-python3 tools/onverhard/beslis_router.py brouter.json eigen.json                                 # A naar B: eigen router of BRouter
+python3 tools/onverhard/beslis_router.py brouter.json eigen.json                                 # A naar B: Nopave-router of BRouter
 ```
 
 Vlaggen in de adresbalk: `?ui=oud` (de oude interface met het stappenplan), `?router=eigen` of
-`?router=auto` (A naar B met de eigen router), `?stations=ringen` (Naar station in ringen).
+`?router=auto` (A naar B met de Nopave-router), `?stations=ringen` (Naar station in ringen).
 
 `NODE_USE_ENV_PROXY=1` is alleen nodig achter een proxy. De end-to-end-test
 gebruikt Playwright uit de `node_modules` van de repo; zet `CHROMIUM_PAD` als

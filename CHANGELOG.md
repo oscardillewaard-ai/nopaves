@@ -31,6 +31,6 @@ Alle noemenswaardige wijzigingen aan Nopav.es, in gewone taal. Versies volgen
   krijgt.
 - **Mijn gebruik**: een teller die alleen in je eigen browser bijhoudt wat je doet. Hij wordt nooit
   verstuurd.
-- **Proeven achter een schakelaar** (niet standaard): `?router=eigen` (eigen router voor A naar B),
+- **Proeven achter een schakelaar** (niet standaard): `?router=eigen` (Nopave-router voor A naar B),
   `?stations=ringen` (stations zoeken in ringen) en `?graaf=vooraf` (vooraf bewerkte routegraaf, alleen
   regio Delft).

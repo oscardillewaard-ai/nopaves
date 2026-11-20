@@ -10,7 +10,7 @@ GPX en bewaren. Live: https://oscardillewaard-ai.github.io/nopaves/ (GitHub Page
 ## Mappen
 
 - `public/`: de app (geen bouwstap). `index.html`, `app.js` (interface), `kern.js` (score, ondergrond),
-  `bronnen.js` (OSM-tegels, BGT, AHN, BRouter, Locatieserver), `graaf.js` (eigen router),
+  `bronnen.js` (OSM-tegels, BGT, AHN, BRouter, Locatieserver), `graaf.js` (Nopave-router),
   `blokgraaf.js` (vooraf bewerkte graaf), `rekenwerker.js` (Web Worker), `sw.js`, `manifest.webmanifest`,
   `graaf/<versie>/` (graafblokken), `vendor/` (Leaflet, MapLibre; niet aanpassen).
 - `tests/`: `test_web_kern.mjs` (unit), `test_web_nopaves.mjs` (Playwright, telefoon en desktop),
@@ -35,7 +35,8 @@ CHROMIUM_PAD=/opt/pw-browsers/chromium npm run test:desktop
 ```
 
 (`CHROMIUM_PAD` alleen in de cloudomgeving; elders `npx playwright install chromium`.)
-Alles moet groen zijn, ook achter de vlaggen `?ui=oud`, `?router=eigen`, `?stations=ringen` en
+Alles moet groen zijn, ook achter de vlaggen `?ui=oud`, `?router=nopave` (de Nopave-router voor A naar B; de oude
+naam `?router=eigen` werkt ook), `?stations=ringen` en
 `?graaf=tegels` (de oude werking met kaarttegels en BGT; binnen de regio Delft is de vooraf bewerkte graaf
 sinds v1.1.0 de standaard, buiten de regio valt de app vanzelf terug op de tegels). **Elke nieuwe handeling krijgt een Playwright-test die via de knoppen werkt**, niet via
 `window.onverhard`.

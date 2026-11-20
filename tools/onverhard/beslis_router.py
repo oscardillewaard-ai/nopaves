@@ -1,8 +1,8 @@
-"""Stap 6: eigen router naast BRouter op de A-naar-B-paren, en de beslisregel.
+"""Stap 6: Nopave-router naast BRouter op de A-naar-B-paren, en de beslisregel.
 
   python3 tools/onverhard/beslis_router.py brouter.json eigen.json
 
-Regel: eigen router standaard als hij op minstens 9 van de 10 paren sneller is (mediaan totaal, koud),
+Regel: Nopave-router standaard als hij op minstens 9 van de 10 paren sneller is (mediaan totaal, koud),
 de score gelijk of hoger is, en er nergens een stuk is waar de route niet mag komen.
 """
 import json
@@ -36,4 +36,4 @@ print('\n'.join(regels))
 print()
 print(f'Sneller op {sneller} van {len(paren)}; score gelijk of hoger op {score_ok} van {len(paren)}; paren met een verboden stuk: {verboden}.')
 regel = sneller >= 9 and score_ok == len(paren) and verboden == 0
-print('BESLISSING:', 'eigen router standaard' if regel else 'BRouter blijft standaard')
+print('BESLISSING:', 'Nopave-router standaard' if regel else 'BRouter blijft standaard')

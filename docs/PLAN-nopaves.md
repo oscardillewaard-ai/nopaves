@@ -23,7 +23,7 @@ Onverhard (live op oscardillewaard-ai.github.io/Tezt/onverhard/) krijgt de naam 
 - **Herbruikbaar uit `bronnen.js`:**
   - `planRondjeEigen`: het patroon voor tegels ophalen, graaf bouwen, BGT-analyse, de tweede ronde zonder strand/kaartje en `waardering`;
   - `haalTegels`, `analyseerRoute`, `pasRouteAan`, `optieVan`.
-- Opties uit de eigen router hebben al `knopen/segs/vast`. Slepen, weghalen en undo werken daar al op.
+- Opties uit de Nopave-router hebben al `knopen/segs/vast`. Slepen, weghalen en undo werken daar al op.
 - **Nog niet gecontroleerd (aanname):**
   - of z12 álle kleine stations bevat; de rank-filtering van OpenMapTiles kan kleine haltes weglaten;
   - of `leesOsmTegel` met een andere zoom dan 14 overweg kan; vermoedelijk is er een zoomparameter nodig.
@@ -101,7 +101,7 @@ Onverhard (live op oscardillewaard-ai.github.io/Tezt/onverhard/) krijgt de naam 
   - nieuw `tegelsLangs(a, b, marge)`: de z14-tegels in een ellips om start en station.
 - **Bronnen (`bronnen.js`), nieuwe functie `planStations(instel, bgt, aantal, meld, signal)`:**
   1. **Stations zoeken:** z12-tegels binnen ±0,85 × km van de start, alleen de laag `poi` lezen, alleen `railway/station` en `railway/halt`. Ontdubbelen op naam binnen 300 m.
-  2. **Kandidaten:** hemelsbreed 0,5–0,85 × km (de eigen router is meestal 1,2–1,4× hemelsbreed). Per kompassector (8 stuks) het station het dichtst bij 0,7 × km, hooguit 6 in totaal.
+  2. **Kandidaten:** hemelsbreed 0,5–0,85 × km (de Nopave-router is meestal 1,2–1,4× hemelsbreed). Per kompassector (8 stuks) het station het dichtst bij 0,7 × km, hooguit 6 in totaal.
   3. **Paden:** z14-tegels uit de vereniging van de ellipsen per kandidaat, met als grens: som van de afstanden ≤ 1,35·d + 1 km. Plafond ±220 tegels; zit je erboven, dan vallen de verste kandidaten af.
   4. **Graaf en routes:** `bouwGraaf` met dezelfde opbouw als `planRondjeEigen`.
      - Startknoop via `dichtsteKnoop`, daarna **één** `dijkstra(g, s)`: één boom geeft de routes naar álle stations.

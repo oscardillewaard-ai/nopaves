@@ -19,7 +19,7 @@ const GEVALLEN = [
   ['rondje-10 Delft Centraal', { punten: [DELFT], rondjeKm: 10 }],
   ['station-15 Delft Centraal', { modus: 'station', punten: [DELFT], rondjeKm: 15 }],
   ['rondje-10 Meijendel', { punten: [[52.13081, 4.35323]], rondjeKm: 10 }],
-  ...AB.map((b, i) => [NAMEN[i], { punten: [DELFT, b], router: 'eigen' }]),
+  ...AB.map((b, i) => [NAMEN[i], { punten: [DELFT, b], router: 'nopave' }]),
 ]
 
 const uitPad = process.argv[2] || 'vergelijk_oordeel.json'

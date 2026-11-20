@@ -1479,7 +1479,7 @@ export function ontdubbelStations(stations, binnen = 300) {
 }
 
 /**
- * Welke stations proberen we? Hemelsbreed tussen 0,5 en 0,85 × doel (m) van de start (de eigen router
+ * Welke stations proberen we? Hemelsbreed tussen 0,5 en 0,85 × doel (m) van de start (de Nopave-router
  * komt op 1,2-1,4 × hemelsbreed uit). Per kompassector (8 stuks) het station dat het dichtst bij
  * 0,7 × doel ligt, een waarschijnlijk treinstation wint van een tram- of metrohalte en een knooppunt
  * (hoge rank) van een klein station. Hooguit 'max' in

@@ -21,7 +21,7 @@ regio of als een blok niet laadt. Wekelijkse Action: `.github/workflows/graaf.ym
 |---|---|---|---|---|
 | Rondje 10 km Delft | 4,3 → **2,9** (−31%) | 11,1 → **3,1** | 214 / 32 → **7 / 2,2** | 50 → 50 |
 | Station 15 km Delft | 8,1 → **1,9** (−76%) | 23,3 → **2,3** | 828 / 105 → **21 / 7,9** | 58 → 57 |
-| A naar B, 10 paren (eigen router) | 1,6–7,6 → **0,4–1,8** | 4,0–20,7 → **0,5–2,1** | tot 689 / 87 → **≤ 22 / 7,6** | 11 van 12 gelijk of hoger* |
+| A naar B, 10 paren (Nopave-router) | 1,6–7,6 → **0,4–1,8** | 4,0–20,7 → **0,5–2,1** | tot 689 / 87 → **≤ 22 / 7,6** | 11 van 12 gelijk of hoger* |
 | A naar B tegen BRouter | | 5,1–17,0 → **0,5–2,1** | | 3 van 10 gelijk of hoger |
 
 \* rondje, station en de 10 paren samen. **Ondergrondoordeel vooraf tegen de app: 99,66% van 331 km gelijk.**
@@ -29,7 +29,7 @@ regio of als een blok niet laadt. Wekelijkse Action: `.github/workflows/graaf.ym
 **Beslisregels**
 - `?graaf=vooraf` standaard: **niet gehaald**. Oordeel, score en tests halen de eis, maar route A bij
   het rondje is 31% sneller in plaats van ≥ 40%: wat overblijft is het rekenen zelf, niet de data.
-- Eigen router standaard voor A naar B: **niet gehaald**. 10 van 10 sneller, geen verboden stukken, maar
+- Nopave-router standaard voor A naar B: **niet gehaald**. 10 van 10 sneller, geen verboden stukken, maar
   de score is maar bij 3 van 10 paren gelijk of hoger. BRouter blijft.
 
 **Live**: niets veranderd; de Pages-branch is niet aangeraakt. Alles staat op branch `graaf-proef`.
@@ -44,7 +44,7 @@ niet in git committen maar direct in het Pages-artefact zetten (anders ~7–8 GB
 (2) de BGT als landelijk extract plus wekelijkse mutaties ophalen in plaats van ~300.000 losse tegels
 (25–30 GB, past niet in de 10 GB Actions-cache en belast PDOK), (3) blokken in de stad kleiner maken
 (quadtree) en het formaat compacter (ketens tussen kruisingen, gedeelde tabellen). Doe eerst de twee
-vervolgstappen uit stap 4 (rondje sneller vinden, eigen router op het eindoordeel laten kiezen): dan
+vervolgstappen uit stap 4 (rondje sneller vinden, Nopave-router op het eindoordeel laten kiezen): dan
 haalt de proef waarschijnlijk beide beslisregels, en is opschalen de moeite waard.
 
 ## Hervatten
@@ -79,7 +79,7 @@ is. Werkbranch `graaf-proef` (vanaf de live versie `7c885b5`); terugzetpunt: bra
 
 Bepaald met de tegelfuncties van de app zelf (`tools/graaf/regio.mjs`): alle kaarttegels (zoom 14)
 die de testset vraagt: rondje 10 km (cirkel 0,38 × L), station 15 km (ellipsen naar kandidaten op
-0,5–0,85 × L in 24 richtingen), de 10 A-naar-B-paren (eerste ellips van de eigen router, 1,4 × + 600 m)
+0,5–0,85 × L in 24 richtingen), de 10 A-naar-B-paren (eerste ellips van de Nopave-router, 1,4 × + 600 m)
 en Meijendel & Berkheide (rondjes van 15 km vanaf twee plekken in het gebied). Dat zijn 451 tegels in
 38 blokken; de omhullende rechthoek is de regio (marge = de rest van de blokken).
 
@@ -90,7 +90,7 @@ en Meijendel & Berkheide (rondjes van 15 km vanaf twee plekken in het gebied). D
 | Bbox (lon/lat) | **4,1309 – 4,6582 O, 51,8358 – 52,2682 N** (≈ 36 × 48 km) |
 | Vastgelegd in | `tools/graaf/regio.json` |
 
-De twee grotere ellipsen van de eigen router (1,9 × en 2,6 ×, alleen als er geen route is) vallen
+De twee grotere ellipsen van de Nopave-router (1,9 × en 2,6 ×, alleen als er geen route is) vallen
 er niet altijd in: dan valt de router terug op de huidige werking.
 
 ### Formaat: NPG1 (binair, gzip)
@@ -416,7 +416,7 @@ Score gelijk of hoger: 11 van 12 (eis: ≥ 90%, dus ≥ 11).
 Ondergrondoordeel gelijk: 99.66% van 331.3 km (eis ≥ 98%).
 **Beslisregel 1: niet gehaald.**
 
-#### Beslisregel 2: A naar B, eigen router met de vooraf bewerkte graaf tegen BRouter
+#### Beslisregel 2: A naar B, Nopave-router met de vooraf bewerkte graaf tegen BRouter
 
 | Paar | Wachttijd koud BRouter → eigen (s) | warm (s) | Lengte (km) | Onverhard+half | Score | Verboden (m) | Sneller | Score ≥ |
 |---|---|---|---|---|---|---|---|---|
@@ -496,7 +496,7 @@ Sneller op 10 van 10; score gelijk of hoger op 3 van 10; paren met een verboden 
 - **Route A bij het rondje** daalt maar 31% (4,3 → 2,9 s): wat overblijft is het rekenen zelf
   (`zoekRondjes` ≈ 2,1 s), en dat haalt voorbewerking niet weg. Daar strandt beslisregel 1.
 - Score: 11 van 12 gelijk of hoger; station 58 → 57 door één stuk van 50 m met een ander oordeel
-  (61,0% → 60,2% onverhard + half). Delfgauw (eigen router) 44 → 47.
+  (61,0% → 60,2% onverhard + half). Delfgauw (Nopave-router) 44 → 47.
 - Oordeel: **99,66% van 331 km gelijk**. De grootste verschillen zijn stukken van ~50 m waar de BGT
   rond de route anders geladen is dan in de voorbewerking (de app laadt alleen tegels rond de route; de
   voorbewerking alle tegels van de groep, waardoor er soms een ander vlak "het dichtstbij" ligt), en
@@ -509,10 +509,10 @@ Sneller op 10 van 10; score gelijk of hoger op 3 van 10; paren met een verboden 
   lager, niet ≥ 40% (station: 76%). Dus blijft het achter de vlag. Vervolgstap die dit wel kan halen: het
   rondje zelf sneller vinden (minder pogingen tot het eerste goede rondje, of eerst de beste sector tonen);
   de data is niet meer de bottleneck.
-- **Beslisregel 2 (eigen router standaard voor A naar B): niet gehaald.** Sneller op 10 van 10 (koud
+- **Beslisregel 2 (Nopave-router standaard voor A naar B): niet gehaald.** Sneller op 10 van 10 (koud
   0,5–2,3 s tegen 5–17 s), geen verboden stukken, maar de score is maar op 3 van 10 paren gelijk of hoger
-  (zelfde patroon als stap 6: de eigen router kiest op OSM-kosten, BRouter kiest tussen vier alternatieven
-  met de BGT). BRouter blijft. Vervolgstap: met de voorafgraaf is het oordeel gratis, dus de eigen router
+  (zelfde patroon als stap 6: de Nopave-router kiest op OSM-kosten, BRouter kiest tussen vier alternatieven
+  met de BGT). BRouter blijft. Vervolgstap: met de voorafgraaf is het oordeel gratis, dus de Nopave-router
   kan nu goedkoop 4–6 alternatieven op het eindoordeel scoren en de beste kiezen; daarna opnieuw meten.
 - **Niets live gezet**: geen beslisregel maakt iets standaard. De Pages-branch is niet aangeraakt.
 
@@ -591,7 +591,7 @@ Stations: Maassluis West is sinds 2019 metro (nu terecht geen trein); museumtram
 Wassenaarse Wetering zijn geen trein; Nieuw Vennep ontbreekt (vermoedelijk als vlak in OSM, niet
 nagekeken; buiten bereik vanaf Delft). Rotterdam Stadion staat als halte.
 
-**A naar B, eigen router op deze graaf tegen BRouter** (10 paren, 5× koud en 5× warm, mediaan;
+**A naar B, Nopave-router op deze graaf tegen BRouter** (10 paren, 5× koud en 5× warm, mediaan;
 `docs/graaf-geofabrik/`): sneller op 10 van 10 (koud 0,5–2,3 s tegen 5,5–17,4 s), score gelijk of hoger
 op **9 van 10** (proef: 3 van 10; alleen Schipluiden 22 → 21), verboden stukken 0. Beslisregel 2 vraagt
 score ≥ op alle 10: **net niet gehaald**, BRouter blijft de standaard voor A naar B. Let op: bij Den Hoorn

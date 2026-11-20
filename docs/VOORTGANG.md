@@ -25,7 +25,7 @@ Alle fasen zijn af: UX 1, 2, 3 en snelheid stap 0–6. Unit-tests (48) en de Pla
 - **Snelheid**: meetpunten en benchmark (stap 0); datacache voor tegels/BGT/AHN (1); vooraf ophalen
   na het kiezen van de start (2); route A meteen, voorlopig, de rest daarna (3); rekenwerk in een Web
   Worker met echte Stop (4); stations in ringen achter `?stations=ringen` (5, uitkomst niet altijd
-  gelijk); eigen A-naar-B-router achter `?router=eigen` (6, haalt de beslisregel niet: score lager).
+  gelijk); Nopave-router (A naar B) achter `?router=eigen` (6, haalt de beslisregel niet: score lager).
 
 **Gemaakte keuzes** (details per stap verderop): geen `main` op GitHub en tags mogen niet gepusht
 worden → integratie op de sessiebranch, terugzetpunten als `terugzet/*`-branches, niet zelf live
@@ -75,7 +75,7 @@ is niet sneller** (gelijk tot 1 s trager): het tussenresultaat moet getekend wor
 schrijft alles weg. Scores zijn overal gelijk: de uitkomst veranderde niet.
 
 **Niet gelukt of bewust laten liggen**
-- Stap 5 (ringen) en stap 6 (eigen router) zijn gebouwd en getest, maar niet de standaard: ze halen
+- Stap 5 (ringen) en stap 6 (Nopave-router) zijn gebouwd en getest, maar niet de standaard: ze halen
   "resultaat gelijk" resp. de beslisregel niet (cijfers in de secties).
 - "Delft Centraal" zoeken vindt de Locatieserver niet (geen stations).
 - In-gebied-rondjes zijn vaak langer dan gevraagd (bestaand gedrag).
@@ -124,7 +124,7 @@ en dat is ook de standaardbranch (HEAD). Veiligste redelijke keuze:
 | UX fase 3 | klaar (tag `na-ux-3`) |
 | Snelheid stap 0 (meten) | klaar |
 | Snelheid stap 1–5 | klaar |
-| Snelheid stap 6 (eigen router) | klaar: BRouter blijft standaard |
+| Snelheid stap 6 (Nopave-router) | klaar: BRouter blijft standaard |
 | Hermeting na stap 6 | klaar (tag `na-snelheid`) |
 
 ## Testen
@@ -470,14 +470,14 @@ variant vraagt een bovengrens op de score van een nog niet doorgerekende route, 
 (de score kan tot 100 gaan). Vervolgstap als je de winst toch wilt: de regel "resultaat gelijk"
 loslaten voor Station en `?stations=ringen` standaard maken (scheelt in Delft 33% tegels, 6 s).
 
-### Stap 6: A naar B met de eigen router
+### Stap 6: A naar B met de Nopave-router
 
 `planRouteEigen` (bronnen.js): tegels in een ellips per deel met de punten als brandpunten (grote
 as 1,4 × de rechte afstand + 600 m), geen route? dan 1,9 × (+1,2 km) en 2,6 × (+2,5 km); tussenpunten
 per deel; dezelfde voorkeuren als rondjes (trail, alles, strand, toegangskaart); alternatieven met
 `routesLangs` (graaf.js: straf 1,8× op stukken die eerdere routes al gebruiken, routes die voor meer
 dan 80% overlappen vallen af); de routes liggen op het eigen netwerk en zijn dus **versleepbaar**
-(getest). Mislukt de eigen router, dan alsnog BRouter. Niet bij een LAW-voorkeur (die kent alleen
+(getest). Mislukt de Nopave-router, dan alsnog BRouter. Niet bij een LAW-voorkeur (die kent alleen
 BRouter).
 
 Vergelijking op de 10 paren, zelfde code (na stap 1–5), 5× koud en 5× warm per router
@@ -509,11 +509,11 @@ foot=designated` (bij 85969,448288 RD), `highway=pedestrian … access=no foot=y
 deel van de toegangsinformatie (geen `access` op elk pad, geen tijdelijke afsluitingen), dus "geen
 verboden stuk gevonden" is geen garantie.
 
-**Beslissing volgens de regel: BRouter blijft de standaard voor A naar B.** De eigen router is wel
+**Beslissing volgens de regel: BRouter blijft de standaard voor A naar B.** De Nopave-router is wel
 sneller (8 van 10, niet de vereiste 9; trager bij Rotterdam en Leiden, waar de graaf groot wordt),
 maar de **score is maar op 3 van 10 paren gelijk of hoger** (tot 14 punten lager bij Delftse Hout,
 8 bij Leiden). Waarom: de BRouter-route kiest tussen vier alternatieven met de officiële kaart
-erbij, de eigen router kiest alleen op de OpenStreetMap-kosten. De eigen router staat achter
+erbij, de Nopave-router kiest alleen op de OpenStreetMap-kosten. De Nopave-router staat achter
 **`?router=eigen`** (en `?router=auto` = eigen tot `EIGEN_ROUTER_MAX_M` = 25 km, daarboven
 BRouter); er is dus geen lengtegrens actief. Vervolgstap die de score kan dichten: ook bij de eigen
 router 3–4 alternatieven langs de BGT leggen en de beste kiezen (zoals bij rondjes), en dan opnieuw

@@ -4,11 +4,11 @@
 //   python3 tools/serve.py &
 //   CHROMIUM_PAD=/opt/pw-browsers/chromium node tools/onverhard/benchmark_snelheid.mjs uit.json [N=5] [filter] [groep]
 //
-// groep: 'ab' = alleen de A-naar-B-paren (BRouter of eigen router), 'rest' = de andere gevallen, leeg = alles,
+// groep: 'ab' = alleen de A-naar-B-paren (BRouter of Nopave-router), 'rest' = de andere gevallen, leeg = alles,
 // 'nieuw' = de nieuwe A-naar-B-paren uit tools/graaf/ab_nieuw.mjs (niet gebruikt bij het afstellen).
 // Koud = een nieuwe browsercontext (lege HTTP-cache en lege Cache Storage). Warm = dezelfde context na
 // één opwarmronde, met elke keer de pagina opnieuw geladen (geheugen leeg, caches gevuld).
-// ONVERHARD_QUERY=router=eigen voegt ?router=eigen toe (stap 6).
+// ONVERHARD_QUERY=router=nopave voegt ?router=nopave toe (stap 6; de oude naam router=eigen werkt ook).
 import { chromium } from 'playwright'
 import fs from 'node:fs'
 

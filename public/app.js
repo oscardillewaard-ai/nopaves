@@ -13,9 +13,15 @@ import { voorafOphalen, haalTegels, bekijkRoute, haalOpeningstijden, importeerGp
 const SLEUTEL = 'onverhard.v1'
 // UX fase 2: de plankaart is de standaard; de oude interface blijft (tijdelijk) bereikbaar met ?ui=oud.
 const UI_NIEUW = new URLSearchParams(location.search).get('ui') !== 'oud'
-// A naar B: welke router standaard (snelheid, stap 6; zie VOORTGANG.md). 'auto' = eigen router tot
-// EIGEN_ROUTER_MAX_M, daarboven en bij fouten BRouter.
+// A naar B: welke router standaard (snelheid, stap 6; zie VOORTGANG.md). 'auto' = Nopave-router tot
+// NOPAVE_ROUTER_MAX_M, daarboven en bij fouten BRouter. ?router=nopave (oude naam ?router=eigen werkt ook).
 const STANDAARD_ROUTER = 'brouter'
+/** ?router=nopave | brouter | auto; ?router=eigen is de oude naam van nopave. */
+const routerKeuze = () => {
+  const q = new URLSearchParams(location.search).get('router')
+  if (q === 'eigen') return 'nopave'
+  return ['nopave', 'brouter', 'auto'].includes(q) ? q : STANDAARD_ROUTER
+}
 // De vooraf bewerkte routegraaf (regio Delft). 'vooraf' = blokken gebruiken binnen de regio (buiten de
 // regio of bij een fout: de gewone werking met kaarttegels en BGT). Standaard sinds v1.1.0; de oude
 // werking blijft bereikbaar met ?graaf=tegels. Zie docs/GRAAF-PROEF.md.
@@ -1065,7 +1071,7 @@ async function planNu() {
       binnen: binnenVlak ? binnen.naam : undefined,
       ringen: new URLSearchParams(location.search).get('stations') === 'ringen', // stap 5: alleen op verzoek (uitkomst kan afwijken)
       graaf: GRAAF, // graaf-proef
-      router: ['eigen', 'brouter', 'auto'].includes(new URLSearchParams(location.search).get('router')) ? new URLSearchParams(location.search).get('router') : STANDAARD_ROUTER, // stap 6
+      router: routerKeuze(), // stap 6
       law: staat.law,
       trail: staat.trail,
       alles: !!staat.alles,
