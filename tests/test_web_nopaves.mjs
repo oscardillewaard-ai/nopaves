@@ -82,9 +82,11 @@ await page.screenshot({ path: path.join(map, `nopaves_resultaat_${soort}.png`) }
 
 // ---- groene omwegen ----
 {
-  // een rondje bij Rijswijk Buiten: lange verharde stukken met een onverhard alternatief ernaast
+  // een rondje bij Rijswijk Buiten: lange verharde stukken met een onverhard alternatief ernaast. Met
+  // ?graaf=tegels: op de vooraf bewerkte graaf (standaard sinds v1.1.0) kiest de router hier een andere
+  // ronde, zonder stuk dat aan de omweg-eisen voldoet (zie docs/GRAAF-PROEF.md, na de proef)
   const og = await ctx.newPage()
-  await og.goto(`${basis}#p=52.04,4.32&rondje=10&plan=1`)
+  await og.goto(`${basis}?graaf=tegels#p=52.04,4.32&rondje=10&plan=1`)
   await og.waitForFunction(() => (!document.getElementById('resultaat').hidden && !(window.onverhard.bezig && window.onverhard.bezig())) || !document.getElementById('fout').hidden, null, { timeout: 300000 })
   await og.waitForTimeout(2000)
   const meet = () => og.evaluate(() => {
