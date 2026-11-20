@@ -11,6 +11,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import crypto from 'node:crypto'
+import { StringDecoder } from 'node:string_decoder'
 import { fileURLToPath } from 'node:url'
 import { haal, tegelijk, teller } from './haal.mjs'
 import { ofmElementen, ofmVersie } from './bron_ofm.mjs'
@@ -32,6 +33,24 @@ export function laadRegio(pad = path.join(HIER, 'regio.json')) {
   return r
 }
 
+/** Regels van een (groot) tekstbestand, in stukken gelezen: een hele provincie past niet in één string. */
+function* regelsVan(pad) {
+  const fd = fs.openSync(pad, 'r')
+  const buf = Buffer.alloc(64 * 1024 * 1024)
+  const dec = new StringDecoder('utf8') // houdt een half UTF-8-teken op de stukgrens vast
+  let rest = ''
+  try {
+    for (let n; (n = fs.readSync(fd, buf, 0, buf.length, null)) > 0;) {
+      const delen = (rest + dec.write(buf.subarray(0, n))).split('\n')
+      rest = delen.pop()
+      yield* delen
+    }
+  } finally {
+    fs.closeSync(fd)
+  }
+  if (rest) yield rest
+}
+
 /** Elementen ({type:'way', tags, geometry, osm}) uit de gekozen bron, plus snap (zoals de app). */
 export async function laadElementen(regio, bron) {
   if (bron === 'ofm') {
@@ -41,7 +60,7 @@ export async function laadElementen(regio, bron) {
   // ndjson uit bron_pbf.py: per regel {osm, tags, geometry: [[lat, lon], ...]} of {poi|station}
   const elementen = []
   let id = 0
-  for (const regel of fs.readFileSync(bron, 'utf8').split('\n')) {
+  for (const regel of regelsVan(bron)) {
     if (!regel.trim()) continue
     const e = JSON.parse(regel)
     if (e.soort === 'way') {
