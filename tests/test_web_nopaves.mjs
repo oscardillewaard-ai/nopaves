@@ -210,7 +210,9 @@ assert.deepEqual(fouten.filter((f) => !/Failed to load resource/.test(f)), [], '
   const extra = stationsInfo.find((s) => !namen.includes(s.naam))
   if (extra) {
     const marker = sp.locator('.stationico').nth(stationsInfo.findIndex((s) => s.naam === extra.naam))
-    await marker.click({ force: true })
+    // de marker kan buiten beeld liggen (de kaart toont de routes, niet alle stations): klik op het
+    // element zelf; Leaflet opent de popup en schuift de kaart zo dat hij in beeld komt
+    await marker.dispatchEvent('click')
     await sp.locator('.leaflet-popup button', { hasText: 'Route hierheen' }).click()
     await sp.waitForFunction((n) => document.querySelectorAll('#opties .optie').length > n, titels.length, { timeout: 120000 })
     const na = await sp.locator('#opties .kies > span:nth-child(2) > b:first-child').allTextContents()
