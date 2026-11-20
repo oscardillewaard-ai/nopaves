@@ -41,8 +41,15 @@ class Lezer(osmium.SimpleHandler):
             return
         t = n.tags
         naam = t.get('name:nl') or t.get('name') or ''
-        if t.get('railway') in ('station', 'halt') and t.get('station') not in ('subway', 'light_rail') and naam:
-            trein = t.get('train') == 'yes' or t.get('railway') == 'station' and t.get('operator', '').startswith('NS')
+        spoor = t.get('railway') in ('station', 'halt') or (t.get('public_transport') == 'station' and t.get('train') == 'yes')
+        if spoor and naam:
+            # Zoals de app in de kaarttegels (laag poi, railway/station en railway/halt): ook metro- en
+            # RandstadRail-haltes, maar dan als 'geen trein' (de app geeft ze een straf en noemt ze
+            # "misschien een tram- of metrohalte"). Museumlijnen (toeristisch, bewaard) tellen niet als trein.
+            metro = t.get('station') in ('subway', 'light_rail') or t.get('subway') == 'yes' or t.get('light_rail') == 'yes'
+            museum = (t.get('usage') in ('tourism', 'heritage') or t.get('railway:preserved') == 'yes' or 'tourism' in t
+                      or any(w in (t.get('operator', '') + ' ' + t.get('network', '')).lower() for w in ('museum', 'smalspoor', 'stoomtrein', 'stichting')))
+            trein = not metro and not museum and (t.get('train') == 'yes' or t.get('operator', '').startswith('NS') or t.get('network', '').startswith('NS'))
             self.schrijf({'soort': 'station', 'naam': naam, 'trein': bool(trein), 'rank': 0, 'lat': n.location.lat, 'lon': n.location.lon})
             return
         for (k, v), s in POI.items():

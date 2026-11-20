@@ -4,6 +4,8 @@
 // Uitkomst: overeenkomst van het eindoordeel als % van de lengte, en de grootste verschillen.
 //
 //   NODE_USE_ENV_PROXY=1 node --max-old-space-size=8000 tools/graaf/vergelijk_oordeel.mjs uit.json
+// Met OORDEEL_MIN=98 stopt het script met code 1 als de overeenkomst lager is of als een geval niet op
+// de vooraf bewerkte graaf gepland kon worden (gebruikt door de workflow Graaf bouwen).
 import fs from 'node:fs'
 import * as K from '../../public/kern.js'
 import { maakPlan } from '../../public/bronnen.js'
@@ -25,9 +27,10 @@ const resultaten = []
 const verschillen = []
 let totaal = 0
 let gelijk = 0
+const overgeslagen = []
 for (const [naam, opties] of GEVALLEN) {
   const plan = await maakPlan({ ...opties, graaf: 'vooraf', trail: true, strandMijden: true, kaartje: false, alternatieven: 2, hoogtes: false })
-  if (plan.graafBron !== 'vooraf') { console.log(naam, 'niet vooraf:', plan.graafBron); continue }
+  if (plan.graafBron !== 'vooraf') { console.log(naam, 'niet vooraf:', plan.graafBron); overgeslagen.push(naam); continue }
   for (const o of plan.opties) {
     const an = o.analyse
     const punten = K.meetpunten(an.stukken)
@@ -54,3 +57,8 @@ verschillen.sort((a, b) => b.m - a.m)
 const samen = { gelijkPct: +((100 * gelijk) / totaal).toFixed(2), km: +(totaal / 1000).toFixed(1), resultaten, grootsteVerschillen: verschillen.slice(0, 25) }
 fs.writeFileSync(uitPad, JSON.stringify(samen, null, 1))
 console.log('TOTAAL', samen.gelijkPct, '% van', samen.km, 'km')
+const min = Number(process.env.OORDEEL_MIN || 0)
+if (min && (overgeslagen.length || !(samen.gelijkPct >= min))) {
+  console.error(`MISLUKT: overeenkomst ${samen.gelijkPct}% (eis ${min}%), niet op de vooraf bewerkte graaf: ${overgeslagen.join(', ') || 'geen'}`)
+  process.exit(1)
+}
