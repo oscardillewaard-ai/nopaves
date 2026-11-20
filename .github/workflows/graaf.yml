@@ -48,10 +48,22 @@ jobs:
           key: graaf-${{ github.run_id }}
           restore-keys: graaf-
 
+      # Geofabrik hapert soms (502, of een doorverwijslus). Daarom: een paar keer opnieuw proberen, en
+      # anders het extract uit de cache van een vorige run (hooguit 14 dagen oud), met een waarschuwing.
       - name: OpenStreetMap-extract ophalen (Geofabrik)
         run: |
-          mkdir -p ~/osm
-          curl -fsSL -o ~/osm/zh.osm.pbf https://download.geofabrik.de/europe/netherlands/zuid-holland-latest.osm.pbf
+          mkdir -p ~/osm ~/.cache/nopaves-graaf/osm
+          URL=https://download.geofabrik.de/europe/netherlands/zuid-holland-latest.osm.pbf
+          OUD=~/.cache/nopaves-graaf/osm/zh.osm.pbf
+          if curl -fsSL --retry 6 --retry-delay 60 --retry-all-errors --max-redirs 10 -o ~/osm/zh.osm.pbf "$URL"; then
+            cp ~/osm/zh.osm.pbf "$OUD"
+          elif [ -f "$OUD" ] && [ $(( ($(date +%s) - $(stat -c %Y "$OUD")) / 86400 )) -le 14 ]; then
+            echo "::warning::Geofabrik niet bereikbaar; extract uit de cache van $(date -u -r "$OUD" +%F)"
+            cp "$OUD" ~/osm/zh.osm.pbf
+          else
+            echo "::error::Geofabrik niet bereikbaar en geen extract van hooguit 14 dagen in de cache"
+            exit 1
+          fi
           ls -l ~/osm
 
       - name: Bijsnijden tot de regio
