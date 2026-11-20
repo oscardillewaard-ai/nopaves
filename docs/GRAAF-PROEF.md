@@ -2,6 +2,10 @@
 
 ## Samenvatting
 
+> **Na de proef (v1.1.0, 2026-11-20)**: de graaf wordt nu gebouwd uit het Geofabrik-extract
+> (`v20261120-r4`) en is binnen de regio Delft de standaard; `?graaf=tegels` geeft de oude werking.
+> Cijfers en kanttekeningen: sectie "Na de proef" onderaan.
+
 **Gebouwd**: een voorbewerking (`tools/graaf/`) die de routegraaf van de regio Delft (48 blokken op
 zoom 12, 36 × 48 km) één keer vooraf maakt, met per wegstuk het ondergrondoordeel van de app zelf (BGT +
 OSM, per meetpunt), toegang, strand, toegangskaart-gebied, paadje, hoogtemeters en OSM-way-id, als
@@ -566,3 +570,54 @@ Sneller op 10 van 10; score gelijk of hoger op 3 van 10; paren met een verboden 
    hij lineair met het aantal kernen.
 7. **Bron**: het Geofabrik-pad levert echte OSM-way-id's en scherpere geometrie; dat moet eerst één keer
    tegen de proef (OpenFreeMap-bron) worden vergeleken met `vergelijk_oordeel.mjs` en de benchmark.
+
+## Na de proef: graaf uit het Geofabrik-extract, en standaard binnen de regio
+
+**Bouw.** De wekelijkse workflow `graaf.yml` draaide voor het eerst op 2026-11-20 (Geofabrik-extract
+van 2026-11-19 21:22 UTC). Na drie reparaties (PR #16: echte tests op de nieuwe graaf vóór de PR en een
+unieke versienaam; #17: opnieuw proberen bij Geofabrik-storingen; #19: treinstations) staat graaf
+`v20261120-r4` op main (PR #20). Vóór de PR draaiden in de workflow: unit-tests, het oordeel tegen de app
+en Playwright telefoon en desktop op die graaf; daarna `test` op de PR-branch.
+
+| | Proef (OpenFreeMap-tegels) | Geofabrik `v20261120-r4` |
+|---|---|---|
+| Grootte (gzip) | 14,59 MB | 14,72 MB (+0,9%) |
+| Wegstukken | 1.328.149 | 1.368.894 (+3,1%) |
+| Knopen | 1.175.173 | 1.192.032 |
+| Ondergrondoordeel gelijk aan de app | 99,66% van 331,3 km | 99,57% van 336,4 km |
+| Stations (waarvan trein) | 94 (40) | 125 (35) |
+
+Stations: Maassluis West is sinds 2019 metro (nu terecht geen trein); museumtramhaltes Depot en
+Wassenaarse Wetering zijn geen trein; Nieuw Vennep ontbreekt (vermoedelijk als vlak in OSM, niet
+nagekeken; buiten bereik vanaf Delft). Rotterdam Stadion staat als halte.
+
+**A naar B, eigen router op deze graaf tegen BRouter** (10 paren, 5× koud en 5× warm, mediaan;
+`docs/graaf-geofabrik/`): sneller op 10 van 10 (koud 0,5–2,3 s tegen 5,5–17,4 s), score gelijk of hoger
+op **9 van 10** (proef: 3 van 10; alleen Schipluiden 22 → 21), verboden stukken 0. Beslisregel 2 vraagt
+score ≥ op alle 10: **net niet gehaald**, BRouter blijft de standaard voor A naar B. Let op: bij Den Hoorn
+wordt de route 3,74 → 4,50 km voor score 22 → 38.
+
+**Standaard binnen de regio.** Op verzoek van Oscar is `?graaf=vooraf` nu de standaard binnen de regio
+Delft (v1.1.0), hoewel beslisregel 1 in de proef niet gehaald was (route A bij het rondje 31% sneller,
+eis 40%). Buiten de regio en bij een fout: de gewone werking. Terug naar de oude werking: `?graaf=tegels`.
+Rondjes vanaf tien startplekken in de regio, route A, score vooraf / tegels: hoger op 7 van 10 (tot +11:
+Delft Centraal 61/50, 51,99 4,38 55/44), lager op 3 van 10 (Rijswijk Buiten 32/34, 52,06 4,36 14/16,
+52,10 4,30 51/54). Groene omwegen worden daardoor minder vaak gevonden (2 van 20 routes tegen 5 van 20):
+de routes zijn meestal al groener. De omwegtest in Playwright draait daarom op `?graaf=tegels`.
+
+**Snelheid, standaard (vooraf, `v20261120-r4`) tegen `?graaf=tegels`** (5× koud en 5× warm, mediaan,
+seconden; `docs/graaf-geofabrik/standaard-rest.json` en `tegels-rest.json`):
+
+| Geval | Cache | Route A | Totaal | Score | Onverhard + half |
+|---|---|---|---|---|---|
+| rondje-10 Delft Centraal | koud | 4,3 → 3,0 | 10,8 → 3,2 | 50 → 61 | 54,3% → 66,7% |
+| rondje-10 Delft Centraal | warm | 3,8 → 3,3 | 5,7 → 3,5 | 50 → 61 | 54,3% → 66,7% |
+| station-15 Delft Centraal | koud | 8,7 → 2,0 | 24,8 → 2,5 | 58 → 54 | 61% → 63,1% |
+| station-15 Delft Centraal | warm | 6,7 → 1,8 | 10,2 → 2,2 | 58 → 54 | 61% → 63,1% |
+| gebied Delftse Hout | koud | 1,7 → 1,8 | 4,3 → 4,6 | 0 → 0 | gelijk (geen graaf) |
+| tekenen | koud | 1,8 → 1,7 | 2,7 → 2,6 | 94 → 94 | gelijk (geen graaf) |
+
+Kanttekening: bij station-15 is route A groener (63,1% tegen 61%) maar scoort lager (54 tegen 58): een
+andere route, met meer heen en terug of een langer verhard stuk. "In gebied" en "tekenen" gebruiken de
+graaf niet; de kleine verschillen zijn ruis.
+

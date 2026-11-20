@@ -36,7 +36,8 @@ CHROMIUM_PAD=/opt/pw-browsers/chromium npm run test:desktop
 
 (`CHROMIUM_PAD` alleen in de cloudomgeving; elders `npx playwright install chromium`.)
 Alles moet groen zijn, ook achter de vlaggen `?ui=oud`, `?router=eigen`, `?stations=ringen` en
-`?graaf=vooraf`. **Elke nieuwe handeling krijgt een Playwright-test die via de knoppen werkt**, niet via
+`?graaf=tegels` (de oude werking met kaarttegels en BGT; binnen de regio Delft is de vooraf bewerkte graaf
+sinds v1.1.0 de standaard, buiten de regio valt de app vanzelf terug op de tegels). **Elke nieuwe handeling krijgt een Playwright-test die via de knoppen werkt**, niet via
 `window.onverhard`.
 
 ## De graaf
@@ -44,7 +45,8 @@ Alles moet groen zijn, ook achter de vlaggen `?ui=oud`, `?router=eigen`, `?stati
 `tools/graaf/bouw.mjs` bouwt de vooraf bewerkte routegraaf (nu alleen regio Delft, 48 blokken) uit
 het Geofabrik-extract (`bron_pbf.py`) of uit de OpenFreeMap-tegels (`--bron ofm`), met BGT en AHN van
 PDOK, naar `public/graaf/<versie>/` plus `actueel.json`. De workflow `graaf.yml` doet dit elke maandag en
-biedt de nieuwe versie aan als PR `chore: graaf vJJJJMMDD`. Achtergrond en beslisregels: docs/GRAAF-PROEF.md.
+biedt de nieuwe versie aan als PR `chore: graaf vJJJJMMDD-r<run>`, pas nadat unit-tests, het oordeel tegen
+de app (>= 98%) en Playwright op de nieuwe graaf groen zijn. Achtergrond en beslisregels: docs/GRAAF-PROEF.md.
 
 ## Werkwijze
 
