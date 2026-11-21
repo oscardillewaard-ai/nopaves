@@ -31,6 +31,9 @@ jobs:
       - name: Unit-tests
         run: npm run test:unit
 
+      - name: Graaf samenvoegen (provincies -> heel NL, op de graaf van de regio Delft)
+        run: npm run test:graaf
+
       - name: Lint
         run: npm run lint
 

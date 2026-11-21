@@ -43,9 +43,9 @@ function delta16(waarden) {
 /**
  * b: {blok, lat, lon (Int32 ×1e7), hoogte (dm of ONBEKEND_H), van, naar, tag, klasse, vlag, op, af, osm,
  *     rleN: [[...per wegstuk]], rleOordeel: [[...]], extra: [[dm...]], rand, buren, tags, oordelen, pois}
- * Geeft {ruw: Buffer, gz: Buffer}.
+ * Geeft {ruw: Buffer, gz: Buffer} (gz: false slaat het inpakken over, bv. in tests).
  */
-export function schrijfBlok(b) {
+export function schrijfBlok(b, { gz = true } = {}) {
   const n = b.lat.length
   const m = b.van.length
   const rleN = b.rleN.flat()
@@ -88,5 +88,5 @@ export function schrijfBlok(b) {
     delen.push(buf, Buffer.alloc(pad4(buf.length)))
   }
   const ruw = Buffer.concat(delen)
-  return { ruw, gz: zlib.gzipSync(ruw, { level: 9 }) }
+  return { ruw, gz: gz ? zlib.gzipSync(ruw, { level: 9 }) : null }
 }
