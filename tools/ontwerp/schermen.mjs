@@ -36,7 +36,8 @@ for (const toestel of toestellen) {
       await page.screenshot({ path: naam(t) })
       console.log(t, toestel, thema)
     }
-    const sheet = (s) => telefoon && page.evaluate((x) => window.onverhard.sheet.zet(x), s).then(() => page.waitForTimeout(500))
+    // na een sheetwissel bouwt de kaart zijn canvas opnieuw op: wacht tot de tegels er weer zijn
+    const sheet = (s) => telefoon && page.evaluate((x) => window.onverhard.sheet.zet(x), s).then(() => rust(page, 1500))
     await page.goto(basis)
     await page.evaluate((t) => { localStorage.clear(); localStorage.setItem('onverhard.intro', '1'); localStorage.setItem('onverhard.thema', t) }, thema)
     // lege kaart, nieuwe gebruiker
