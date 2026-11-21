@@ -125,6 +125,53 @@ dikte en streep, dus ook bij volledig kleurverlies blijven ze herkenbaar. De kla
 overal 3:1 tegen de kaart (half verhard 1,1 tot 1,8 op een lichte kaart); dat vangt de rand op, zoals
 WCAG 1.4.11 toestaat.
 
-### ui-review en accessibility-review
+### ui-review (skill `ui-review`, op de beelden hierboven)
 
-AXE_UITKOMST
+**Wat alle drie oplossen** uit de review van stap 0: de route is overal te zien (rand), het alternatief
+lijkt niet meer op de gekozen route, de klassen blijven uit elkaar bij kleurenblindheid, de kaart is
+rustiger (geen golfjes en arcering meer, behalve een vleug in C), één lettersysteem zonder mono en zonder
+hoofdletterlabels, `inkt-3` haalt overal 4,5:1, en alle losse kleuren komen uit tokens.
+
+**Bewust niet opgelost** (gedrag, geen stijl; de functionaliteit blijft gelijk): de laag winkels staat
+standaard aan en stapelt pictogrammen rond de start, en de foutmelding bij een start op zee komt laat.
+Beide staan als vervolgpunt in [huidig.md](huidig.md).
+
+| | Sterk | Zwakker | Het meest voor wie |
+|---|---|---|---|
+| **A Stil** | De route springt het meest uit de kaart; het rustigst; dichtst bij wat mensen kennen; lichtste letter (34 kB) | De kaart is bijna kleurloos, bos en heide zijn zwak voor oriëntatie in de natuur; de nul met streep (1Ø); het karakter zit vooral in de route en het woordteken, de rest is neutraal | wie de kaart en de route wil zien en de interface wil vergeten |
+| **B Startnummer** | Het meest herkenbaar (gele score); dikste lijnen, goed buiten te lezen; smalle cijfers geven veel data op weinig ruimte | Twee accenten (kobalt en geel) naast vijf klassekleuren is drukker; koel blauw voelt minder als natuur; risico op "sportapp zoals elke sportapp" | wie het sportief en energiek wil, met de score voorop |
+| **C Veldboek** | Houdt de identiteit van Korrel (korrel, aardse kleuren) maar volwassener; boekletter-cijfers zijn eigen; paden goed zichtbaar op de kaart | Nog veel kaders (punt 7 van stap 0 maar half opgelost); de korrel op kaart en lijn maakt het drukker dan A; zwaarste letters (76 kB, gelijk aan nu) | wie het eigen karakter van Nopav.es wil houden |
+
+Gevonden en opgelost tijdens het maken:
+- In B werd de kaart na het verschuiven van de sheet leeg (in de testbrowser). Oorzaak gevonden door de
+  regels van B te halveren: een overbodige achtergrondregel op het paneel. Weggehaald, opnieuw bekeken.
+- Aanraakdoelen te klein (zie hieronder). Opgelost in alle drie.
+
+### accessibility-review (skill `accessibility-review`, WCAG 2.1 AA)
+
+Gemeten met axe-core 4.10 (`tools/ontwerp/a11y.mjs`) op de plankaart en het resultaat (sheet vol),
+telefoon, licht en donker; de kaarttegels zelf vallen erbuiten. Daarnaast de kleurmetingen hierboven en
+een meting van alle knoppen en velden in het paneel.
+
+| | axe: overtredingen | Aanraakdoelen < 44 px (voor → na) | Focus zichtbaar |
+|---|---|---|---|
+| Korrel nu | 0 | 14 op de plankaart, 23 bij het resultaat | standaard van de browser |
+| A | 0 | 14 / 23 → 1 (greep van de sheet, 28 px hoog over de volle breedte) | 2 px inkt, 2 px afstand |
+| B | 0 | 14 / 23 → 1 (idem) | 3 px kobalt |
+| C | 0 | 14 / 26 → 1 (idem) | 2 px heide |
+
+- **1.4.3 contrast**: alle tekst ≥ 4,5:1 in alle zes paletten (laagste 5,11). Korrel haalt dat nu niet op
+  één plek (4,10).
+- **1.4.11 niet-tekstueel contrast**: routerand ≥ 8,5:1 tegen de kaart; velden en steppers hebben een rand
+  van ≥ 3:1 (A `#8F9691`, B en C inkt). In A en B hebben secundaire knoppen een vlak zonder rand; hun
+  tekst en pictogram dragen de herkenning.
+- **1.4.1 kleur niet als enige drager**: de vijf klassen verschillen ook in dikte en streep, de strook in
+  hoogte (A, B) of korrel (C).
+- **2.5.5 doelgrootte** (in WCAG 2.1 eigenlijk AAA, maar de huisregel is 44 px): opgelost; de greep van de
+  sheet is 28 px hoog maar loopt over de hele breedte en haalt 2.5.8 (24 px).
+- **Niet getest**: schermlezer (VoiceOver, TalkBack), 200 % zoom, toetsenbord van begin tot eind. De
+  opbouw van de pagina (knoppen, labels, volgorde) is niet veranderd, alleen de stijl.
+
+### ux-copy
+
+Geen nieuwe of gewijzigde teksten in deze stap; alleen de stijl verandert. ux-copy volgt in stap 3.

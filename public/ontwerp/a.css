@@ -194,3 +194,10 @@ dialog, #hulp, #voorkeuren { border: 0; box-shadow: var(--schaduw-zwevend); }
 .balkje i { border-radius: 999px; background: var(--inkt); }
 .baan.onbepaald .balkje i { background: var(--inkt); }
 .ico { stroke-width: 1.7; }
+
+/* aanraakdoelen: alles wat je aantikt minstens 44 × 44 px (WCAG 2.5.5); de greep van de sheet 28 px hoog */
+.kopknoppen button.klein, header button.klein { min-height: 44px; min-width: 44px; }
+.segment button, .keuze button, [data-ui="nieuw"] #opties .kies, .andereknop, .snelkeuzes button, .startknoppen button { min-height: 44px; }
+.snelkeuzes button, .startknoppen button, #afspeel { min-width: 44px; }
+#afspeel, .omwegknop, .voorkeurregel, .eindknoppen button { min-height: 44px; }
+@media (max-width: 700px) { .sheetgreep { min-height: 28px; } }

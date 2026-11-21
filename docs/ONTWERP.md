@@ -9,8 +9,8 @@ bestand en ga verder bij de eerste stap die niet `klaar` is. Werk op de sessiebr
 | Stap | Status | Waar |
 |---|---|---|
 | 0 Huidige stand vastleggen | klaar | [ontwerp/huidig.md](ontwerp/huidig.md), beelden in `ontwerp/huidig/` |
-| 1 Ontwerptokens | bezig: code klaar, pixelgelijk bevestigd; Playwright loopt, PR nog niet | `public/tokens.css`, `public/kaarttokens.js` |
-| 2 Drie richtingen achter `?ontwerp=a\|b\|c` | bezig: plan staat hieronder | `public/ontwerp/`, [ontwerp/richtingen.md](ontwerp/richtingen.md) |
+| 1 Ontwerptokens | klaar (pixelgelijk, Playwright telefoon en desktop groen) | `public/tokens.css`, `public/kaarttokens.js` |
+| 2 Drie richtingen achter `?ontwerp=a\|b\|c` | gebouwd en gecontroleerd; PR en samenvoegen volgen | `public/ontwerp/`, [ontwerp/richtingen.md](ontwerp/richtingen.md) |
 | STOP | Oscar kiest een richting (mag combineren) | |
 | 3 Uitrollen | open | |
 | 4 Beter testen | open | |
@@ -21,7 +21,7 @@ bestand en ga verder bij de eerste stap die niet `klaar` is. Werk op de sessiebr
 - `tools/ontwerp/schermen.mjs <map> [query] [alleen=a,b]`: alle schermen en toestanden, telefoon
   390 × 844 en desktop 1280 × 800, licht en donker (`TOESTEL=`, `THEMA=` om te beperken). Vraagt
   `python3 tools/serve.py` en netwerk naar `tiles.openfreemap.org` (op 2026-11-20 toegevoegd aan de
-  omgeving `nopaves`).
+  omgeving `nopaves`, samen met `brouter.de` en `overpass-api.de` die de Playwright-tests nodig hebben).
 - `tools/ontwerp/kleurcheck.mjs [richting]`: tekstcontrast (≥ 4,5), routelijnen tegen de kaart (≥ 3),
   en het kleinste verschil (CIEDE2000) tussen de vijf klassen bij deuteranopie, protanopie en
   tritanopie. Paletten in `tools/ontwerp/paletten.mjs`.
@@ -33,7 +33,12 @@ bestand en ga verder bij de eerste stap die niet `klaar` is. Werk op de sessiebr
 |---|---|---|
 | Stap 0 | `ui-review` | 15 punten, waarvan 6 "moet beter"; belangrijkste: de route haalt geen 3:1 tegen de kaart (gemeten), de kaart is te druk, alternatief lijkt op de gekozen route. Zie huidig.md |
 | Stap 0 | `ui-compare` | UXKIN niet bereikbaar (proxy), dus vergelijking met bekende conventies van Komoot, Strava, AllTrails, Google en Apple Maps: gedempte kaart, route met rand, alternatieven neutraal met label |
-| Stap 2 | `frontend-design` | Plan van drie richtingen; getoetst aan de valkuilen (crème + serif + terracotta, zuur groen op zwart, overal hoofdletters en mono-labels). Zie hieronder |
+| Stap 2 | `frontend-design` | Plan van drie richtingen; getoetst aan de valkuilen (crème + serif + terracotta, zuur groen op zwart, overal hoofdletters en mono-labels). Gevolg: geen crème in C (salie-grijs), geen mono en geen hoofdletterlabels in alle drie, in B alleen het woordteken in hoofdletters |
+| Stap 2 | `no-ui-slop` | Getoetst: één accent per richting (A geen, B kobalt met geel alleen voor de score, C mos met heide alleen voor tekenen en focus), geen verlopen of glas, alle toestanden blijven van het bestaande ontwerp |
+| Stap 2 | `ui-review` | Per richting sterk en zwak, in richtingen.md; bug gevonden in B (lege kaart na sheetwissel), opgelost |
+| Stap 2 | `accessibility-review` | axe-core: 0 overtredingen in alle richtingen; aanraakdoelen van 14 tot 26 te klein naar 1 (greep, haalt 24 px); focusring per richting |
+| Stap 2 | `ux-copy` | Niet nodig: geen nieuwe teksten |
+| Stap 2 | `ui-compare` | Niet opnieuw gedraaid: de vergelijking van stap 0 bepaalde de routetaal (rand, neutraal alternatief) |
 
 ## Stap 1: tokens (klaar in code)
 
@@ -65,6 +70,6 @@ Alternatieven: één neutrale kleur, dunner, met een letter. Zo hangt de klasse 
 | Kaart | bijna kleurloos, wegen wit met grijze rand, paden zacht gestippeld | koel en scherp, wegen wit, meer contrast | aards: stro, mos, heide, zand; paden in veenbruin; korrel heel licht |
 | Route | donkere rand (licht) / lichte rand (donker), helder palet | dikste lijnen, marineblauwe rand | aards palet, veenrand, korrel op de lijn |
 
-Hervatten: de code voor stap 2 komt in `public/ontwerp/a.css|b.css|c.css` (component- en tokenwaarden
+Code van stap 2 staat in `public/ontwerp/a.css|b.css|c.css` (component- en tokenwaarden
 per richting, alleen geladen bij `?ontwerp=`), `public/kaarttokens.js` (KAART/ROUTE per richting) en
 `tools/ontwerp/paletten.mjs` (voor de controle).
