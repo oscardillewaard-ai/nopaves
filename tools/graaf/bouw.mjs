@@ -100,13 +100,15 @@ async function bgtTegel(col, row) {
   return v
 }
 
-export async function vlakkenVoor(tegels) {
+/** BgtVlakken voor een set tegels ('col/row'). tegelBron(col, row) geeft de vlakken van één tegel
+ * ({collectie, props, polygonen}); standaard de vectortegels van PDOK, of de BGT-download (tools/bgt). */
+export async function vlakkenVoor(tegels, tegelBron = bgtTegel) {
   const vlakken = new K.BgtVlakken(K.SNAP_M)
   // vaste volgorde (de app voegt ze toe in volgorde van binnenkomst; voor het oordeel maakt dat niet uit)
   for (const k of [...tegels].sort()) {
     const [col, row] = k.split('/').map(Number)
     const gebied = K.tegelGebied(col, row)
-    for (const v of await bgtTegel(col, row)) {
+    for (const v of await tegelBron(col, row)) {
       if (v.collectie === 'waterdeel') {
         if (v.props.type === 'zee') vlakken.voegToeZee(v.props.lokaal_id, v.polygonen)
       } else vlakken.voegToeVlak(v.collectie, v.props, v.polygonen, gebied)
@@ -126,6 +128,20 @@ function meestVoorkomend(lijst, sleutel) {
   let beste = null
   for (const t of telling.values()) if (!beste || t.n > beste.n) beste = t
   return beste
+}
+
+/** Het oordeel van één wegstuk (tags-tekst, meetpunten in RD): per meetpunt (lijst) en het eindoordeel
+ * van het hele stuk (st.eind), zoals analyseer() het per stuk doet. */
+export function oordeelVoorStuk(tekst, punten, vlakken) {
+  const osm = K.osmKlasse(tekst)
+  const niveau = K.osmNiveau(tekst)
+  const osmGroep = osm.zeker ? K.groep(osm.klasse) : null
+  const lijst = punten.map(([x, y]) => vlakken.zoek(x, y, niveau, osmGroep))
+  const top = meestVoorkomend(lijst, (o) => o.klasse)
+  const detail = meestVoorkomend(lijst.filter((o) => o.klasse === top.item.klasse), (o) => o.uitleg + '|' + o.bron).item
+  const st = { osm: osm.klasse, osmZeker: osm.zeker, osmUitleg: osm.uitleg, bgt: top.item.klasse, bgtUitleg: detail.uitleg, bgtBron: detail.bron }
+  K.bepaalEindEnTwijfel(st)
+  return { osm, lijst, detail, st }
 }
 
 const ONBEKEND_H = 32767
@@ -195,10 +211,7 @@ async function hoofd() {
     const vlakken = await vlakkenVoor(tegels)
     for (const s of segs) {
       const tekst = g.tagLijst[g.segTags[s]]
-      const osm = K.osmKlasse(tekst)
-      const niveau = K.osmNiveau(tekst)
-      const osmGroep = osm.zeker ? K.groep(osm.klasse) : null
-      const lijst = segMeetpunten(g, s).map(([x, y]) => vlakken.zoek(x, y, niveau, osmGroep))
+      const { lijst, detail, st } = oordeelVoorStuk(tekst, segMeetpunten(g, s), vlakken)
       // oordeel per meetpunt (runs)
       const runs = []
       for (const o of lijst) {
@@ -215,11 +228,6 @@ async function hoofd() {
         runs.splice(k, 1)
       }
       rle[s] = runs
-      // het eindoordeel van het hele wegstuk, zoals analyseer() het per stuk doet
-      const top = meestVoorkomend(lijst, (o) => o.klasse)
-      const detail = meestVoorkomend(lijst.filter((o) => o.klasse === top.item.klasse), (o) => o.uitleg + '|' + o.bron).item
-      const st = { osm: osm.klasse, osmZeker: osm.zeker, osmUitleg: osm.uitleg, bgt: top.item.klasse, bgtUitleg: detail.uitleg, bgtBron: detail.bron }
-      K.bepaalEindEnTwijfel(st)
       klasse[s] = K.KLASSEN.indexOf(st.eind)
       let v = 0
       const afgesloten = K.alleenMetKaartje(tekst)

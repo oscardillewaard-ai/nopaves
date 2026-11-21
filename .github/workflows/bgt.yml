@@ -1,0 +1,96 @@
+# Fase 1 van docs/PLAN-heel-nederland.md: de BGT voor heel Nederland omzetten naar het afgeleide bestand
+# (tools/bgt/afgeleid.mjs). Bron: het kant-en-klare NL-bestand van PDOK; per objecttype alleen zijn eigen
+# bytes uit de zip, in parallelle stukken (PDOK begrenst per verbinding). De vijf typen draaien als vijf
+# processen tegelijk. Daarna de oordeeltoets: geeft het afgeleide bestand op vier vakken in de regio Delft
+# hetzelfde ondergrondoordeel als de vectortegels (eis >= 98% per vak)?
+#
+# Niets gaat live. Uitkomst: samenvatting in de run en het artifact bgt-afgeleid (7 dagen).
+name: BGT omzetten
+
+on:
+  workflow_dispatch:
+    inputs:
+      stromen:
+        description: 'Stromen per objecttype (5 typen tegelijk)'
+        default: '3'
+  push:
+    branches-ignore: [main]
+    paths:
+      - .github/workflows/bgt.yml
+      - tools/bgt/**
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bgt
+  cancel-in-progress: false
+
+jobs:
+  omzetten:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Eén versie van het NL-bestand vastzetten (cache-adres van PDOK)
+        run: |
+          node --input-type=module -e "
+            import fs from 'node:fs'
+            import { bestandInfo } from './tools/bgt/zip.mjs'
+            import { NL_ZIP } from './tools/bgt/bron.mjs'
+            const i = await bestandInfo(NL_ZIP)
+            console.log(JSON.stringify(i))
+            fs.appendFileSync(process.env.GITHUB_ENV, 'BGT_ADRES=' + i.url + '\\nBGT_GEWIJZIGD=' + i.gewijzigd + '\\n')"
+
+      - name: Vijf objecttypes tegelijk omzetten
+        run: |
+          mkdir -p ~/bgt uit
+          ( while true; do echo "geheugen $(date +%T) $(free -m | awk '/Mem:/ {print "gebruikt " $3 " MB, beschikbaar " $7 " MB"}'), schijf $(du -sm ~/bgt | cut -f1) MB"; sleep 60; done ) &
+          LOG=$!
+          T0=$(date +%s)
+          PIDS=""
+          for c in wegdeel onbegroeidterreindeel begroeidterreindeel waterdeel ondersteunendwegdeel; do
+            node --max-old-space-size=3000 tools/bgt/bouw_bgt.mjs $c ~/bgt --adres "$BGT_ADRES" --stromen ${{ inputs.stromen || '3' }} > uit/$c.log 2>&1 &
+            PIDS="$PIDS $!"
+          done
+          FOUT=0
+          for p in $PIDS; do wait $p || FOUT=1; done
+          kill $LOG
+          echo $(( $(date +%s) - T0 )) > uit/seconden.txt
+          for c in wegdeel onbegroeidterreindeel begroeidterreindeel waterdeel ondersteunendwegdeel; do echo "== $c"; tail -3 uit/$c.log | cut -c1-400; done
+          [ $FOUT = 0 ] || { echo "::error::Een objecttype is mislukt (zie hierboven)"; exit 1; }
+          du -sh ~/bgt; ls ~/bgt | wc -l
+          cp ~/bgt/*.json uit/
+
+      - name: Oordeeltoets op vier vakken in de regio Delft (eis >= 98%)
+        run: |
+          FOUT=0
+          for v in "delft 82500 444500 85500 447500" "kust 79400 459400 81600 461600" "zoetermeer 92000 451000 95000 454000" "westland 72000 441000 75000 444000"; do
+            set -- $v
+            node --max-old-space-size=6000 tools/bgt/vergelijk_oordeel.mjs ~/bgt $2 $3 $4 $5 uit/oordeel-$1.json | grep -v "^  groep" > uit/oordeel-$1.log
+            P=$(node -p "require('./uit/oordeel-$1.json').overeenkomst.tegelsVsDownload")
+            echo "$1: $P% gelijk ($(node -p "require('./uit/oordeel-$1.json').km") km)"
+            node -e "process.exit(require('./uit/oordeel-$1.json').overeenkomst.tegelsVsDownload >= 98 ? 0 : 1)" || FOUT=1
+          done
+          [ $FOUT = 0 ] || { echo "::error::Oordeel onder de 98% in een vak"; exit 1; }
+
+      - name: Samenvatting
+        if: always()
+        run: node tools/bgt/samenvatting.mjs uit >> $GITHUB_STEP_SUMMARY; cat $GITHUB_STEP_SUMMARY
+
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: bgt-uitkomst
+          path: uit/
+          retention-days: 30
+      - uses: actions/upload-artifact@v6
+        with:
+          name: bgt-afgeleid
+          path: ~/bgt/
+          retention-days: 7
+          compression-level: 0
