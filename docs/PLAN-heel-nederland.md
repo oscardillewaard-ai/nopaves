@@ -1,7 +1,7 @@
 # Plan: de vooraf bewerkte graaf voor heel Nederland, in één keer
 
-Status: **fase 0 gemeten** (2026-11-20, `fase0.yml` run 4). Alle metingen zijn binnen, behalve de BGT-download
-van Noord-Brabant (verbinding verbroken na 1,77 GB; loopt opnieuw). Conclusie: heel NL past ruim, de
+Status: **fase 0 gemeten** (2026-11-20, `fase0.yml` run 4). Alle metingen zijn binnen; de BGT-download
+van Noord-Brabant brak de eerste keer af na 1,77 GB en slaagde bij de herstart. Conclusie: heel NL past ruim, de
 OSM-kant is licht, en de BGT is het zware deel. Hieronder de cijfers, wat dat aan het plan verandert, een
 planning per fase en een kostenraming. Nog niets gebouwd voor de app.
 
@@ -29,7 +29,7 @@ planning per fase en een kostenraming. Nog niets gebouwd voor de app.
 | Knippen in 12 | | **2,7 min (gemeten),** max. 11,0 GB geheugen per portie van 3 | runner 16 GB: niet alle 12 in één keer |
 | Graaf zonder BGT/AHN, grootste provincie | | **0,3 min, 1,6 GB (gemeten,** Zuid-Holland) | |
 | Bouw met BGT-tegels + AHN, koude cache | 77 min | **64 min Utrecht, 80 min Drenthe (gemeten);** max. ~171 min Gelderland (geraamd) | 6 uur per job: past, maar zie BGT |
-| BGT `full/custom`, 5 objecttypes | 28.540 losse tegels | **27,7 GB zip voor 11 provincies (gemeten)** + Noord-Brabant (> 1,77 GB) | runner-schijf ~14 GB |
+| BGT `full/custom`, 5 objecttypes | 28.540 losse tegels | **32,1 GB zip voor de 12 provincies (gemeten;** bboxen overlappen) | runner-schijf ~14 GB |
 | BGT-delta per week, heel NL | | **53 MB zip (gemeten** in run 1 en run 4) | |
 | Actions-minuten fase 0 | | **778 runner-minuten, 2 u 06 min doorlooptijd** | openbare repo: gratis |
 
@@ -48,13 +48,13 @@ Scripts in `tools/fase0/`. De provinciegrenzen komen van PDOK (Bestuurlijke Gebi
 | Gelderland | 4.964 | 2.096.901 | 47.507 | 8.045 | 22 | 171 | 6.094 | 90 |
 | Groningen | 2.325 | 528.755 | 13.590 | 1.359 | 5,7 | 43 | 1.543 | 25 |
 | Limburg | 2.148 | 1.068.398 | 23.610 | 3.648 | 11 | 87 | 2.349 | 45 |
-| Noord-Brabant | 4.905 | 1.871.654 | 48.731 | 7.650 | 20 | 153 | > 1.770 (afgebroken) | – |
+| Noord-Brabant | 4.905 | 1.871.654 | 48.731 | 7.650 | 20 | 153 | 4.431 (2e poging) | 46 |
 | Noord-Holland | 2.662 | 1.797.602 | 34.819 | 3.525 | 19 | 147 | 3.022 | 38 |
 | Overijssel | 3.317 | 1.366.548 | 27.624 | 4.606 | 15 | 112 | 2.914 | 32 |
 | Utrecht | 1.485 | 907.197 | 19.346 | 2.933 | **10** gemeten | **64** gemeten | 2.539 | 56 |
 | Zeeland | 1.781 | 477.041 | 12.843 | 968 | 5,1 | 39 | 683 | 9,6 |
 | Zuid-Holland | 2.700 | 2.063.824 | 41.989 | 3.005 | 22 | 169 | 3.748 | 42 |
-| **Totaal** | 33.673 | **14.491.164** | **318.979** | **42.147** | **155** | | **27.650** + NB | |
+| **Totaal** | 33.673 | **14.491.164** | **318.979** | **42.147** | **155** | | **32.081** | |
 
 Niet vet = geraamd (wegstukken × de verhouding uit Utrecht en Drenthe). Wegstukken, km en BGT zijn voor alle
 provincies gemeten. Land-km² zijn afgeronde CBS-cijfers, overgenomen en niet nagekeken. Een weg over een
@@ -71,16 +71,17 @@ provinciegrens telt in beide provincies mee (osmium `complete_ways`): een kleine
 - **Knippen moet in porties.** Een portie van 3 provincies gebruikt al 11,0 GB; alle 12 in één run past
   niet op een runner van 16 GB. Dat verklaart vermoedelijk run 3 (runner gestopt na 30 s).
 - **De BGT is het zware deel.**
-  - *Groot:* de 11 provincies samen geven al 27,7 GB zip, meer dan de kant-en-klare download van heel NL
+  - *Groot:* de 12 provincies samen geven 32,1 GB zip, meer dan de kant-en-klare download van heel NL
     met álle objecttypes (28,0 GB, `full/predefined/bgt-gmllight-nl-nopbp.zip`, elke nacht ververst).
     Oorzaak: de provincies zijn als rechthoek (bbox) opgevraagd, en die rechthoeken overlappen fors.
   - *Vooral historie:* in Utrecht is 61% van de objecten een oude versie (4,1 van 6,7 mln), in Drenthe
     62% (3,0 van 4,8 mln).
-  - *Traag per download, niet per afnemer:* elke download liep op 0,8–1,5 MB/s, ook met 12 tegelijk.
+  - *Traag per download, niet per afnemer:* elke download liep op 0,8–1,6 MB/s, ook met 12 tegelijk.
     PDOK begrenst dus per download. Gelderland deed 6,1 GB in 90 min.
-  - *Kwetsbaar:* de download van Noord-Brabant brak af na 1,77 GB (verbinding verbroken). Een download
-    van uren moet kunnen hervatten.
-  - *Wachttijd:* PDOK had de bestanden in 5–28 min klaar, ook met 12 aanvragen tegelijk.
+  - *Kwetsbaar:* de download van Noord-Brabant brak af na 1,77 GB (verbinding verbroken); de herstart
+    haalde 4,4 GB in 46 min (1,6 MB/s, toen als enige). Een download van uren moet kunnen hervatten.
+  - *Wachttijd:* PDOK had de bestanden in 5–28 min klaar, ook met 12 aanvragen tegelijk (Noord-Brabant
+    bij de herstart: 12 min).
 - **Het weekvolume is klein:** 53 MB aan delta's voor heel NL per week (werkdagen 9–15 MB, weekend ~20 kB).
 - **De bouw met de oude methode** (BGT-tegels + AHN, koude cache) zou ook passen: geraamd tot ~171 min per
   provincie. Maar dat zijn ~300.000 tegelverzoeken per ronde bij PDOK, en dat wilde het plan afschaffen.
@@ -155,7 +156,7 @@ server bij. De echte kosten zijn tijd en limieten:
 | Post | Raming | Grens | Basis |
 |---|---|---|---|
 | Actions, wekelijkse bouw | ~3–6 runner-uur per week (knip 6 min, 12 × bouw, samen, tests) | geen (openbare repo) | fase 0: 778 runner-min, waarvan 597 BGT-download |
-| Actions, volledige BGT (een paar keer per jaar) | ~6–12 runner-uur per keer | 6 uur per job: in stukken | 27,7 GB in 11 jobs |
+| Actions, volledige BGT (een paar keer per jaar) | ~6–12 runner-uur per keer | 6 uur per job: in stukken | 32,1 GB in 12 jobs, ~11 runner-uur |
 | Release-bijlagen | 155 MB graaf + afgeleide BGT (grootte onbekend) per week, 8 weken bewaard | 2 GB per bestand | graaf: geraamd; BGT: fase 1 |
 | Pages-site | ~155 MB graaf + app | 1 GB | geraamd |
 | Pages-verkeer | ~2 MB per rondje, ~7 MB per station-planning | ~100 GB per maand (zacht) | proef Delft |
@@ -163,7 +164,7 @@ server bij. De echte kosten zijn tijd en limieten:
 
 ## Risico's en open vragen
 
-- **BGT-download van uren** (gemeten: 0,8–1,5 MB/s per download, één afgebroken na 1,77 GB). Hervatbaar
+- **BGT-download van uren** (gemeten: 0,8–1,6 MB/s per download, één afgebroken na 1,77 GB). Hervatbaar
   ophalen met `Range` is nodig; of meerdere stukken tegelijk sneller gaan, meet fase 1.
 - **AHN voor heel NL** is nog niet gemeten. In de regio Delft zat AHN in de cache van 1,47 GB; voor heel NL
   past dat niet in de Actions-cache (10 GB). Mogelijke oplossing: de hoogtes uit de vorige graafversie
