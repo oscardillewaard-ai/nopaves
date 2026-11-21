@@ -25,6 +25,15 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: actions/configure-pages@v6
+      # De graaf voor heel NL staat buiten git (release-bijlage); alleen als public/graaf-nl/goedgekeurd.txt
+      # een versie noemt, komt hij in de site. Zonder dat bestand verandert er niets.
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Graaf heel NL uit de release (alleen met public/graaf-nl/goedgekeurd.txt)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: tools/graaf/haal_release.sh public/graaf-nl
       - uses: actions/upload-pages-artifact@v5
         with:
           path: public

@@ -31,12 +31,17 @@ jobs:
     timeout-minutes: 90
     outputs:
       bgt_run: ${{ steps.bgt.outputs.run }}
+      versie: ${{ steps.versie.outputs.versie }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
           node-version: 22
       - run: sudo apt-get update -q && sudo apt-get install -yq osmium-tool time
+
+      - name: Versie (één keer, voor alle provincies)
+        id: versie
+        run: echo "versie=nl$(date -u +%Y%m%d)-r${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
 
       - name: Welke BGT-run?
         id: bgt
@@ -63,6 +68,7 @@ jobs:
           [ -n "$OK" ] || { echo "::error::Geen OSM-extract te halen"; exit 1; }
           echo "$OK" > uit/bron.txt
           node tools/fase0/grenzen.mjs ~/osm/poly
+          cp -r ~/osm/poly uit/poly
           for p in $(node -p "require('./tools/fase0/provincies.json').provincies.map(p=>p.slug).join(' ')"); do
             node tools/fase0/poly.mjs ~/osm/poly/$p.poly uit/grens/$p
           done
@@ -134,7 +140,7 @@ jobs:
       - name: Graaf bouwen (BGT uit het afgeleide bestand, AHN in blokken van 5 km)
         run: |
           P=${{ matrix.provincie }}
-          VERSIE=nl$(date -u +%Y%m%d)-r${GITHUB_RUN_NUMBER}
+          VERSIE=${{ needs.knip.outputs.versie }}
           ( while true; do echo "geheugen $(date +%T) $(free -m | awk '/Mem:/ {print "gebruikt " $3 " MB, beschikbaar " $7 " MB"}')"; sleep 120; done ) &
           LOG=$!
           /usr/bin/time -v -o uit/tijd-bouw.txt node --max-old-space-size=13000 tools/graaf/bouw.mjs --bron ~/osm/$P.ndjson --regio knip/grens/$P/regio.json \
@@ -195,3 +201,62 @@ jobs:
           name: samenvatting
           path: samenvatting.md
           retention-days: 30
+
+  # Fase 3: samenvoegen tot één graaf voor heel NL en als release-bijlage uitleveren (proefversie). Niets gaat
+  # live: de deploy zet hem pas in de site als public/graaf-nl/goedgekeurd.txt deze versie noemt.
+  samenvoegen:
+    needs: [knip, bouw]
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: graaf-*
+          path: ~/prov
+      - uses: actions/download-artifact@v7
+        with:
+          name: knip
+          path: knip
+      - name: Samenvoegen
+        run: |
+          VERSIE=${{ needs.knip.outputs.versie }}
+          /usr/bin/time -v -o tijd-samen.txt node --max-old-space-size=13000 tools/graaf/samenvoeg.mjs --versie $VERSIE --uit ~/nl --grenzen knip/poly ~/prov/graaf-* | tee samen.json
+          grep -E "Elapsed|Maximum resident" tijd-samen.txt
+          du -sh ~/nl
+      - name: Release graaf-${{ needs.knip.outputs.versie }} (proefversie)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSIE=${{ needs.knip.outputs.versie }}
+          tar -cf graaf-$VERSIE.tar -C ~/nl .
+          ls -l graaf-$VERSIE.tar
+          gh release create "graaf-$VERSIE" graaf-$VERSIE.tar --prerelease --target "$GITHUB_SHA" \
+            --title "Graaf heel NL $VERSIE (proef, niet live)" \
+            --notes "Vooraf bewerkte graaf voor heel Nederland, gebouwd door workflow Graaf heel NL (run ${GITHUB_RUN_ID}). Proefversie: gaat pas live als public/graaf-nl/goedgekeurd.txt deze versie noemt. $(cat samen.json)"
+      - uses: actions/upload-artifact@v6
+        with:
+          name: samenvoegen
+          path: |
+            samen.json
+            tijd-samen.txt
+          retention-days: 30
+
+  # Wat de deploy straks doet, hier alvast getest: de bijlage ophalen, uitpakken en elk blok controleren.
+  ophalen:
+    needs: [knip, samenvoegen]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Bijlage ophalen zoals deploy.yml
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: tools/graaf/haal_release.sh public/graaf-nl ${{ needs.knip.outputs.versie }}

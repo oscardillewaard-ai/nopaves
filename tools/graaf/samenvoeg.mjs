@@ -2,7 +2,7 @@
 // NL, in hetzelfde formaat (NPG1) en met hetzelfde soort manifest als nu, zodat de app hem zonder wijziging
 // leest (buiten de dekking valt de app vanzelf terug op de kaarttegels).
 //
-//   node --max-old-space-size=12000 tools/graaf/samenvoeg.mjs --versie nlJJJJMMDD-rN --uit <map> <provinciemap> ...
+//   node --max-old-space-size=12000 tools/graaf/samenvoeg.mjs --versie nlJJJJMMDD-rN --uit <map> [--grenzen <map met .poly>] <provinciemap> ...
 //
 // Een provinciemap bevat <versie>/manifest.json en de blokken (bouw.mjs --uit). Wat er gebeurt:
 //   1. blokken met dezelfde (x, y) uit twee provincies (op de grens) worden één blok: knopen samen op lat/lon,
@@ -26,8 +26,46 @@ export function leesProvincie(map) {
   const versie = fs.readdirSync(map).find((d) => fs.existsSync(path.join(map, d, 'manifest.json')))
   if (!versie) throw new Error('geen manifest in ' + map)
   const manifest = JSON.parse(fs.readFileSync(path.join(map, versie, 'manifest.json'), 'utf8'))
-  const blokken = manifest.blokken.filter((b) => b.wegstukken > 0 || b.pois > 0).map((b) => ({ x: b.x, y: b.y, blok: leesBlok(zlib.gunzipSync(fs.readFileSync(path.join(map, versie, b.bestand)))) }))
-  return { manifest, blokken }
+  const vol = (b) => b.wegstukken > 0 || b.pois > 0
+  const blokken = manifest.blokken.filter(vol).map((b) => ({ x: b.x, y: b.y, blok: leesBlok(zlib.gunzipSync(fs.readFileSync(path.join(map, versie, b.bestand)))) }))
+  const leeg = manifest.blokken.filter((b) => !vol(b)).map((b) => [b.x, b.y])
+  return { manifest, blokken, leeg }
+}
+
+/** Ringen uit een .poly-bestand (lon/lat; gaten met '!'): [{ gat, ring: [[lon, lat], ...] }]. */
+export function leesPoly(tekst) {
+  const uit = []
+  let huidig = null
+  for (const regel of tekst.split('\n').slice(1)) {
+    const t = regel.trim()
+    if (!t) continue
+    if (t === 'END') { if (huidig) { uit.push(huidig); huidig = null } continue }
+    const d = t.split(/\s+/)
+    if (d.length === 2 && !Number.isNaN(+d[0]) && !Number.isNaN(+d[1]) && huidig) huidig.ring.push([+d[0], +d[1]])
+    else huidig = { gat: t.startsWith('!'), ring: [] }
+  }
+  return uit
+}
+
+function inRing(lon, lat, r) {
+  let binnen = false
+  for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
+    if ((r[i][1] > lat) !== (r[j][1] > lat) && lon < ((r[j][0] - r[i][0]) * (lat - r[i][1])) / (r[j][1] - r[i][1]) + r[i][0]) binnen = !binnen
+  }
+  return binnen
+}
+
+/** Ligt het punt in een van de gebieden (elk een lijst ringen uit leesPoly)? Even-oneven over alle ringen. */
+export function inGebied(lon, lat, gebieden) {
+  return gebieden.some((ringen) => ringen.reduce((b, r) => (inRing(lon, lat, r.ring) ? !b : b), false))
+}
+
+/** Midden van blok (x, y) op zoom 12, in lon/lat. */
+export function blokMidden(x, y) {
+  const n = 2 ** 12
+  const lon = ((x + 0.5) / n) * 360 - 180
+  const lat = (Math.atan(Math.sinh(Math.PI * (1 - (2 * (y + 0.5)) / n))) * 180) / Math.PI
+  return [lon, lat]
 }
 
 /** Voeg gelezen blokken (zelfde x, y) samen tot een object voor schrijfBlok (zonder rand). */
@@ -123,13 +161,26 @@ export function bepaalRand(blokken) {
   })
 }
 
-/** Alles samen: geeft { manifest, bestanden: [[naam, gz]] }. */
-export function voegSamen(provincies, versie) {
+const leegBlok = (x, y) => ({ blok: [x, y], n: 0, m: 0, lat: new Int32Array(0), lon: new Int32Array(0), hoogte: new Int16Array(0), van: [], naar: [], tag: [], klasse: [], vlag: [], op: [], af: [], osm: [], rleBegin: [0], rleN: [], rleOordeel: [], extraBegin: [0], extra: new Int16Array(0), rand: [], buren: [], tags: [], oordelen: [], pois: [] })
+
+/**
+ * Alles samen: geeft { manifest, bestanden: [[naam, gz]] }. gebieden (optioneel, ringen uit leesPoly per
+ * provincie): een leeg blok blijft alleen als zijn midden in een provincie ligt (zee en water binnen de grens
+ * wel: de app ziet dat als gedekt; buiten NL niet: daar neemt de app de kaarttegels). Zonder gebieden blijven
+ * alle lege blokken uit de provinciemanifesten.
+ */
+export function voegSamen(provincies, versie, gebieden = null) {
   const groepen = new Map()
   for (const p of provincies) for (const { x, y, blok } of p.blokken) {
     const k = x + '/' + y
     if (!groepen.has(k)) groepen.set(k, [])
     groepen.get(k).push(blok)
+  }
+  for (const p of provincies) for (const [x, y] of p.leeg || []) {
+    const k = x + '/' + y
+    if (groepen.has(k)) continue
+    if (gebieden && !inGebied(...blokMidden(x, y), gebieden)) continue
+    groepen.set(k, [leegBlok(x, y)])
   }
   const sleutels = [...groepen.keys()].sort((a, b) => { const [ax, ay] = a.split('/').map(Number); const [bx, by] = b.split('/').map(Number); return ax - bx || ay - by })
   const blokken = sleutels.map((k) => voegBlokkenSamen(groepen.get(k)))
@@ -160,7 +211,7 @@ export function voegSamen(provincies, versie) {
     regio: { naam: 'nederland', zoom: 12, bbox, blokken_x: [Math.min(...xs), Math.max(...xs)], blokken_y: [Math.min(...ys), Math.max(...ys)] },
     bronnen: eerste.bronnen,
     provincies: provincies.map((p) => ({ naam: p.manifest.regio.naam, versie: p.manifest.versie, blokken: p.blokken.length, wegstukken: p.manifest.totaal.wegstukken, bouwtijdSeconden: p.manifest.bouwtijdSeconden })),
-    totaal: { blokken: lijst.length, ruw: som('ruw'), gz: som('gz'), knopen: som('knopen'), wegstukken: som('wegstukken'), randblokken: lijst.filter((b) => b.bronnen > 1).length },
+    totaal: { blokken: lijst.length, ruw: som('ruw'), gz: som('gz'), knopen: som('knopen'), wegstukken: som('wegstukken'), randblokken: lijst.filter((b) => b.bronnen > 1).length, leeg: lijst.filter((b) => b.wegstukken === 0 && b.pois === 0).length },
     blokken: lijst,
     stations,
   }
@@ -172,10 +223,12 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const arg = (n) => { const i = args.indexOf(n); if (i < 0) return null; const v = args[i + 1]; args.splice(i, 2); return v }
   const versie = arg('--versie')
   const uit = arg('--uit')
+  const grenzen = arg('--grenzen') // map met <provincie>.poly (tools/fase0/grenzen.mjs)
   if (!versie || !uit || !args.length) throw new Error('gebruik: samenvoeg.mjs --versie <v> --uit <map> <provinciemap> ...')
   const t0 = Date.now()
   const provincies = args.map(leesProvincie)
-  const { manifest, bestanden } = voegSamen(provincies, versie)
+  const gebieden = grenzen ? fs.readdirSync(grenzen).filter((f) => f.endsWith('.poly')).map((f) => leesPoly(fs.readFileSync(path.join(grenzen, f), 'utf8'))) : null
+  const { manifest, bestanden } = voegSamen(provincies, versie, gebieden)
   const map = path.join(uit, versie)
   fs.mkdirSync(map, { recursive: true })
   for (const [naam, gz] of bestanden) fs.writeFileSync(path.join(map, naam), gz)
