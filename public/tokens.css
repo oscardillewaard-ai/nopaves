@@ -95,7 +95,7 @@
   --score-laag-cijfer: #F4C7BC;
   --hoogtelijn: #7A5A36;
   /* ---- kleur: op de kaart ---- */
-  --omweg: #2F7D4A;
+  --omweg: #55701A;
   --omweg-tekst: #F7F7F1;
   --punt-rand: #F7F7F1;
   --station-halte: #8C8778;
@@ -140,7 +140,7 @@
     --fout-vlak: #4A211B; --fout-rand: #B5604D; --fout-inkt: #FFD3C7;
     --let-op-vlak: #3F3A16; --let-op-rand: #A8962E;
     --goed: #9BE3B0; --score-laag: #FFD3C7; --score-laag-tekst: #4A211B; --score-laag-cijfer: #6B1F12;
-    --hoogtelijn: #E5C48F; --omweg: #4FBF9A; --omweg-tekst: #0F2418;
+    --hoogtelijn: #E5C48F; --omweg: #C6E36A; --omweg-tekst: #0F2418;
     --punt-rand: #163A28; --water-vlak: #1E4550; --station-vlak: #1D4532;
     --tekenschaduw: #000000; --korrel-inkt: #0F2418; --korrel-licht: #0F2418;
     --onverhard: #4FBF9A; --half: #E8B54A; --open: #B65A96; --gesloten: #BDC2CC; --onbekend: #6E7568; --twijfel: #FF9A88;
@@ -161,7 +161,7 @@
   --fout-vlak: #4A211B; --fout-rand: #B5604D; --fout-inkt: #FFD3C7;
   --let-op-vlak: #3F3A16; --let-op-rand: #A8962E;
   --goed: #9BE3B0; --score-laag: #FFD3C7; --score-laag-tekst: #4A211B; --score-laag-cijfer: #6B1F12;
-  --hoogtelijn: #E5C48F; --omweg: #4FBF9A; --omweg-tekst: #0F2418;
+  --hoogtelijn: #E5C48F; --omweg: #C6E36A; --omweg-tekst: #0F2418;
   --punt-rand: #163A28; --water-vlak: #1E4550; --station-vlak: #1D4532;
   --tekenschaduw: #000000; --korrel-inkt: #0F2418; --korrel-licht: #0F2418;
   --onverhard: #4FBF9A; --half: #E8B54A; --open: #B65A96; --gesloten: #BDC2CC; --onbekend: #6E7568; --twijfel: #FF9A88;

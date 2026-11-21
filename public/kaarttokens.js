@@ -40,7 +40,9 @@ export const KAART = {
  * een rand (rand.breedte aan elke kant) die tegen elk kaartvlak >= 3:1 haalt. Diktes in px.
  * - korrel: per klasse een dunne laag over de lijn ('inkt' of 'licht' = korrelInkt/korrelLicht), null = effen
  * - alternatief: de andere routes, in één neutrale kleur
- * - twijfel, tekening, slepen, omweg, afspeelstip, luchtfoto: de rest van wat op de kaart getekend wordt
+ * - twijfel, tekening, slepen, omweg (eigen kleur, los van onverhard), afspeelstip, luchtfoto (en de schaalbalk
+ *   daarop): de rest van wat op de kaart getekend wordt
+ * - tikzone: breedte van de onzichtbare tikzone per stuk route, zodat ook dunne stukken te raken zijn
  */
 const klassen = { onverhard: { dikte: 6.5 }, half: { dikte: 5.5 }, open: { dikte: 4, streep: '7 5', kap: 'butt' }, gesloten: { dikte: 2.8 }, onbekend: { dikte: 2.8, streep: '0.1 6', kap: 'round' } }
 export const ROUTE = {
@@ -55,9 +57,10 @@ export const ROUTE = {
     twijfel: { kleur: '#26291F', dikte: 1.6, streep: '3 6' },
     tekening: { kleur: '#8E4A73', dikte: 3.5, streep: '8 6', schaduw: '#F7F7F1', schaduwDikte: 7, schaduwDoorzicht: 0.9, vulling: 0.07 },
     slepen: { lijn: '#26291F', stip: '#8E4A73' },
-    omweg: { onder: '#F7F7F1', onderDikte: 10, onderDoorzicht: 1, kleur: '#2F7D4A', dikte: 5, doorzicht: 1, streep: '1 8' },
+    omweg: { onder: '#F7F7F1', onderDikte: 10, onderDoorzicht: 1, kleur: '#55701A', dikte: 5, doorzicht: 1, streep: '1 8' },
     afspeelstip: { rand: '#FFFFFF' },
-    luchtfoto: { route: '#FFFFFF', stuk: '#FF00C8' },
+    luchtfoto: { route: '#FFFFFF', stuk: '#FF00C8', schaalVlak: '#FFFFFF', schaalInkt: '#000000' },
+    tikzone: 18,
   },
   donker: {
     rand: { kleur: '#EEF3EA', breedte: 1.5, doorzicht: 1 }, lijn: { dikte: 5, kap: 'butt' }, klassen,
@@ -70,9 +73,10 @@ export const ROUTE = {
     twijfel: { kleur: '#EEF3EA', dikte: 1.6, streep: '3 6' },
     tekening: { kleur: '#E3A8CB', dikte: 3.5, streep: '8 6', schaduw: '#000000', schaduwDikte: 7, schaduwDoorzicht: 0.6, vulling: 0.07 },
     slepen: { lijn: '#EEF3EA', stip: '#E3A8CB' },
-    omweg: { onder: '#17231C', onderDikte: 10, onderDoorzicht: 1, kleur: '#4FBF9A', dikte: 5, doorzicht: 1, streep: '1 8' },
+    omweg: { onder: '#17231C', onderDikte: 10, onderDoorzicht: 1, kleur: '#C6E36A', dikte: 5, doorzicht: 1, streep: '1 8' },
     afspeelstip: { rand: '#17231C' },
-    luchtfoto: { route: '#FFFFFF', stuk: '#FF00C8' },
+    luchtfoto: { route: '#FFFFFF', stuk: '#FF00C8', schaalVlak: '#FFFFFF', schaalInkt: '#000000' },
+    tikzone: 18,
   },
 }
 

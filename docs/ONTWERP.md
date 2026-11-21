@@ -38,8 +38,8 @@ bestand en ga verder bij de eerste stap die niet `klaar` is. Werk op de sessiebr
 | 2 Drie richtingen achter `?ontwerp=a\|b\|c` | gebouwd en gecontroleerd; PR en samenvoegen volgen | `public/ontwerp/`, [ontwerp/richtingen.md](ontwerp/richtingen.md) |
 | Schetsen | klaar: 30 schetsen van het eerste scherm (op Oscars verzoek, in plaats van drie uitgewerkte richtingen) | [ontwerp/schetsen/](ontwerp/schetsen/) |
 | Keuze | klaar: Oscar koos **4 Veldboek** met het donkere paneel van **12 Bosgroen** als donker thema (2026-11-21); zoekbalk boven: nee (zie hieronder) | |
-| 3 Uitrollen | bezig: Veldboek is standaard, Korrel en A/B/C weg; alle schermen, review-lussen en CLAUDE.md volgen | `public/tokens.css`, `public/kaarttokens.js`, `public/kaartstijl.js` |
-| 4 Beter testen | open | |
+| 3 Uitrollen | klaar: Veldboek standaard in alle schermen, manifest en pictogram nieuw, review-lus, CLAUDE.md bijgewerkt | `public/tokens.css`, `public/kaarttokens.js`, `public/kaartstijl.js`, `ontwerp/na/` |
+| 4 Beter testen | klaar: visuele regressie, wandeling, metingen, telefoontest | `tests/visueel/`, `tests/test_wandeling.mjs`, [ontwerp/metingen.md](ontwerp/metingen.md), [ontwerp/telefoontest.md](ontwerp/telefoontest.md) |
 | Release v1.3.0 | open (v1.2.0 bestond al: de Nopave-router) | |
 
 ## Hulpmiddelen
@@ -110,3 +110,34 @@ per richting, alleen geladen bij `?ontwerp=`), `public/kaarttokens.js` (KAART/RO
 - **Weggehaald** (vastgelegd in docs/branches-archief.md): Korrel (Darker Grotesque, Overpass Mono,
   korrelkaart.js, nu kaartstijl.js), de richtingen A/B/C en `?ontwerp=`, Atkinson en Archivo.
 - **Lettertypen**: Literata (52 kB) en Karla (24 kB) = 76 kB; was 70 kB (Darker Grotesque, Karla, Overpass Mono).
+
+## Stap 3: uitrollen (2026-11-21)
+
+Skills en wat ze opleverden:
+
+| Skill | Opbrengst |
+|---|---|
+| `ui-review` (ronde 1, alle 60 schermen) | golfjes op het water terug; kleine knoppen in de boekletter te zwaar; twee keuzekleuren (groen segment, zwarte snelkeuze); ondertitel in Korrel-hoofdletters; felgroene natuurgrenzen in het donker; water en land te dicht bij elkaar in het donker |
+| `ui-polish` | alle zes opgelost (water effen, kleine knoppen in Karla, één keuzekleur, ondertitel gewoon, natuurgrenzen gedempt, water dieper) en opnieuw bekeken: geen punten met hoge prioriteit meer |
+| `accessibility-review` | axe: 0 overtredingen (licht en donker); twee knoppen nog 36 à 40 px door een oudere regel: opgelost; kleurcheck van de gekozen combinatie: alles ✓ (krapste tekst 4,54:1) |
+| `ux-copy` | weinig nieuwe tekst: laagnaam "Kaart" (was "Korrel"), CHANGELOG en telefoontest in gewone taal |
+| `/code-review` | 8 punten, alle verwerkt: service worker noemde verwijderde lettertypen (installeerde niet), tekening en omwegen kregen bij een themawissel de oude kleuren, dunne stukken (asfalt) slecht te raken (nu een onzichtbare tikzone van 18 px), visuele test in CI mogelijk vals rood (voorlopig niet-blokkerend), omwegen in dezelfde kleur als onverhard (nu eigen olijfgroen), losse kleuren op de luchtfoto, thema zonder opslag |
+
+## Stap 4: beter testen (2026-11-21)
+
+- **Visuele regressie** (`npm run test:visueel`, `tests/visueel/`): plankaart, resultaat, voorkeuren en uitleg,
+  telefoon en desktop, licht en donker (16 beelden). Kaarttegels, kaartletters en PDOK komen uit een opname
+  (`bronnen.zip`), dus stabiel. Twee keer gedraaid: 16/16 gelijk. In CI voorlopig niet-blokkerend, omdat de
+  basisbeelden in de cloudomgeving gemaakt zijn; als CI rood geeft op letterweergave, de basisbeelden één keer
+  uit CI overnemen (bijlage `schermafbeeldingen`).
+- **Wandeling** (`npm run test:wandeling`): rondje vanaf je locatie, station, A naar B, Meijendel, bewaren en
+  terugvinden, alles via de knoppen, met een schermafbeelding per reis.
+- **Metingen**: niet trager ([ontwerp/metingen.md](ontwerp/metingen.md)).
+- **Telefoontest** voor Oscar: [ontwerp/telefoontest.md](ontwerp/telefoontest.md).
+
+## Vervolgpunten (buiten deze opdracht)
+
+- De laag winkels staat standaard aan en stapelt pictogrammen rond de start (gedrag, niet stijl).
+- Een start op zee geeft pas laat een foutmelding.
+- Na het plannen van een station zoomt de kaart op alle routes, waardoor het grijze alternatief veel ruimte krijgt.
+- Zoekbalk bovenin (schets 27): bewust niet gedaan; kan als proef met echte gebruikers.

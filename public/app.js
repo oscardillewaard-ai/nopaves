@@ -55,8 +55,13 @@ const BRONNAAM = { eind: 'Eindoordeel', bgt: 'Officiële kaart', osm: 'OpenStree
 
 let KLEUR = {}
 let RT = null // routetokens (kaarttokens.js) van het huidige thema
+/** Donker thema? Zoals de css het bepaalt: data-theme, en zonder (geen opslag) de systeeminstelling. */
+function isDonker() {
+  const t = document.documentElement.dataset.theme
+  return t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches
+}
 function leesKleuren() {
-  RT = routeTokens(document.documentElement.dataset.theme === 'dark')
+  RT = routeTokens(isDonker())
   const stijl = getComputedStyle(document.documentElement)
   const v = (naam) => stijl.getPropertyValue(naam).trim()
   KLEUR = {
@@ -276,6 +281,9 @@ function zetThema(keuze) {
     else korrelLaag.options.style = kaartStijl(donker) // bij de volgende keer dat de laag aan gaat
   }
   if (plan) herteken()
+  // wat buiten de route getekend is, krijgt ook de kleuren van het nieuwe thema
+  tekenTekening()
+  if (uitslag) tekenOmwegen()
 }
 el('thema').addEventListener('click', () => {
   const volgorde = ['auto', 'licht', 'donker']
@@ -289,7 +297,7 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
 const kaart = L.map('kaart', { maxZoom: 21 }).setView([52.1, 5.3], 8)
 // De kaart van Nopav.es (vectortegels met MapLibre, stijl in kaartstijl.js). Zonder WebGL, of als de tegels niet laden, blijft de
 // gewone OpenStreetMap-kaart over.
-const donkerNu = () => document.documentElement.dataset.theme === 'dark'
+const donkerNu = isDonker
 let korrelLaag = null
 let kaartDonker = donkerNu() // welke stijl er nu op de kaart staat
 if (kanWebgl() && window.maplibregl && L.maplibreGL) {
@@ -334,6 +342,7 @@ kaart.createPane('alternatieven').style.zIndex = 390 // onder de gekozen route
 const puntLaag = L.layerGroup().addTo(kaart)
 const altLaag = L.layerGroup().addTo(kaart)
 const routeLaag = L.layerGroup().addTo(kaart)
+const tikLaag = L.layerGroup().addTo(kaart) // onzichtbare tikzones boven de route (zie tekenRoute)
 const icoon = (tekst, klasse = '') =>
   L.divIcon({ className: '', html: `<div class="punt ${klasse}">${tekst}</div>`, iconSize: [26, 26], iconAnchor: [13, 13] })
 
@@ -979,7 +988,7 @@ el('opnieuw').addEventListener('click', () => {
   gekozen = 0
   opKaart.clear()
   stopAfspelen()
-  for (const laag of [routeLaag, altLaag, profielLaag, tekenLaag, waterLaag, stationLaag, omwegLaag]) laag.clearLayers()
+  for (const laag of [routeLaag, tikLaag, altLaag, profielLaag, tekenLaag, waterLaag, stationLaag, omwegLaag]) laag.clearLayers()
   omwegModus = false
   tekenKaartlagen(null) // de knoppen voor water en stations horen bij de oude route
   el('resultaat').hidden = true
@@ -1235,6 +1244,7 @@ function tekenAlternatieven() {
 
 function tekenRoute(passend) {
   routeLaag.clearLayers()
+  tikLaag.clearLayers()
   lijnen = []
   korrels = []
   randen = []
@@ -1244,8 +1254,10 @@ function tekenRoute(passend) {
   for (const s of plan.analyse.samengevoegd) randen.push([L.polyline(naarLatLon(s.xy), { ...randStijl(s[bron]), interactive: false }).addTo(routeLaag), s])
   for (const s of plan.analyse.samengevoegd) {
     const pad = naarLatLon(s.xy)
-    const lijn = L.polyline(pad, { ...lijnStijl(s[bron]), opacity: 1, bubblingMouseEvents: false }).addTo(routeLaag)
-    lijn.bindPopup(() => {
+    const lijn = L.polyline(pad, { ...lijnStijl(s[bron]), opacity: 1, interactive: false }).addTo(routeLaag)
+    // een onzichtbare, brede tikzone: ook dunne stukken (asfalt, onbekend) zijn met een vinger te raken
+    const doel = L.polyline(pad, { weight: RT.tikzone, opacity: 0, lineCap: 'round', bubblingMouseEvents: false }).addTo(tikLaag)
+    doel.bindPopup(() => {
       const inhoud = document.createElement('div')
       inhoud.innerHTML = popup(s)
       if (uitslag.graaf && keuze().knopen) {
@@ -1254,7 +1266,7 @@ function tekenRoute(passend) {
         knop.className = 'weghalen'
         knop.innerHTML = ico('schaar') + 'Haal dit stukje weg'
         knop.addEventListener('click', () => {
-          const plek = lijn.getPopup().getLatLng()
+          const plek = doel.getPopup().getLatLng()
           kaart.closePopup()
           versleepNaar(dichtsteIndex(plek), null, null, true)
         })
@@ -1262,8 +1274,8 @@ function tekenRoute(passend) {
       }
       return inhoud
     }, { maxWidth: 300 })
-    lijn.bindTooltip(() => `km ${nl(s.van / 1000)}–${nl(s.tot / 1000)} · ${s[bron]}${s.twijfel ? ' · twijfel' : ''}`, { sticky: true })
-    maakVersleepbaar(lijn)
+    doel.bindTooltip(() => `km ${nl(s.van / 1000)}–${nl(s.tot / 1000)} · ${s[bron]}${s.twijfel ? ' · twijfel' : ''}`, { sticky: true })
+    maakVersleepbaar(doel)
     lijnen.push([lijn, s])
     korrels.push([L.polyline(pad, { ...(korrelStijl(s[bron]) || { color: RT.korrelInkt, weight: 1, dashArray: '1 9' }), opacity: korrelStijl(s[bron]) ? korrelStijl(s[bron]).opacity : 0, interactive: false }).addTo(routeLaag), s])
     const twijfelsTonen = el('twijfelblok').open
@@ -1272,13 +1284,13 @@ function tekenRoute(passend) {
       L.polyline(pad, { color: RT.twijfel.kleur, weight: RT.twijfel.dikte, dashArray: RT.twijfel.streep, interactive: false }).addTo(routeLaag)
     }
     if (s.nr) {
-      twijfelLijn[s.nr] = lijn
+      twijfelLijn[s.nr] = doel
       const [mx, my] = K.puntOpLijn(s.xy, K.lijnLengte(s.xy) / 2)
       const [lon, lat] = K.naarWgs(mx, my)
       s.midden = [lat, lon]
       if (twijfelsTonen) {
         L.marker(s.midden, { icon: icoon(s.nr, 'tw'), keyboard: false })
-          .on('click', () => lijn.openPopup(s.midden))
+          .on('click', () => doel.openPopup(s.midden))
           .addTo(routeLaag)
       }
     }
@@ -1881,7 +1893,7 @@ function tekenLuchtfoto(canvas, s, regel) {
     const masker = document.createElement('canvas')
     masker.width = masker.height = FOTO_PX
     const mctx = masker.getContext('2d', { willReadFrequently: true })
-    mctx.strokeStyle = '#fff'
+    mctx.strokeStyle = '#fff' // rekenmasker, geen kleur op het scherm: wit = de strook die gemeten wordt
     mctx.lineWidth = 2 * schaal
     pad(mctx, s.xy)
     mctx.stroke()
@@ -1930,9 +1942,9 @@ function tekenLuchtfoto(canvas, s, regel) {
     rand(route, RT.luchtfoto.route, 2)
     rand(s.xy, RT.luchtfoto.stuk, 4)
     // schaalbalk van 20 m
-    ctx.fillStyle = '#fff'
+    ctx.fillStyle = RT.luchtfoto.schaalVlak
     ctx.fillRect(14, FOTO_PX - 50, 20 * schaal + 12, 40)
-    ctx.fillStyle = '#000'
+    ctx.fillStyle = RT.luchtfoto.schaalInkt
     ctx.fillRect(20, FOTO_PX - 22, 20 * schaal, 4)
     ctx.font = '16px system-ui, sans-serif'
     ctx.fillText('20 m', 20, FOTO_PX - 28)
@@ -2239,7 +2251,7 @@ function herstel(opname) {
     toonResultaat(false)
   } else {
     plan = null
-    for (const laag of [routeLaag, altLaag, profielLaag, waterLaag, stationLaag, omwegLaag]) laag.clearLayers()
+    for (const laag of [routeLaag, tikLaag, altLaag, profielLaag, waterLaag, stationLaag, omwegLaag]) laag.clearLayers()
     tekenKaartlagen(null)
     el('resultaat').hidden = true
     if (stap === 4) toonStap(2)

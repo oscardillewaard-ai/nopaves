@@ -901,14 +901,17 @@ assert.deepEqual(fouten.filter((f) => !/Failed to load resource/.test(f)), [], '
     const kleur = (n) => st.getPropertyValue(n).trim().toLowerCase()
     const paden = [...document.querySelectorAll('.leaflet-overlay-pane path')].map((p) => ({ k: (p.getAttribute('stroke') || '').toLowerCase(), w: Number(p.getAttribute('stroke-width')) }))
     const dikte = (n) => paden.filter((p) => p.k === kleur(n)).map((p) => p.w)
-    return { onv: dikte('--onverhard'), ges: dikte('--gesloten'), half: dikte('--half'), rand: paden.filter((p) => p.k === '#26291f' || p.k === '#eef3ea').length, n: paden.length }
+    const tik = [...document.querySelectorAll('.leaflet-overlay-pane path.leaflet-interactive')].filter((p) => Number(p.getAttribute('stroke-width')) >= 18).length
+    return { onv: dikte('--onverhard'), ges: dikte('--gesloten'), half: dikte('--half'), rand: paden.filter((p) => p.k === '#26291f' || p.k === '#eef3ea').length, tik, n: paden.length }
   })
+  // ook dunne stukken (asfalt, onbekend) zijn te raken: elk stuk heeft een brede, onzichtbare tikzone
+  assert.ok(lijnen.tik >= lijnen.onv.length + lijnen.ges.length, `elk stuk route heeft een tikzone (${lijnen.tik})`)
   assert.ok(lijnen.onv.length + lijnen.half.length > 0, `route op de kaart in de klassekleuren (${JSON.stringify(lijnen)})`)
   if (lijnen.onv.length && lijnen.ges.length) assert.ok(Math.max(...lijnen.onv) > Math.max(...lijnen.ges), 'onverhard is dikker dan asfalt')
   assert.ok(lijnen.rand >= lijnen.onv.length, 'elk stuk route heeft een rand')
   assert.deepEqual(of, [], 'geen paginafouten')
   await oc.close()
-  stap('Veldboek: na Plan rondje staat de route per ondergrond op de kaart, onverhard dikker dan asfalt, met een rand')
+  stap('Veldboek: na Plan rondje staat de route per ondergrond op de kaart, onverhard dikker dan asfalt, met een rand en een tikzone per stuk')
 }
 
 await browser.close()
