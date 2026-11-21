@@ -1,6 +1,6 @@
 # Plan: de vooraf bewerkte graaf voor heel Nederland, in één keer
 
-Status: **fase 0 gemeten** (2026-11-20, `fase0.yml` run 4); **fase 1 loopt** (2026-11-21, zie onder). Alle metingen zijn binnen; de BGT-download
+Status: **fase 0 gemeten** (2026-11-20, `fase0.yml` run 4); **fase 1 klaar** (2026-11-21, `bgt.yml` run 2); fase 2 en 3 lopen. Alle metingen zijn binnen; de BGT-download
 van Noord-Brabant brak de eerste keer af na 1,77 GB en slaagde bij de herstart. Conclusie: heel NL past ruim, de
 OSM-kant is licht, en de BGT is het zware deel. Hieronder de cijfers, wat dat aan het plan verandert, een
 planning per fase en een kostenraming. Nog niets gebouwd voor de app.
@@ -135,7 +135,7 @@ samen (1 job)           randblokken samenvoegen, index per provincie, de kwalite
    Nopave-router op die paren minstens zo goed als BRouter. Alle 12 groen = live.
 7. **Uitrol.** Achter `?graaf=nl` tot de poort voor alle provincies groen is; dan in één keer de standaard.
 
-## Fase 1: de BGT-bron (loopt, 2026-11-21)
+## Fase 1: de BGT-bron (klaar, 2026-11-21)
 
 Code in `tools/bgt/`, workflow `.github/workflows/bgt.yml`, unit-tests in `tests/test_bgt.mjs`.
 
@@ -173,14 +173,42 @@ stroken voelen dat. De geometrie zelf ligt in beide richtingen binnen 5 cm (nage
 **Het afgeleide bestand (NBV1):** per vak van 32 × 32 tegels (6,88 km) en per objecttype één gzip-bestand;
 per vlak een 64-bits sleutel van de `lokaal_id` (voor delta's), de velden als index in een tabel, en de
 coördinaten op centimeters met delta-codering. Proefvak Delft (~25 km²): 5,1 MB, tegen 48,7 MB in de
-PDOK-zip. Geraamd voor heel NL ~1,5–2,5 GB (~26 mln vlakken); de NL-run meet het.
+PDOK-zip. Heel NL: 2,34 GB, 22,6 mln vlakken (gemeten, zie hieronder).
 
 **Gevonden en opgelost:** een object ging verloren als de grens tussen twee tekststukken midden in het
 beginlabel viel (gevonden door een unit-test; verklaarde 1 van de 2 "alleen in de tegel" bij Delft).
 
-**Nog open in fase 1:** de NL-run (`bgt.yml`, run 1 loopt): tijd, grootte en de oordeeltoets op vier vakken
-(Delft, kust, Zoetermeer, Westland). Daarna: de delta's toepassen (beslissing 6), de workflow op 6
-verbindingen (beslissing 7), en de bouw laten lezen uit het afgeleide bestand (fase 2).
+**De NL-run (`bgt.yml` run 2, 2026-11-21 04:53–06:50 UTC, versie van 21-11 01:59, stand 20-11 23:30):**
+
+| Objecttype | zip MB | objecten | historie | actueel | vakken | afgeleid MB | min | CPU min | geheugen MB |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| wegdeel | 5.172 | 19.974.302 | 11.700.505 | 8.273.797 | 931 | 693 | 113,6 | 6,4 | 589 |
+| ondersteunend wegdeel | 1.569 | 6.093.206 | 4.026.865 | 2.066.341 | 923 | 210 | 33,7 | 1,9 | 544 |
+| begroeid terreindeel | 4.735 | 16.217.384 | 9.910.785 | 6.306.599 | 945 | 675 | 103,5 | 5,5 | 570 |
+| onbegroeid terreindeel | 6.362 | 11.037.661 | 7.218.499 | 3.819.162 | 952 | 476 | 58,6 | 5,0 | 564 |
+| waterdeel | 1.909 | 4.762.220 | 2.634.528 | 2.127.692 | 1.032 | 290 | 40,7 | 2,1 | 543 |
+| **Totaal** | **19.747** | **58.084.773** | **35.491.182 (61%)** | **22.593.591** | | **2.344** | **113,6** (doorloop) | | |
+
+- **Doorlooptijd 113,6 min** voor heel NL met 6 verbindingen (beslissing 7). Het langst duurt wegdeel met één
+  stroom: 5,17 GB in 113 min, 0,76 MB/s, trager dan de 1,3 MB/s van de proef. Ruim binnen 6 uur; met 2 stromen
+  voor wegdeel (7 samen) zou het ~60 min zijn. De CPU is geen rem (hooguit 6,4 CPU-min per type).
+- **Geheugen per proces hooguit 589 MB** (run 1 liep op 3 GB vast; opgelost, zie de commit).
+- **Afgeleid bestand 2,34 GB** in 4.788 bestanden (vakken × typen); wekelijks bijgewerkt met de delta's.
+
+| Oordeeltoets (afgeleid bestand tegen de vectortegels) | wegstukken | km | gelijk | strand km (anders) | afgesloten km (natuur anders) |
+|---|---:|---:|---:|---:|---:|
+| Delft | 22.277 | 382,1 | 99,95% | 0 (0) | 38,1 (0) |
+| kust (Meijendel) | 1.191 | 28,4 | 100% | 4,6 (0) | 13,0 (0) |
+| Zoetermeer | 25.858 | 432,5 | 99,93% | 0 (0) | 38,7 (0,13) |
+| Westland | 4.166 | 103,9 | 99,99% | 0 (0) | 19,4 (0) |
+
+Eis ≥ 98% per vak: gehaald. **Fase 1 is klaar.**
+
+**Delta's (beslissing 6):** `tools/bgt/delta.mjs` en `pas_delta.mjs`. Getoetst op de delta van 20-11 in het
+drukste vak (Velsen): 190/190 nieuwe en 168/168 oude versies exact gelijk aan de volledige download (velden,
+geometrie op 1 cm), en gisteren + delta = vandaag in 16/16 vakken. Citygml schrijft lege velden als
+`waardeOnbekend`/`geenWaarde`; die tellen als leeg (gmllight laat ze weg). De wekelijkse workflow die de
+delta's toepast hoort bij de wekelijkse bouw (na fase 3).
 
 ## Planning per fase
 
