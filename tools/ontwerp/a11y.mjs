@@ -42,6 +42,6 @@ for (const thema of ['licht', 'donker']) {
 }
 await browser.close()
 for (const [k, v] of Object.entries(uit)) {
-  console.log(`\n== ${query || 'korrel'} · ${k}: ${v.length ? v.map((x) => `${x.id} (${x.n})`).join(', ') : 'geen overtredingen'}`)
+  console.log(`\n== ${query || 'standaard'} · ${k}: ${v.length ? v.map((x) => `${x.id} (${x.n})`).join(', ') : 'geen overtredingen'}`)
   for (const x of v) for (const e of x.voorbeeld) console.log(`   ${x.id}: ${e}`)
 }

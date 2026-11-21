@@ -144,7 +144,8 @@ export function kaartStijl(donker, t = kaartTokens(donker)) {
     { id: 'natuur-vlak', type: 'fill', source: 'ofm', 'source-layer': 'park', paint: { 'fill-color': t.park, 'fill-opacity': t.natuurDoorzicht } },
     { id: 'natuur-lijn', type: 'line', source: 'ofm', 'source-layer': 'park', minzoom: 8, paint: { 'line-color': t.park, 'line-width': 1.2, 'line-opacity': 0.8, 'line-dasharray': [4, 3] } },
     // water
-    { id: 'water', type: 'fill', source: 'ofm', 'source-layer': 'water', paint: vlak('water') },
+    // water altijd effen: golfjes maken grote wateren op lage zoom onrustig
+    { id: 'water', type: 'fill', source: 'ofm', 'source-layer': 'water', paint: { 'fill-color': t.water } },
     { id: 'waterloop', type: 'line', source: 'ofm', 'source-layer': 'waterway', paint: { 'line-color': t.waterLijn, 'line-width': dikte(8, 0.6, 14, 2, 18, 8) } },
     { id: 'gebouwen', type: 'fill', source: 'ofm', 'source-layer': 'building', minzoom: 13, paint: { 'fill-color': t.building, 'fill-outline-color': t.buildingLijn } },
     // wegen: eerst een rand in de kleur van de grond, dan de weg zelf

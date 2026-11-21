@@ -59,3 +59,14 @@ PALETTEN.c = {
     rand: '#E9EADF',
   },
 }
+
+// ---- de gekozen huisstijl (v1.3.0): Veldboek licht, Bosgroen donker. Houd gelijk met tokens.css en kaarttokens.js ----
+PALETTEN.veldboek = {
+  licht: { ...PALETTEN.c.licht },
+  donker: {
+    tekst: [['#EEF3EA', '#163A28', 'inkt op paneel'], ['#C2D3C4', '#1D4532', 'inkt-2 op vlak'], ['#A5BCA9', '#24503B', 'inkt-3 op vlak-2'], ['#A5BCA9', '#163A28', 'inkt-3 op paneel'], ['#14301F', '#C6E36A', 'hoofdknop'], ['#C2D3C4', '#24503B', 'inkt-2 op vlak-2']],
+    klassen: { onverhard: '#4FBF9A', half: '#E8B54A', open: '#B65A96', gesloten: '#BDC2CC', onbekend: '#6E7568' },
+    kaart: ['#17231C', '#19261E', '#1D2A22', '#24332A', '#1E3626', '#213A28', '#0D2A36', '#2F2B20', '#2E2630'],
+    rand: '#EEF3EA',
+  },
+}

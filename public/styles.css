@@ -754,7 +754,9 @@ header button.klein { background: var(--vlak); }
 .segment button { font-weight: 600; font-size: 19px; }
 .segment button[aria-pressed="true"], .keuze button[aria-pressed="true"], .meerlijst > button[aria-pressed="true"] { background: var(--route); color: var(--route-inkt); }
 .snelkeuzes button { border-color: transparent; background: transparent; color: var(--inkt-2); }
-.snelkeuzes button[aria-pressed="true"] { background: var(--inkt); color: var(--vlak); border-color: var(--inkt); }
+.snelkeuzes button[aria-pressed="true"] { background: var(--route); color: var(--route-inkt); border-color: var(--route); }
+/* kleine knoppen in de tekstletter: rustiger dan de boekletter, die blijft voor koppen, hoofdknop, segment en cijfers */
+button.klein, .startknoppen button, .eindknoppen button:not(.hoofd), .omwegknop, .andereknop, .bewaardlijst button, .hulp-soorten button, .toast button { font-family: var(--tekst); font-weight: 600; font-size: 16px; letter-spacing: 0; }
 /* rijen van de plankaart: een vlak, geen kader */
 .startregel { border: 0; background: var(--vlak-2); border-radius: var(--hoek-vlak); }
 .voorkeurregel { border: 0; background: transparent; color: var(--inkt-2); padding-left: 2px; }
@@ -806,3 +808,5 @@ dialog, #hulp, #voorkeuren { border: var(--lijn) solid var(--inkt); }
 .segment button, .keuze button, [data-ui="nieuw"] #opties .kies, .andereknop, .snelkeuzes button, .startknoppen button,
 #afspeel, .omwegknop, .voorkeurregel, .eindknoppen button { min-height: var(--doel); }
 .snelkeuzes button, .startknoppen button, #afspeel { min-width: var(--doel); }
+header .sub { font: 500 13px/1.3 var(--tekst); text-transform: none; letter-spacing: 0; color: var(--inkt-2); }
+#afspeel.ikoon, button.omwegknop.klein { min-height: var(--doel); min-width: var(--doel); }

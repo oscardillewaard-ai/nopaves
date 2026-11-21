@@ -354,7 +354,7 @@ ondergrondstrook onder de score, de legenda en de tabel, en als dunne laag over
 de route zelf (stippen = onverhard, streepjes = half verhard, lange strepen =
 open verharding, asfalt blijft effen). De kleuren van de ondergrondklassen zijn
 dezelfde als voorheen (gevalideerd op kleurenblindheid); de korrel zit erbovenop.
-De kaart zelf is ook Korrel (`korrelkaart.js`): vectortegels van OpenFreeMap
+De kaart zelf heeft een eigen stijl (`kaartstijl.js`, huisstijl Veldboek): vectortegels van OpenFreeMap
 (OpenMapTiles-schema) in een eigen MapLibre-stijl, via de plugin
 `maplibre-gl-leaflet` onder de Leaflet-lagen. Bos, gras, struweel, heide, zand,
 wetland en water hebben elk een korrel (de plaatjes worden in de browser

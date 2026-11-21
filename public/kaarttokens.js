@@ -26,11 +26,11 @@ export const KAART = {
   },
   donker: {
     bg: '#17231C', wood: '#1E3626', grass: '#213A28', scrub: '#1F3426', heath: '#2E2630', farm: '#19261E', sand: '#2F2B20',
-    wetland: '#1D3330', water: '#12262E', res: '#1D2A22', comm: '#1F2C24', ind: '#212E26', campus: '#1B281F', pitch: '#213A26',
+    wetland: '#1D3330', water: '#0D2A36', res: '#1D2A22', comm: '#1F2C24', ind: '#212E26', campus: '#1B281F', pitch: '#213A26',
     rail: '#4C5A50', railStreep: '#17231C', building: '#24332A', buildingLijn: '#2D3D33', ink: '#C9D6CB', ink2: '#9DB0A1', halo: '#17231C',
     wegRand: '#0E1712', wegRandDoorzicht: 0.9,
     snel: '#45544A', hoofd: '#3C4A41', klein: '#324038', fiets: '#2C3932', onverhard: '#A38E66', pad: '#B09A70',
-    waterLabel: '#7FA3A8', waterLijn: '#1A3540', park: '#C6E36A', natuurDoorzicht: 0.04, grens: '#B07A9C',
+    waterLabel: '#7FA3A8', waterLijn: '#1A3540', park: '#6E8F4A', natuurDoorzicht: 0.06, grens: '#B07A9C',
     patronen: true, korrelInkt: [233, 240, 228], korrelSterkte: 0.15, ...NOTO,
   },
 }
