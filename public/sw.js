@@ -1,10 +1,11 @@
 // Network-first: haal altijd de nieuwste versie op als er internet is, val
 // terug op de cache als je offline bent. Plannen zelf heeft internet nodig
 // (BRouter en PDOK); offline zie je alleen de app en je bewaarde punten.
-const CACHE = 'nopaves-app-v48'
+const CACHE = 'nopaves-app-v49'
 const SHELL = [
   './',
   'index.html',
+  'tokens.css',
   'styles.css',
   'app.js',
   'sheet.js',
@@ -14,6 +15,7 @@ const SHELL = [
   'datacache.js',
   'rekenen.js',
   'rekenwerker.js',
+  'kaarttokens.js',
   'korrelkaart.js',
   'bronnen.js',
   'kern.js',

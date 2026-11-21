@@ -882,5 +882,38 @@ assert.deepEqual(fouten.filter((f) => !/Failed to load resource/.test(f)), [], '
   await cg2.close()
 }
 
+// ---- Ontwerprichtingen (stap 2): ?ontwerp=a|b|c laadt een eigen stijl; plannen via de knoppen werkt gelijk ----
+{
+  const oc = await browser.newContext(mobiel ? { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } : { viewport: { width: 1440, height: 900 } })
+  const o = await oc.newPage()
+  const of = []
+  o.on('pageerror', (e) => of.push('PAGEERROR ' + e.message))
+  // zonder parameter: geen richting, geen extra stijlblad
+  await o.goto(basis)
+  assert.equal(await o.evaluate(() => document.documentElement.dataset.ontwerp || null), null, 'standaard geen ontwerprichting')
+  assert.equal(await o.locator('link[href^="ontwerp/"]').count(), 0, 'standaard geen extra stijlblad')
+  // een onbekende waarde doet niets
+  await o.goto(`${basis}?ontwerp=x`)
+  assert.equal(await o.evaluate(() => document.documentElement.dataset.ontwerp || null), null, '?ontwerp=x wordt genegeerd')
+  for (const r of ['a', 'b', 'c']) {
+    await o.goto(`${basis}?ontwerp=${r}#p=52.0116,4.3571&rondje=10`)
+    await o.waitForSelector('#planKnop:not([disabled])', { timeout: 20000 })
+    assert.equal(await o.evaluate(() => document.documentElement.dataset.ontwerp), r)
+    // de richting zet zijn eigen tokens: de kleur van onverhard verschilt van Korrel (#008300)
+    const kleur = await o.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--onverhard').trim().toLowerCase())
+    assert.notEqual(kleur, '#008300', `richting ${r} heeft een eigen klassekleur`)
+    await o.click('#planKnop')
+    await o.waitForFunction(() => (!document.getElementById('resultaat').hidden && !(window.onverhard.bezig && window.onverhard.bezig())) || !document.getElementById('fout').hidden, null, { timeout: 300000 })
+    assert.equal(await o.locator('#fout').textContent(), '', `richting ${r}: geen foutmelding`)
+    // de route is per klasse getekend, met een rand eronder (meer lijnen dan stukken)
+    const lijnen = await o.evaluate(() => document.querySelectorAll('.leaflet-overlay-pane path').length)
+    assert.ok(lijnen > 2, `richting ${r}: route op de kaart (${lijnen} lijnen)`)
+    if (r === 'a') await o.screenshot({ path: path.join(map, `nopaves_ontwerp-a_${soort}.png`) })
+  }
+  assert.deepEqual(of, [], 'geen paginafouten in de richtingen')
+  await oc.close()
+  stap('ontwerprichtingen: ?ontwerp=a, b en c laden een eigen stijl en plannen via de knop; zonder of met onbekende waarde blijft alles gelijk')
+}
+
 await browser.close()
 console.log(`klaar (${soort})`)

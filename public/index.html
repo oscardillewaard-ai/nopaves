@@ -15,6 +15,7 @@
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
     <link rel="stylesheet" href="vendor/leaflet.css" />
     <link rel="stylesheet" href="vendor/maplibre-gl.css" />
+    <link rel="stylesheet" href="tokens.css" />
     <link rel="stylesheet" href="styles.css" />
     <script>
       // thema meteen zetten, vóór de pagina zichtbaar wordt (geen witte flits)
@@ -24,6 +25,16 @@
         document.documentElement.dataset.theme = donker ? 'dark' : 'light'
       } catch {
         // geen opslag: de media-query in de css regelt het
+      }
+      // ontwerprichting om te proberen (?ontwerp=a, b of c); zonder blijft het huidige ontwerp
+      const ontwerp = new URLSearchParams(location.search).get('ontwerp')
+      if (/^[abc]$/.test(ontwerp || '')) {
+        document.documentElement.dataset.ontwerp = ontwerp
+        document.write('<link rel="stylesheet" href="ontwerp/' + ontwerp + '.css" />')
+        const kleur = { a: ['#FFFFFF', '#161817'], b: ['#FFFFFF', '#0C1330'], c: ['#F7F7F1', '#1A1C16'] }[ontwerp]
+        const metas = document.querySelectorAll('meta[name="theme-color"]')
+        metas[0].content = kleur[0]
+        metas[1].content = kleur[1]
       }
     </script>
     <title>Nopav.es</title>

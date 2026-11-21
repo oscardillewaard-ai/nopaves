@@ -1,0 +1,156 @@
+/* Ontwerptokens: alle visuele beslissingen van de interface op één plek. styles.css gebruikt alleen deze
+   namen; een andere richting is een andere set waarden (zie docs/ONTWERP.md). De kaart en de routelijnen
+   hebben hun eigen tokens in kaarttokens.js; de klassekleuren hieronder gelden voor beide.
+
+   Rollen:
+   --pagina          achtergrond van het paneel           --vlak, --vlak-2   oppervlak, en een tint dieper
+   --inkt, -2, -3    tekst, zachter, zachtst (>= 4,5:1)   --rand             fijne scheidingslijn
+   --lijn-kleur      rand van wat je kunt aantikken       --balk             vlak met nadruk (score)
+   --route           hoofdknop en gekozen keuze           --accent           accent op tekst en vinkjes
+   --rouw            rand om de route op de kaart (alleen voor de oude kaartlaag; zie kaarttokens.js)
+   --fout-*, --let-op-*, --goed                           status
+   klassen: --onverhard, --half, --open, --gesloten, --onbekend; --twijfel */
+
+/* Korrel: de ondergrond is het merk. Vierkant, 2px inkt, geen schaduw. */
+@font-face { font-family: 'Darker Grotesque'; font-style: normal; font-weight: 500 900; font-display: swap; size-adjust: 112%; src: url('fonts/darker-grotesque-latin-variable.woff2') format('woff2'); }
+@font-face { font-family: 'Karla'; font-style: normal; font-weight: 400 700; font-display: swap; src: url('fonts/karla-latin-variable.woff2') format('woff2'); }
+@font-face { font-family: 'Overpass Mono'; font-style: normal; font-weight: 500 700; font-display: swap; src: url('fonts/overpass-mono-latin-variable.woff2') format('woff2'); }
+
+:root {
+  color-scheme: light;
+  /* ---- letters ---- */
+  --kop: 'Darker Grotesque', 'Arial Narrow', sans-serif;      /* koppen, knoppen, grote cijfers */
+  --tekst: 'Karla', system-ui, -apple-system, 'Segoe UI', sans-serif; /* lopende tekst */
+  --mono: 'Overpass Mono', ui-monospace, Menlo, monospace;   /* kleine data, eenheden */
+  --kaartletter: 'Karla', system-ui, sans-serif;              /* Leaflet-bediening en popups */
+  --kop-gewicht: 900;
+  --kop-gewicht-2: 800;                                       /* kleinere koppen, segmentknop */
+  --kop-spatie: -.01em;
+  --kop-kast: none;                                           /* text-transform van koppen */
+  --tekst-maat: 16px;
+  --tekst-regel: 1.45;
+  --klein-kast: uppercase;                                    /* kleine labels (stapper, 'waarom') */
+
+  /* ---- vorm ---- */
+  --hoek: 0;              /* knoppen, velden, segment */
+  --hoek-vlak: 0;         /* kaarten, dialogen, sheet */
+  --hoek-pil: 0;          /* badges, chips */
+  --hoek-sheet: 0;        /* bovenkant van de sheet op de telefoon */
+  --lijn: 2px;            /* randdikte van wat je kunt aantikken */
+  --lijn-kleur: var(--inkt);
+  --lijn-vlak: var(--lijn) solid var(--lijn-kleur); /* rand om leesvlakken (score, statistieken) */
+  --scheiding: 1px solid var(--rand);
+  --schaduw: none;        /* vlakken in het paneel */
+  --schaduw-zwevend: none;/* popups, menu, toast, zoekresultaten */
+  --schaduw-sheet: none;
+  --schaduw-markering: 0 1px 4px rgb(0 0 0 / .35); /* pinnen op de kaart */
+  --keuze-rand: 8px solid var(--route); /* streep links bij een gekozen route of soort */
+
+  /* ---- afstanden ---- */
+  --r-1: 4px; --r-2: 8px; --r-3: 12px; --r-4: 16px; --r-5: 24px; --r-6: 32px;
+  --goot: 18px;           /* binnenrand van het paneel */
+  --paneel-breed: 440px;
+
+  /* ---- beweging ---- */
+  --duur-kort: .12s;
+  --duur: .25s;
+  --duur-sheet: .28s;
+  --curve: cubic-bezier(.2, .8, .2, 1);
+
+  /* ---- kleur: papier en inkt ---- */
+  --zand: #E3C98C; --veen: #2B211B; --heide: #9B4A7A; --mos: #5F7A2F; --klei: #A8714A; --asfalt: #565B63;
+  --pagina: #DDE5B3;
+  --pagina-beeld: var(--ruis);   /* textuur over de pagina; none voor effen */
+  --vlak: #F1F3D4;
+  --vlak-2: #E3E9BD;
+  --rand: #A3AE75;
+  --inkt: #2E3320;
+  --inkt-2: #4A5235;
+  --inkt-3: #656E4B;
+  --balk: #4F6B2A;
+  --balk-tekst: #F6F6DA;
+  --balk-tekst-2: #cfd5bf;       /* zachte tekst op --balk */
+  --route: #9BC046;
+  --route-inkt: #1F2A12;
+  --accent: #4F6B2A;
+  --accent-tekst: #F6F6DA;
+  --greep: var(--balk);          /* handvat van de sheet */
+  --greep-streep: var(--balk-tekst);
+  --nadruk-ring: rgb(155 74 122 / .35); /* ring om de huidige stap */
+  --sluier: rgb(10 18 12 / .6);  /* achter een dialoog */
+  --rouw: #F6F7DD;
+  --asfalt-korrel: #9097a0;      /* stippen in 'pav' van het woordteken */
+  /* ---- kleur: status ---- */
+  --fout-vlak: #F6D8CC;
+  --fout-rand: #B5533F;
+  --fout-inkt: #5E1A10;
+  --let-op-vlak: #F3E8A0;
+  --let-op-rand: #A8841F;
+  --goed: #2f7a35;
+  --score-laag: #7a2a22;         /* badge bij een lage score */
+  --score-laag-tekst: #fff;
+  --score-laag-cijfer: #ffb4a8;  /* groot cijfer bij een lage score */
+  --hoogtelijn: #8A5530;
+  /* ---- kleur: op de kaart ---- */
+  --omweg: var(--mos);
+  --omweg-tekst: #F6F6DA;
+  --punt-rand: #fff;             /* rand om start, eind en tussenpunt */
+  --station-halte: #6c7a89;      /* rand om een halte (geen trein) */
+  --water-vlak: #8FB4BF;         /* pictogram drinkwater */
+  --station-vlak: var(--vlak);
+  --tekenkleur: #9B4A7A;         /* wat je tekent (gebied, lijn) */
+  --tekenschaduw: #2B211B;
+  --sleepstip: #9B4A7A;
+  --korrel-inkt: #2B211B;        /* korrel over de klassekleur */
+  --korrel-licht: #F2E4B8;       /* korrel op een donkere klassekleur */
+  /* ---- kleur: ondergrondklassen ---- */
+  --onverhard: #008300;
+  --half: #eda100;
+  --open: #e87ba4;
+  --gesloten: #6250d6;
+  --onbekend: #8a8985;
+  --twijfel: #b3261e;
+
+  /* korrels als plaatje (inkt met doorzicht), over de klassekleur heen */
+  --ruis: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' seed='5'/%3E%3CfeColorMatrix values='0 0 0 0 .17  0 0 0 0 .13  0 0 0 0 .1  0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
+  --k-onverhard: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11'%3E%3Cg fill='%232B211B' fill-opacity='.65'%3E%3Ccircle cx='2' cy='2' r='.9'/%3E%3Ccircle cx='7.5' cy='1.5' r='.7'/%3E%3Ccircle cx='5' cy='6.5' r='1'/%3E%3Ccircle cx='10' cy='8.5' r='.7'/%3E%3Ccircle cx='1.5' cy='9' r='.8'/%3E%3C/g%3E%3C/svg%3E");
+  --k-half: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Cpath d='M2 8V4M5.5 9V5.5M8.5 6V2.5' stroke='%232B211B' stroke-opacity='.7' stroke-width='1.1' stroke-linecap='round' fill='none'/%3E%3C/svg%3E");
+  --k-open: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='7'%3E%3Cpath d='M-1 1L1-1M0 7L7 0M6 8L8 6' stroke='%232B211B' stroke-opacity='.55' stroke-width='1.1' fill='none'/%3E%3C/svg%3E");
+  --k-gesloten: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Cg fill='%23F2E4B8' fill-opacity='.4'%3E%3Ccircle cx='1.5' cy='1.5' r='.8'/%3E%3Ccircle cx='4.5' cy='4.5' r='.7'/%3E%3C/g%3E%3C/svg%3E");
+  --k-onbekend: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M0 4Q3 1 6 4T12 4' stroke='%232B211B' stroke-opacity='.5' stroke-width='1' fill='none'/%3E%3C/svg%3E");
+  /* pictogram van de Leaflet-lagenknop (Leaflet zoekt het als los plaatje) */
+  --lagen-ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 3 2 8l10 5 10-5-10-5Z'/%3E%3Cpath d='m2 12 10 5 10-5'/%3E%3Cpath d='m2 16 10 5 10-5'/%3E%3C/svg%3E");
+  --osm-filter: sepia(.2) saturate(.85) contrast(.98); /* de gewone OSM-tegels (terugval) */
+}
+
+/* donker: dezelfde grond bij nacht. Twee keer dezelfde set: voor 'automatisch' zonder opslag, en voor de keuze. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --pagina: #1E2517; --pagina-beeld: none; --vlak: #28301F; --vlak-2: #333D28; --rand: #566240;
+    --inkt: #EEF1CC; --inkt-2: #CCD4A2; --inkt-3: #A1AC77;
+    --balk: #45602A; --balk-tekst: #F4F6D8;
+    --route: #A9CF52; --route-inkt: #1B2410; --accent: #A9CF52; --accent-tekst: #F4F6D8;
+    --rouw: #10150B;
+    --fout-vlak: #3B1714; --fout-rand: #9A3A31; --fout-inkt: #FFC4BC;
+    --let-op-vlak: #3A3410; --let-op-rand: #8A8A2A;
+    --hoogtelijn: #C9A15E;
+    --half: #c98500; --open: #d55181; --gesloten: #9085e9; --twijfel: #ff8a80;
+    --lagen-ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23eee' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 3 2 8l10 5 10-5-10-5Z'/%3E%3Cpath d='m2 12 10 5 10-5'/%3E%3Cpath d='m2 16 10 5 10-5'/%3E%3C/svg%3E");
+    --osm-filter: invert(1) hue-rotate(180deg) brightness(.9) contrast(.85) saturate(.7) sepia(.15);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --pagina: #1E2517; --pagina-beeld: none; --vlak: #28301F; --vlak-2: #333D28; --rand: #566240;
+  --inkt: #EEF1CC; --inkt-2: #CCD4A2; --inkt-3: #A1AC77;
+  --balk: #45602A; --balk-tekst: #F4F6D8;
+  --route: #A9CF52; --route-inkt: #1B2410; --accent: #A9CF52; --accent-tekst: #F4F6D8;
+  --rouw: #10150B;
+  --fout-vlak: #3B1714; --fout-rand: #9A3A31; --fout-inkt: #FFC4BC;
+  --let-op-vlak: #3A3410; --let-op-rand: #8A8A2A;
+  --hoogtelijn: #C9A15E;
+  --half: #c98500; --open: #d55181; --gesloten: #9085e9; --twijfel: #ff8a80;
+  --lagen-ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23eee' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 3 2 8l10 5 10-5-10-5Z'/%3E%3Cpath d='m2 12 10 5 10-5'/%3E%3Cpath d='m2 16 10 5 10-5'/%3E%3C/svg%3E");
+  --osm-filter: invert(1) hue-rotate(180deg) brightness(.9) contrast(.85) saturate(.7) sepia(.15);
+}

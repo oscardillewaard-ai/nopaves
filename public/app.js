@@ -6,6 +6,7 @@ import { maakSheet } from './sheet.js'
 import * as Teller from './teller.js'
 import * as Meting from './meting.js'
 import { korrelStijl as kaartStijl, koppelKorrels, kanWebgl, KAART_BRON } from './korrelkaart.js'
+import { routeTokens } from './kaarttokens.js'
 import * as Gebieden from './gebieden.js'
 import { voorafOphalen, haalTegels, bekijkRoute, haalOpeningstijden, importeerGpx, pasRouteAan, routeNaarStation, zoekOmwegen, maakPlan, luchtfotoUrl, details, zoekPlaats } from './bronnen.js'
 
@@ -53,7 +54,9 @@ const TOELICHTING = {
 const BRONNAAM = { eind: 'Eindoordeel', bgt: 'Officiële kaart', osm: 'OpenStreetMap' }
 
 let KLEUR = {}
+let RT = null // routetokens (kaarttokens.js) van het huidige thema
 function leesKleuren() {
+  RT = routeTokens(document.documentElement.dataset.theme === 'dark')
   const stijl = getComputedStyle(document.documentElement)
   const v = (naam) => stijl.getPropertyValue(naam).trim()
   KLEUR = {
@@ -62,8 +65,7 @@ function leesKleuren() {
     [K.OPEN]: v('--open'),
     [K.GESLOTEN]: v('--gesloten'),
     [K.ONBEKEND]: v('--onbekend'),
-    rouw: v('--rouw'),
-    inkt: v('--inkt'),
+    hoogtelijn: v('--hoogtelijn'),
   }
 }
 leesKleuren()
@@ -96,13 +98,25 @@ const korrelKlasse = (klasse) => `kl kl-${String(klasse).split(' ')[0]}`
  * Onverhard krijgt stippen, half verhard streepjes, open verharding lange strepen en onbekend losse
  * puntjes; gesloten verharding (asfalt) blijft effen.
  */
+/** Naam van een klasse zoals in de tokens: 'half verhard' wordt 'half'. */
+const klasseNaam = (klasse) => String(klasse).split(' ')[0]
+/**
+ * De lijn van één stuk route. Een richting kan per klasse een eigen dikte en streep geven (RT.klassen);
+ * zonder die tokens is elke klasse even dik (Korrel).
+ */
+function lijnStijl(klasse) {
+  const k = RT.klassen && RT.klassen[klasseNaam(klasse)]
+  return { color: KLEUR[klasse], weight: k ? k.dikte : RT.lijn.dikte, dashArray: k ? k.streep || null : null, lineCap: k ? k.kap || RT.lijn.kap : RT.lijn.kap }
+}
+/** De rand onder één stuk route, of null als de richting één doorlopende rand gebruikt. */
+function randStijl(klasse) {
+  if (!RT.klassen) return null
+  return { color: RT.rand.kleur, weight: lijnStijl(klasse).weight + 2 * RT.rand.breedte, opacity: RT.rand.doorzicht, lineCap: 'round', lineJoin: 'round' }
+}
 function korrelStijl(klasse) {
-  const inkt = '#2B211B'
-  if (klasse === K.ONVERHARD) return { color: inkt, weight: 2.4, opacity: 0.7, dashArray: '0.1 6', lineCap: 'round' }
-  if (klasse === K.HALF) return { color: inkt, weight: 2.2, opacity: 0.65, dashArray: '5 5', lineCap: 'butt' }
-  if (klasse === K.OPEN) return { color: '#F2E4B8', weight: 1.8, opacity: 0.9, dashArray: '10 6', lineCap: 'butt' }
-  if (klasse === K.ONBEKEND) return { color: inkt, weight: 2, opacity: 0.5, dashArray: '0.1 10', lineCap: 'round' }
-  return null
+  const k = RT.korrel[klasseNaam(klasse)]
+  if (!k) return null
+  return { color: k.kleur === 'licht' ? RT.korrelLicht : RT.korrelInkt, weight: k.dikte, opacity: k.doorzicht, dashArray: k.streep, lineCap: k.kap }
 }
 
 // ---------- Toestand ----------
@@ -564,13 +578,15 @@ function tekenTekening(vers = false) {
   tekenLaag.clearLayers()
   const t = tekening()
   if (!t || !t.length) return
-  const stijl = { color: '#9B4A7A', weight: 4, opacity: 1, dashArray: '8 6', interactive: false, className: vers ? 'tekening-vers' : '' }
+  const tt = RT.tekening
+  const stijl = { color: tt.kleur, weight: tt.dikte, opacity: 1, dashArray: tt.streep, interactive: false, className: vers ? 'tekening-vers' : '' }
+  const schaduw = { ...stijl, color: tt.schaduw, weight: tt.schaduwDikte, dashArray: null, opacity: tt.schaduwDoorzicht }
   if (staat.modus === 'tekenen') {
-    L.polyline(t, { ...stijl, color: '#2B211B', weight: 7, dashArray: null, opacity: 0.35 }).addTo(tekenLaag)
+    L.polyline(t, schaduw).addTo(tekenLaag)
     L.polyline(t, stijl).addTo(tekenLaag)
   } else {
-    L.polygon(t, { ...stijl, color: '#2B211B', weight: 7, dashArray: null, opacity: 0.35, fill: false }).addTo(tekenLaag)
-    L.polygon(t, { ...stijl, fillColor: '#9B4A7A', fillOpacity: 0.08 }).addTo(tekenLaag)
+    L.polygon(t, { ...schaduw, fill: false }).addTo(tekenLaag)
+    L.polygon(t, { ...stijl, fillColor: tt.kleur, fillOpacity: tt.vulling }).addTo(tekenLaag)
   }
 }
 
@@ -630,7 +646,7 @@ kaartVlak.addEventListener('pointerdown', (e) => {
   e.stopPropagation()
   kaartVlak.setPointerCapture(e.pointerId)
   const p = kaart.mouseEventToLatLng(e)
-  schets = { punten: [[p.lat, p.lng]], lijn: L.polyline([[p.lat, p.lng]], { color: '#9B4A7A', weight: 4, dashArray: '8 6', interactive: false }).addTo(tekenLaag) }
+  schets = { punten: [[p.lat, p.lng]], lijn: L.polyline([[p.lat, p.lng]], { color: RT.tekening.kleur, weight: RT.tekening.dikte, dashArray: RT.tekening.streep, interactive: false }).addTo(tekenLaag) }
 }, { capture: true })
 kaartVlak.addEventListener('pointermove', (e) => {
   if (!tekenen || !schets) return
@@ -1165,6 +1181,7 @@ const naarLatLon = (xy) => xy.map(([x, y]) => {
 })
 let lijnen = [] // [[polyline, stuk], ...]
 let korrels = [] // [[polyline, stuk], ...]: de korrel op de route
+let randen = [] // [[polyline, stuk], ...]: de rand per stuk (alleen als de richting per klasse tekent)
 let twijfelLijn = {}
 
 /** De wegsoort in gewone woorden, voor de korte regel in de popup. */
@@ -1199,13 +1216,14 @@ function tekenAlternatieven() {
     const o = uitslag.opties[i]
     const tip = `Route ${o.naam}: ${nl(o.km)} km, score ${o.score}, ${ondergrondTekst(aandelen(o.analyse))}. Tik om te kiezen.`
     const kies = () => kiesRoute(i)
-    L.polyline(naarLatLon(o.analyse.xy), { pane: 'alternatieven', color: KLEUR.rouw, weight: 7, opacity: 0.7, bubblingMouseEvents: false })
+    const at = RT.alternatief
+    L.polyline(naarLatLon(o.analyse.xy), { pane: 'alternatieven', color: at.rand, weight: at.randDikte, opacity: at.randDoorzicht, bubblingMouseEvents: false })
       .bindTooltip(tip, { sticky: true })
       .on('click', kies)
       .addTo(altLaag)
     for (const s of o.analyse.samengevoegd) {
       L.polyline(naarLatLon(s.xy), {
-        pane: 'alternatieven', color: KLEUR[s.eind], weight: 3.5, dashArray: '6 6', lineCap: 'butt', bubblingMouseEvents: false,
+        pane: 'alternatieven', color: at.kleur || KLEUR[s.eind], weight: at.dikte, opacity: at.doorzicht, dashArray: at.streep, lineCap: at.kap || 'butt', bubblingMouseEvents: false,
       })
         .bindTooltip(tip, { sticky: true })
         .on('click', kies)
@@ -1220,12 +1238,18 @@ function tekenRoute(passend) {
   routeLaag.clearLayers()
   lijnen = []
   korrels = []
+  randen = []
   twijfelLijn = {}
   const alles = naarLatLon(plan.analyse.xy)
-  L.polyline(alles, { color: KLEUR.rouw, weight: 9, opacity: 0.9, interactive: false }).addTo(routeLaag)
+  if (RT.klassen) {
+    // eerst alle randen, dan alle lijnen: zo valt geen rand over een lijn heen bij een overgang
+    for (const s of plan.analyse.samengevoegd) randen.push([L.polyline(naarLatLon(s.xy), { ...randStijl(s[bron]), interactive: false }).addTo(routeLaag), s])
+  } else {
+    L.polyline(alles, { color: RT.rand.kleur, weight: RT.rand.dikte, opacity: RT.rand.doorzicht, interactive: false }).addTo(routeLaag)
+  }
   for (const s of plan.analyse.samengevoegd) {
     const pad = naarLatLon(s.xy)
-    const lijn = L.polyline(pad, { color: KLEUR[s[bron]], weight: 5, opacity: 1, lineCap: 'butt', bubblingMouseEvents: false }).addTo(routeLaag)
+    const lijn = L.polyline(pad, { ...lijnStijl(s[bron]), opacity: 1, bubblingMouseEvents: false }).addTo(routeLaag)
     lijn.bindPopup(() => {
       const inhoud = document.createElement('div')
       inhoud.innerHTML = popup(s)
@@ -1246,11 +1270,11 @@ function tekenRoute(passend) {
     lijn.bindTooltip(() => `km ${nl(s.van / 1000)}–${nl(s.tot / 1000)} · ${s[bron]}${s.twijfel ? ' · twijfel' : ''}`, { sticky: true })
     maakVersleepbaar(lijn)
     lijnen.push([lijn, s])
-    korrels.push([L.polyline(pad, { ...(korrelStijl(s[bron]) || { color: '#000', weight: 1, dashArray: '1 9' }), opacity: korrelStijl(s[bron]) ? korrelStijl(s[bron]).opacity : 0, interactive: false }).addTo(routeLaag), s])
+    korrels.push([L.polyline(pad, { ...(korrelStijl(s[bron]) || { color: RT.korrelInkt, weight: 1, dashArray: '1 9' }), opacity: korrelStijl(s[bron]) ? korrelStijl(s[bron]).opacity : 0, interactive: false }).addTo(routeLaag), s])
     const twijfelsTonen = el('twijfelblok').open
     if (s.twijfel && twijfelsTonen) {
       // dunne stippellijn eroverheen, zodat twijfel niet alleen aan kleur hangt
-      L.polyline(pad, { color: KLEUR.inkt, weight: 1.5, dashArray: '3 6', interactive: false }).addTo(routeLaag)
+      L.polyline(pad, { color: RT.twijfel.kleur, weight: RT.twijfel.dikte, dashArray: RT.twijfel.streep, interactive: false }).addTo(routeLaag)
     }
     if (s.nr) {
       twijfelLijn[s.nr] = lijn
@@ -1317,8 +1341,8 @@ document.addEventListener('pointermove', (e) => {
   if (!slepen.bewogen) {
     slepen.bewogen = true
     kaart.closePopup()
-    slepen.elastiek = L.polyline([slepen.van, ll], { color: '#2B211B', weight: 3, dashArray: '6 6', interactive: false }).addTo(routeLaag)
-    slepen.stip = L.circleMarker(ll, { radius: 9, color: '#2B211B', weight: 3, fillColor: '#9B4A7A', fillOpacity: 1, interactive: false }).addTo(routeLaag)
+    slepen.elastiek = L.polyline([slepen.van, ll], { color: RT.slepen.lijn, weight: 3, dashArray: '6 6', interactive: false }).addTo(routeLaag)
+    slepen.stip = L.circleMarker(ll, { radius: 9, color: RT.slepen.lijn, weight: 3, fillColor: RT.slepen.stip, fillOpacity: 1, interactive: false }).addTo(routeLaag)
   }
   slepen.elastiek.setLatLngs([slepen.van, ll])
   slepen.stip.setLatLng(ll)
@@ -1501,8 +1525,9 @@ function tekenOmwegen() {
   }
   for (const o of lijst) {
     const toepassen = () => omwegToepassen(o)
-    L.polyline(o.lijn, { color: '#F2E4B8', weight: 10, opacity: 0.9, lineCap: 'round', interactive: false }).addTo(omwegLaag)
-    L.polyline(o.lijn, { color: '#5F7A2F', weight: 6, opacity: 0.95, dashArray: '2 9', lineCap: 'round', bubblingMouseEvents: false })
+    const ot = RT.omweg
+    L.polyline(o.lijn, { color: ot.onder, weight: ot.onderDikte, opacity: ot.onderDoorzicht, lineCap: 'round', interactive: false }).addTo(omwegLaag)
+    L.polyline(o.lijn, { color: ot.kleur, weight: ot.dikte, opacity: ot.doorzicht, dashArray: ot.streep, lineCap: 'round', bubblingMouseEvents: false })
       .on('click', toepassen)
       .addTo(omwegLaag)
     const mid = o.lijn[Math.floor(o.lijn.length / 2)]
@@ -1717,7 +1742,8 @@ async function haalTijdenErbij() {
 
 
 function kleurRoute() {
-  for (const [lijn, s] of lijnen) lijn.setStyle({ color: KLEUR[s[bron]] })
+  for (const [lijn, s] of lijnen) lijn.setStyle(lijnStijl(s[bron]))
+  for (const [rand, s] of randen) rand.setStyle(randStijl(s[bron]))
   for (const [k, s] of korrels) k.setStyle(korrelStijl(s[bron]) || { opacity: 0 })
   for (const b of el('bron').children) b.setAttribute('aria-pressed', String(b.dataset.bron === bron))
 }
@@ -1906,8 +1932,8 @@ function tekenLuchtfoto(canvas, s, regel) {
       c.stroke()
       ctx.drawImage(laag, 0, 0)
     }
-    rand(route, '#fff', 2)
-    rand(s.xy, '#ff00c8', 4)
+    rand(route, RT.luchtfoto.route, 2)
+    rand(s.xy, RT.luchtfoto.stuk, 4)
     // schaalbalk van 20 m
     ctx.fillStyle = '#fff'
     ctx.fillRect(14, FOTO_PX - 50, 20 * schaal + 12, 40)
@@ -2091,7 +2117,7 @@ function tekenProfiel() {
   const svg = vlak.querySelector('svg')
   const wijzer = svg.querySelector('.wijzer')
   const tip = vlak.querySelector('.profieltip')
-  const stip = L.circleMarker([0, 0], { radius: 7, color: '#fff', weight: 3, fillColor: getComputedStyle(document.documentElement).getPropertyValue('--hoogtelijn').trim() || '#a8661c', fillOpacity: 1, interactive: false })
+  const stip = L.circleMarker([0, 0], { radius: 7, color: RT.afspeelstip.rand, weight: 3, fillColor: KLEUR.hoogtelijn, fillOpacity: 1, interactive: false })
   profielNaar = (d, metStip = true) => {
     let i = Math.round(d / (h.afstand[1] - h.afstand[0] || 10))
     i = Math.max(0, Math.min(h.afstand.length - 1, i))
