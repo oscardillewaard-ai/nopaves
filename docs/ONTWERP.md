@@ -40,7 +40,7 @@ bestand en ga verder bij de eerste stap die niet `klaar` is. Werk op de sessiebr
 | Keuze | klaar: Oscar koos **4 Veldboek** met het donkere paneel van **12 Bosgroen** als donker thema (2026-11-21); zoekbalk boven: nee (zie hieronder) | |
 | 3 Uitrollen | klaar: Veldboek standaard in alle schermen, manifest en pictogram nieuw, review-lus, CLAUDE.md bijgewerkt | `public/tokens.css`, `public/kaarttokens.js`, `public/kaartstijl.js`, `ontwerp/na/` |
 | 4 Beter testen | klaar: visuele regressie, wandeling, metingen, telefoontest | `tests/visueel/`, `tests/test_wandeling.mjs`, [ontwerp/metingen.md](ontwerp/metingen.md), [ontwerp/telefoontest.md](ontwerp/telefoontest.md) |
-| Release v1.3.0 | open (v1.2.0 bestond al: de Nopave-router) | |
+| Release v1.3.0 | klaar (2026-11-21): PR [#25](https://github.com/oscardillewaard-ai/nopaves/pull/25) samengevoegd na groene `test`, [release v1.3.0](https://github.com/oscardillewaard-ai/nopaves/releases/tag/v1.3.0) (v1.2.0 bestond al) | |
 
 ## Hulpmiddelen
 
@@ -141,3 +141,17 @@ Skills en wat ze opleverden:
 - Een start op zee geeft pas laat een foutmelding.
 - Na het plannen van een station zoomt de kaart op alle routes, waardoor het grijze alternatief veel ruimte krijgt.
 - Zoekbalk bovenin (schets 27): bewust niet gedaan; kan als proef met echte gebruikers.
+
+## Afgerond (2026-11-21)
+
+De opdracht is af. PR #25 is samengevoegd (`af7e2e7`) nadat alle CI-stappen groen waren, óók de wandeling en
+de visuele regressie (die waren voorlopig niet-blokkerend, maar slaagden in CI met de basisbeelden uit de
+cloudomgeving). Release: https://github.com/oscardillewaard-ai/nopaves/releases/tag/v1.3.0.
+
+### Voor Oscar
+
+1. Doe de [telefoontest](ontwerp/telefoontest.md) (5 minuten).
+2. Optioneel: maak de stappen "Wandeling" en "Visuele regressie" in `.github/workflows/test.yml` blokkerend
+   (haal `continue-on-error: true` weg). In CI slaagden ze bij de eerste run.
+3. Vervolgpunten als issue: de winkellaag die standaard aanstaat, de late foutmelding op zee, en de zoom na
+   een stationsrit (zie hierboven).
