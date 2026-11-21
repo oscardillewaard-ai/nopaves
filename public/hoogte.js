@@ -8,11 +8,12 @@ export const BLOK_M = 500
 export const CEL_M = 10
 const AHN_WCS = 'https://service.pdok.nl/rws/ahn/wcs/v1_0'
 
-/** Het adres van één AHN-blok (RD, linksonder x0, y0). */
-export function ahnUrl(x0, y0) {
-  const n = BLOK_M / CEL_M
+/** Het adres van één AHN-blok (RD, linksonder x0, y0); blok in meters (de voorbewerking vraagt grotere blokken
+ * op hetzelfde raster van 10 m). */
+export function ahnUrl(x0, y0, blok = BLOK_M) {
+  const n = blok / CEL_M
   return `${AHN_WCS}?SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=dtm_05m&FORMAT=image/tiff` +
-    `&SUBSET=x(${x0},${x0 + BLOK_M})&SUBSET=y(${y0},${y0 + BLOK_M})&SCALESIZE=x(${n}),y(${n})`
+    `&SUBSET=x(${x0},${x0 + blok})&SUBSET=y(${y0},${y0 + blok})&SCALESIZE=x(${n}),y(${n})`
 }
 
 /** De blokken (linksonder, RD) waar deze punten in vallen. */

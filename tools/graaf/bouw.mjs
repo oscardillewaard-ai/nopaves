@@ -15,13 +15,14 @@ import { StringDecoder } from 'node:string_decoder'
 import { fileURLToPath } from 'node:url'
 import { haal, tegelijk, teller } from './haal.mjs'
 import { ofmElementen, ofmVersie } from './bron_ofm.mjs'
-import { segMeetpunten, segTussen, bgtTegelsVoorSeg, ahnBlokVan } from './nodig.mjs'
+import { segMeetpunten, segTussen, bgtTegelsVoorSeg } from './nodig.mjs'
 import { schrijfBlok } from './schrijf.mjs'
 import * as G from '../../public/graaf.js'
 import * as K from '../../public/kern.js'
 import * as H from '../../public/hoogte.js'
 import * as T from '../../public/osmtegels.js'
 import { tagsVanOsm } from './osmtags.mjs'
+import { afgeleideBron } from '../bgt/afgeleid.mjs'
 
 const HIER = path.dirname(fileURLToPath(import.meta.url))
 const BGT_URL = 'https://api.pdok.nl/kadaster/bgt/ogc/v1/tiles/NetherlandsRDNewQuad/12/'
@@ -161,6 +162,10 @@ async function hoofd() {
   const tijd = {}
   const stap = (naam) => { tijd[naam] = Math.round((Date.now() - t0) / 1000); console.log(`[${tijd[naam]} s] ${naam}`) }
 
+  // --bgt <map>: het afgeleide BGT-bestand (tools/bgt, fase 1) in plaats van de vectortegels
+  const bgtMap = arg('--bgt', null)
+  const tegelBron = bgtMap ? afgeleideBron(bgtMap) : undefined
+  const bgtStand = bgtMap && fs.existsSync(path.join(bgtMap, 'stand.json')) ? JSON.parse(fs.readFileSync(path.join(bgtMap, 'stand.json'), 'utf8')).stand : null
   const { elementen, snap, info } = await laadElementen(regio, bronArg)
   stap('elementen')
   const g = G.bouwGraaf(elementen, { kaartje: true, strandMijden: true, snap, metBron: true, trail: true })
@@ -208,7 +213,7 @@ async function hoofd() {
     if (++gi % 50 === 0) console.log(`  ondergrond: groep ${gi}/${groepLijst.length} (${teller.net} opgehaald, ${teller.cache} uit cache)`)
     const tegels = new Set()
     for (const s of segs) bgtTegelsVoorSeg(g, s, K.alleenMetKaartje(g.tagLijst[g.segTags[s]]), tegels)
-    const vlakken = await vlakkenVoor(tegels)
+    const vlakken = await vlakkenVoor(tegels, tegelBron)
     for (const s of segs) {
       const tekst = g.tagLijst[g.segTags[s]]
       const { lijst, detail, st } = oordeelVoorStuk(tekst, segMeetpunten(g, s), vlakken)
@@ -249,20 +254,26 @@ async function hoofd() {
   stap('ondergrond')
 
   // ---------- hoogte (AHN, zelfde blokken en methode als de app) ----------
+  // --ahn-blok 5000: grote blokken op hetzelfde 10 m-raster (fase 2: ~100× minder verzoeken; binnen een blok
+  // exact dezelfde hoogtes, alleen binnen 5 m van een 500 m-rand nauwkeuriger, zie docs/PLAN-heel-nederland.md)
+  const AHN_BLOK = Number(arg('--ahn-blok', H.BLOK_M))
+  const ahnBlok = (x, y) => [Math.floor(x / AHN_BLOK) * AHN_BLOK, Math.floor(y / AHN_BLOK) * AHN_BLOK]
   const ahnNodig = new Map()
-  for (let i = 0; i < g.n; i++) { const b = ahnBlokVan(g.x[i], g.y[i]); ahnNodig.set(b.join(','), b) }
-  for (let s = 0; s < m; s++) if (blokVan[s] >= 0) for (const [x, y] of segTussen(g, s)) { const b = ahnBlokVan(x, y); ahnNodig.set(b.join(','), b) }
+  for (let i = 0; i < g.n; i++) { const b = ahnBlok(g.x[i], g.y[i]); ahnNodig.set(b.join(','), b) }
+  for (let s = 0; s < m; s++) if (blokVan[s] >= 0) for (const [x, y] of segTussen(g, s)) { const b = ahnBlok(x, y); ahnNodig.set(b.join(','), b) }
   const rasters = new Map()
   await tegelijk([...ahnNodig.entries()], 4, async ([k, [x0, y0]]) => {
     try {
-      const b = await haal(H.ahnUrl(x0, y0), `ahn/${x0}_${y0}.tif`, { maxDagen: 365 })
+      const b = AHN_BLOK === H.BLOK_M
+        ? await haal(H.ahnUrl(x0, y0), `ahn/${x0}_${y0}.tif`, { maxDagen: 365 })
+        : await haal(H.ahnUrl(x0, y0, AHN_BLOK), `ahn${AHN_BLOK}/${x0}_${y0}.tif`, { maxDagen: 365 })
       if (b) rasters.set(k, await H.leesAhnTiff(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength)))
     } catch (fout) {
       console.log('  ahn', k, fout.message)
     }
   }, { naam: 'ahn', elk: 2000 })
   const hoogteDm = (x, y) => {
-    const r = rasters.get(Math.floor(x / H.BLOK_M) * H.BLOK_M + ',' + Math.floor(y / H.BLOK_M) * H.BLOK_M)
+    const r = rasters.get(Math.floor(x / AHN_BLOK) * AHN_BLOK + ',' + Math.floor(y / AHN_BLOK) * AHN_BLOK)
     const h = r ? H.hoogteOp(r, x, y) : NaN
     return Number.isNaN(h) ? ONBEKEND_H : Math.round(h * 10)
   }
@@ -391,8 +402,10 @@ async function hoofd() {
     regio: { naam: regio.naam, zoom: regio.zoom, bbox: regio.bbox_lonlat, blokken_x: regio.blokken_x, blokken_y: regio.blokken_y },
     bronnen: [
       { soort: 'osm', ...info },
-      { soort: 'bgt', naam: 'BGT-vectortegels (PDOK), NetherlandsRDNewQuad 12', opgehaald: datum, maxLeeftijdDagen: 30 },
-      { soort: 'ahn', naam: 'AHN dtm_05m via WCS (PDOK), 10 m per pixel', opgehaald: datum },
+      bgtMap
+        ? { soort: 'bgt', naam: 'BGT-download (PDOK), afgeleid bestand NBV1 (tools/bgt)', stand: bgtStand }
+        : { soort: 'bgt', naam: 'BGT-vectortegels (PDOK), NetherlandsRDNewQuad 12', opgehaald: datum, maxLeeftijdDagen: 30 },
+      { soort: 'ahn', naam: `AHN dtm_05m via WCS (PDOK), 10 m per pixel, blokken van ${AHN_BLOK} m`, opgehaald: datum },
     ],
     totaal: { blokken: lijst.length, ruw: som('ruw'), gz: som('gz'), knopen: som('knopen'), wegstukken: som('wegstukken'), oordelen: oordelen.length, ...stats },
     bouwtijdSeconden: tijd,
