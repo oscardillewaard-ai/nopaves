@@ -11,7 +11,8 @@ bestand en ga verder bij de eerste stap die niet `klaar` is. Werk op de sessiebr
 | 0 Huidige stand vastleggen | klaar | [ontwerp/huidig.md](ontwerp/huidig.md), beelden in `ontwerp/huidig/` |
 | 1 Ontwerptokens | klaar (pixelgelijk, Playwright telefoon en desktop groen) | `public/tokens.css`, `public/kaarttokens.js` |
 | 2 Drie richtingen achter `?ontwerp=a\|b\|c` | gebouwd en gecontroleerd; PR en samenvoegen volgen | `public/ontwerp/`, [ontwerp/richtingen.md](ontwerp/richtingen.md) |
-| STOP | Oscar kiest een richting (mag combineren) | |
+| Schetsen | klaar: 30 schetsen van het eerste scherm (op Oscars verzoek, in plaats van drie uitgewerkte richtingen) | [ontwerp/schetsen/](ontwerp/schetsen/) |
+| STOP | Oscar kiest één schets (op nummer, mag combineren); die wordt uitgewerkt volgens stap 3 en 4 | |
 | 3 Uitrollen | open | |
 | 4 Beter testen | open | |
 | Release v1.2.0 | open | |
