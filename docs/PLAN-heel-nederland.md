@@ -18,6 +18,14 @@ planning per fase en een kostenraming. Nog niets gebouwd voor de app.
 5. **Heel Nederland in één keer:** alle 12 provincies parallel bouwen, testen en samen live zetten. Geen
    uitrol provincie voor provincie.
 
+Aanvulling (Oscar, 2026-11-21, na de eerste metingen van fase 1):
+
+6. **Wekelijks bijwerken met de wijzigingen van PDOK** (bevestigt beslissing 2): één keer alles ophalen,
+   daarna elke week de delta's (~53 MB) verwerken in het afgeleide bestand; elke paar maanden opnieuw
+   volledig als controle.
+7. **Hooguit 6 verbindingen tegelijk bij PDOK:** onbegroeid terreindeel 2, de andere vier typen elk 1.
+   Geraamd ~65 min voor heel NL.
+
 ## De cijfers in één tabel
 
 | | Regio Delft (gemeten) | Heel Nederland | Grens |
@@ -117,8 +125,8 @@ samen (1 job)           randblokken samenvoegen, index per provincie, de kwalite
    fase 1, zie hieronder). Per objecttype haalt de bouw alleen zijn eigen bytes uit de zip van 28 GB (19,7 GB
    voor de vijf typen), in stukken die tegelijk lopen en op volgorde worden uitgepakt en gelezen. Een
    mislukt stuk wordt opnieuw gehaald. De historie gaat er bij het lezen uit. Bewaard wordt alleen het
-   afgeleide bestand (NBV1, zie fase 1), als release-bijlage. Wekelijks de delta toepassen (53 MB, beslissing
-   2), of, als dat eenvoudiger blijkt, wekelijks opnieuw volledig (~30 min): te beslissen na fase 1.
+   afgeleide bestand (NBV1, zie fase 1), als release-bijlage. Wekelijks de delta toepassen (53 MB,
+   beslissing 6); hooguit 6 verbindingen tegelijk (beslissing 7).
 4. **Compacter formaat:** na de livegang (zie boven), voor minder dataverkeer per planning.
 5. **App.** Een index per provincie in plaats van één manifest; stations per blok; de app ziet zelf of een
    plek binnen de dekking valt en valt anders terug op de kaarttegels (buiten NL, of als een blok ontbreekt).
@@ -171,8 +179,8 @@ PDOK-zip. Geraamd voor heel NL ~1,5–2,5 GB (~26 mln vlakken); de NL-run meet h
 beginlabel viel (gevonden door een unit-test; verklaarde 1 van de 2 "alleen in de tegel" bij Delft).
 
 **Nog open in fase 1:** de NL-run (`bgt.yml`, run 1 loopt): tijd, grootte en de oordeeltoets op vier vakken
-(Delft, kust, Zoetermeer, Westland). Daarna: delta's toepassen of wekelijks volledig (beslissen), en de bouw
-laten lezen uit het afgeleide bestand (fase 2).
+(Delft, kust, Zoetermeer, Westland). Daarna: de delta's toepassen (beslissing 6), de workflow op 6
+verbindingen (beslissing 7), en de bouw laten lezen uit het afgeleide bestand (fase 2).
 
 ## Planning per fase
 
@@ -209,8 +217,8 @@ server bij. De echte kosten zijn tijd en limieten:
 
 - **BGT-download van uren:** grotendeels opgelost in fase 1. PDOK begrenst per verbinding; met 8–16
   parallelle stukken is 19,7 GB in ~17–31 min binnen, en een mislukt stuk wordt opnieuw gehaald. Blijft:
-  hoe PDOK 15 stromen tegelijk vindt (fair use), en of het cache-adres van een nachtversie lang genoeg blijft
-  bestaan.
+  of het cache-adres van een nachtversie lang genoeg blijft bestaan. Uit beleefdheid hooguit 6 stromen
+  (beslissing 7).
 - **AHN voor heel NL** is nog niet gemeten. In de regio Delft zat AHN in de cache van 1,47 GB; voor heel NL
   past dat niet in de Actions-cache (10 GB). Mogelijke oplossing: de hoogtes uit de vorige graafversie
   hergebruiken voor ongewijzigde wegstukken.
