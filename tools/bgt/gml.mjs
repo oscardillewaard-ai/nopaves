@@ -85,12 +85,14 @@ function ring(tekst) {
   return m ? Float64Array.from(getallen(m[1])) : null
 }
 
-/** Alle polygonen in het geometrie2d-blok. */
-function polygonen(tekst) {
-  const i = tekst.indexOf('<imgeo-s:geometrie2d>')
-  if (i < 0) return []
-  const j = tekst.indexOf('</imgeo-s:geometrie2d>', i)
-  const g = tekst.slice(i, j)
+/** Alle polygonen in het geometrieblok: gmllight '<imgeo-s:geometrie2d>', citygml (delta's) bv.
+ * '<imgeo:geometrie2dWegdeel>'. */
+export function polygonen(tekst) {
+  const m = /<imgeo(?:-s)?:(geometrie2d[A-Za-z]*)>/.exec(tekst)
+  if (!m) return []
+  const i = m.index
+  const j = tekst.indexOf('</' + m[0].slice(1, -1).split(' ')[0] + '>', i)
+  const g = tekst.slice(i, j < 0 ? tekst.length : j)
   const uit = []
   for (const deel of g.split('<gml:Polygon').slice(1)) {
     const ringen = []
@@ -103,9 +105,11 @@ function polygonen(tekst) {
   return uit
 }
 
-/** Lees één object; null bij een historische versie of zonder vlak. */
-export function leesObject(collectie, tekst, telling = null) {
-  if (tekst.includes('<imgeo-s:eindRegistratie>')) { if (telling) telling.historie++; return null }
+/** Lees één object; null bij een historische versie (tenzij metHistorie: dan met .historie = true) of zonder vlak. */
+export function leesObject(collectie, tekst, telling = null, metHistorie = false) {
+  const historie = tekst.includes('<imgeo-s:eindRegistratie>')
+  if (historie && telling) telling.historie++
+  if (historie && !metHistorie) return null
   const props = {}
   for (const [bron, doel] of VELDEN) {
     const v = veld(tekst, bron)
@@ -114,6 +118,7 @@ export function leesObject(collectie, tekst, telling = null) {
   props.relatieve_hoogteligging = Number(veld(tekst, 'relatieveHoogteligging') || 0)
   const p = polygonen(tekst)
   if (!p.length) { if (telling) telling.zonderVlak++; return null }
+  if (historie) return { collectie, props, polygonen: p, historie: true }
   if (telling) telling.actueel++
   return { collectie, props, polygonen: p }
 }
@@ -122,7 +127,7 @@ export function leesObject(collectie, tekst, telling = null) {
  * Objecten uit een stroom tekststukken (async iterable van strings), als async generator.
  * telling (optioneel) houdt bij: objecten, historie, zonderVlak, actueel.
  */
-export async function* leesGml(collectie, stukken, telling = { objecten: 0, historie: 0, zonderVlak: 0, actueel: 0 }) {
+export async function* leesGml(collectie, stukken, telling = { objecten: 0, historie: 0, zonderVlak: 0, actueel: 0 }, { metHistorie = false } = {}) {
   let rest = ''
   for await (const stuk of stukken) {
     let buf = rest + stuk
@@ -134,7 +139,7 @@ export async function* leesGml(collectie, stukken, telling = { objecten: 0, hist
       const b = buf.indexOf(EIND, a)
       if (b < 0) { pos = a; break }
       telling.objecten++
-      const o = leesObject(collectie, buf.slice(a + BEGIN.length, b), telling)
+      const o = leesObject(collectie, buf.slice(a + BEGIN.length, b), telling, metHistorie)
       if (o) yield o
       pos = b + EIND.length
     }

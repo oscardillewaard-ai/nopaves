@@ -30,11 +30,12 @@ export function sleutel(s) {
   return [a >>> 0, b >>> 0]
 }
 export const sleutelTekst = ([a, b]) => a.toString(16).padStart(8, '0') + b.toString(16).padStart(8, '0')
+export const sleutelUitTekst = (t) => [parseInt(t.slice(0, 8), 16), parseInt(t.slice(8), 16)]
 
 export const vakVanTegel = (col, row) => [Math.floor(col / VAK), Math.floor(row / VAK)]
 
 class Bytes {
-  constructor(n = 1 << 16) { this.b = Buffer.allocUnsafe(n); this.n = 0 }
+  constructor(n = 1 << 12) { this.b = Buffer.allocUnsafe(n); this.n = 0 }
   ruimte(k) { if (this.n + k > this.b.length) { const nb = Buffer.allocUnsafe(Math.max(this.b.length * 2, this.n + k)); this.b.copy(nb, 0, 0, this.n); this.b = nb } }
   varint(v) { this.ruimte(10); while (v >= 0x80) { this.b[this.n++] = (v % 0x80) | 0x80; v = Math.floor(v / 0x80) } this.b[this.n++] = v }
   zz(v) { this.varint(v >= 0 ? v * 2 : -v * 2 - 1) }
@@ -43,9 +44,10 @@ class Bytes {
 
 /** Schrijft de vlakken van één objecttype naar vakbestanden in 'map'. */
 export class Schrijver {
-  constructor(map, collectie, { buffer = 256 << 10 } = {}) {
+  constructor(map, collectie, { buffer = 256 << 10, alleenVak = null } = {}) {
     this.map = map
     this.collectie = collectie
+    this.alleenVak = alleenVak // 'vc_vr': alleen dit vak schrijven (delta's: één vak herschrijven)
     this.vakken = new Map() // 'vc_vr' -> { b, n, tabellen, vx, vy, tijdelijk } (b wordt bij 'buffer' bytes naar schijf geschreven)
     this.buffer = buffer
     this.aantal = 0
@@ -59,14 +61,16 @@ export class Schrijver {
     }
     return v
   }
-  voegToe(o) {
+  /** Voeg een vlak toe; sleutelPaar standaard uit collectie|lokaal_id (bij herschrijven: de bewaarde sleutel). */
+  voegToe(o, sleutelPaar = null) {
     const bbox = bboxVan(o.polygonen)
     const [c0, r0] = K.tegelVan(bbox[0], bbox[3])
     const [c1, r1] = K.tegelVan(bbox[2], bbox[1])
     const [v0, w0] = vakVanTegel(c0, r0)
     const [v1, w1] = vakVanTegel(c1, r1)
-    const [ha, hb] = sleutel(this.collectie + '|' + o.props.lokaal_id)
+    const [ha, hb] = sleutelPaar || sleutel(this.collectie + '|' + o.props.lokaal_id)
     for (let vc = v0; vc <= v1; vc++) for (let vr = w0; vr <= w1; vr++) {
+      if (this.alleenVak && this.alleenVak !== vc + '_' + vr) continue
       const v = this.vak(vc + '_' + vr)
       const b = v.b
       b.varint(ha)
@@ -75,7 +79,11 @@ export class Schrijver {
         const w = o.props[lang]
         if (w === undefined || w === '') { b.varint(0); continue }
         let i = v.tabellen[kort].get(w)
-        if (i === undefined) { i = v.tabellen[kort].size; v.tabellen[kort].set(w, i) }
+        if (i === undefined) {
+          i = v.tabellen[kort].size
+          // een echte kopie: een uitgeknipte string houdt in V8 anders het hele tekstblok (~60 MB) vast
+          v.tabellen[kort].set(Buffer.from(w, 'utf8').toString('utf8'), i)
+        }
         b.varint(i + 1)
       }
       b.zz(Number(o.props.relatieve_hoogteligging) || 0)

@@ -116,3 +116,35 @@ test('zip-inhoud: ZIP64-velden en een bestand op afstand gelezen (lokaal nageboo
     globalThis.fetch = oud
   }
 })
+
+test('delta: citygml-velden (waardeOnbekend = leeg), weg/zet in volgorde, pasToe herschrijft alleen geraakte vakken', async () => {
+  const { leesCityObject, leesDelta, pasToe } = await import('../tools/bgt/delta.mjs')
+  const obj = (id, fysiek, x, eind = '') => `<mlb:bgtObject><cityObjectMember><TrafficArea>
+    <imgeo:relatieveHoogteligging>0</imgeo:relatieveHoogteligging>${eind}
+    <imgeo:identificatie><imgeo:NEN3610ID><imgeo:lokaalID>${id}</imgeo:lokaalID></imgeo:NEN3610ID></imgeo:identificatie>
+    <imgeo:bgt-status codeSpace="x">bestaand</imgeo:bgt-status><function codeSpace="x">fietspad</function>
+    <surfaceMaterial codeSpace="x">${fysiek}</surfaceMaterial><imgeo:kruinlijnWegdeel xsi:nil="true" nilReason="waardeOnbekend" />
+    <imgeo:geometrie2dWegdeel><gml:Polygon><gml:exterior><gml:LinearRing><gml:posList srsDimension="2">${x} 450000 ${x + 10} 450000 ${x + 10} 450010 ${x} 450000</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></imgeo:geometrie2dWegdeel>
+    <imgeo:plus-fysiekVoorkomenWegdeel codeSpace="x">waardeOnbekend</imgeo:plus-fysiekVoorkomenWegdeel></TrafficArea></cityObjectMember></mlb:bgtObject>`
+  const o = leesCityObject('wegdeel', obj('A', 'onverhard', 100000))
+  assert.equal(o.actueel, true)
+  assert.deepEqual(o.object.props, { lokaal_id: 'A', status: 'bestaand', functie: 'fietspad', fysiek_voorkomen: 'onverhard', relatieve_hoogteligging: 0 })
+  assert.equal(leesCityObject('wegdeel', obj('A', 'onverhard', 100000, '<imgeo:eindRegistratie>2026-11-20</imgeo:eindRegistratie>')).actueel, false)
+  // uitgangstoestand: A en B, elk in een eigen vak
+  const map = fs.mkdtempSync(path.join(os.tmpdir(), 'delta-'))
+  const s = new Schrijver(map, 'wegdeel')
+  const vlak = (id, x) => ({ collectie: 'wegdeel', props: { lokaal_id: id, functie: 'fietspad', fysiek_voorkomen: 'onverhard', relatieve_hoogteligging: 0 }, polygonen: [[Float64Array.from([x, 450000, x + 10, 450000, x + 10, 450010])]] })
+  s.voegToe(vlak('A', 100000)); s.voegToe(vlak('B', 120000)); s.sluit()
+  // delta: A wordt half verhard (wijziging), C nieuw, B blijft
+  const xml = `<ml:mutatieGroep><ml:wijziging><ml:was id="1">${obj('A', 'onverhard', 100000)}</ml:was><ml:wordt id="2">${obj('A', 'onverhard', 100000, '<imgeo:eindRegistratie>2026-11-20</imgeo:eindRegistratie>')}</ml:wordt></ml:wijziging></ml:mutatieGroep>
+    <ml:mutatieGroep><ml:toevoeging><ml:wordt id="3">${obj('A', 'half verhard', 100000)}</ml:wordt></ml:toevoeging></ml:mutatieGroep>
+    <ml:mutatieGroep><ml:toevoeging><ml:wordt id="4">${obj('C', 'zand', 100020)}</ml:wordt></ml:toevoeging></ml:mutatieGroep>`
+  async function* stukken() { for (let i = 0; i < xml.length; i += 61) yield xml.slice(i, i + 61) }
+  const t = await pasToe(map, 'wegdeel', leesDelta('wegdeel', stukken()))
+  assert.deepEqual([t.weg, t.nieuw, t.verwijderd, t.toegevoegd], [1, 2, 1, 2])
+  assert.equal(t.vakken, 1) // alleen het vak van A en C; dat van B (20 km verderop) blijft onaangeroerd
+  const alles = fs.readdirSync(map).filter((f) => f.endsWith('.nbv.gz')).flatMap((f) => leesVak(fs.readFileSync(path.join(map, f))))
+  const per = Object.fromEntries(alles.map((x) => [x.props.lokaal_id, x.props.fysiek_voorkomen]))
+  assert.deepEqual(per, { [sleutelTekst(sleutel('wegdeel|A'))]: 'half verhard', [sleutelTekst(sleutel('wegdeel|B'))]: 'onverhard', [sleutelTekst(sleutel('wegdeel|C'))]: 'zand' })
+  fs.rmSync(map, { recursive: true })
+})

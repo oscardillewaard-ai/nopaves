@@ -12,7 +12,7 @@ import path from 'node:path'
 import { leesGml } from './gml.mjs'
 import { Schrijver } from './afgeleid.mjs'
 import { bestandInfo, inhoud, leesBestand } from './zip.mjs'
-import { NL_ZIP } from './bron.mjs'
+import { NL_ZIP, DATASET } from './bron.mjs'
 
 const [collectie, uitmap, ...rest] = process.argv.slice(2)
 const arg = (n, std) => { const i = rest.indexOf(n); return i >= 0 ? rest[i + 1] : std }
@@ -37,7 +37,12 @@ if (arg('--gml')) {
   const info = await bestandInfo(arg('--adres', NL_ZIP))
   const item = (await inhoud(info.url, info.grootte)).find((x) => x.naam === `bgt_${collectie}.gml`)
   if (!item) throw new Error('geen bgt_' + collectie + '.gml in de zip')
-  bron = { soort: 'pdok-nl-zip', adres: NL_ZIP, cache: info.url, gewijzigd: info.gewijzigd, gecomprimeerd: item.gecomprimeerd, uitgepakt: item.uitgepakt }
+  // tot wanneer de data loopt (voor de delta's daarna): de actualiteit van dit type volgens PDOK, die vóór
+  // het aanmaken van het bestand moet liggen (anders is er intussen een nieuwere nachtversie)
+  const actualiteit = await (await fetch(DATASET)).json()
+  const stand = actualiteit.timeliness.find((t) => t.featuretype === collectie)?.datetimeTo
+  if (!stand || new Date(stand) > new Date(info.gewijzigd)) throw new Error(`actualiteit ${stand} ligt niet vóór het bestand (${info.gewijzigd}); later opnieuw proberen`)
+  bron = { soort: 'pdok-nl-zip', adres: NL_ZIP, cache: info.url, gewijzigd: info.gewijzigd, stand, gecomprimeerd: item.gecomprimeerd, uitgepakt: item.uitgepakt }
   stroom = leesBestand(info.url, item, { stromen: Number(arg('--stromen', 8)), voortgang: (b) => { binnen = b; meld() } })
 }
 const s = new Schrijver(uitmap, collectie)
