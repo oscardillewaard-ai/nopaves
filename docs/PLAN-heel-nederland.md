@@ -1,6 +1,6 @@
 # Plan: de vooraf bewerkte graaf voor heel Nederland, in één keer
 
-Status: **fase 0 gemeten** (2026-11-20, `fase0.yml` run 4); **fase 1 klaar** (2026-11-21, `bgt.yml` run 2); fase 2 en 3 lopen. Alle metingen zijn binnen; de BGT-download
+Status: **fase 0 gemeten** (2026-11-20, `fase0.yml` run 4); **fase 1, 2 en 3 klaar** (2026-11-21): een graaf voor heel NL staat als proefversie in release `graaf-nl20261121-r1`, nog niet live. Alle metingen zijn binnen; de BGT-download
 van Noord-Brabant brak de eerste keer af na 1,77 GB en slaagde bij de herstart. Conclusie: heel NL past ruim, de
 OSM-kant is licht, en de BGT is het zware deel. Hieronder de cijfers, wat dat aan het plan verandert, een
 planning per fase en een kostenraming. Nog niets gebouwd voor de app.
@@ -209,6 +209,67 @@ drukste vak (Velsen): 190/190 nieuwe en 168/168 oude versies exact gelijk aan de
 geometrie op 1 cm), en gisteren + delta = vandaag in 16/16 vakken. Citygml schrijft lege velden als
 `waardeOnbekend`/`geenWaarde`; die tellen als leeg (gmllight laat ze weg). De wekelijkse workflow die de
 delta's toepast hoort bij de wekelijkse bouw (na fase 3).
+
+## Fase 2: bouw per provincie (klaar, 2026-11-21)
+
+Workflow `graaf-nl.yml` run 1 (09:30–09:59 UTC, 29 min doorloop): knip, 12 provincies tegelijk op het afgeleide
+BGT-bestand (uit `bgt.yml` run 2, dus geen nieuwe download bij PDOK) en AHN in blokken van 5 km.
+
+| Provincie | blokken | wegstukken | gz MB | bouw min | geheugen MB |
+|---|---:|---:|---:|---:|---:|
+| Drenthe | 144 | 857.262 | 8,8 | 4,3 | 1.636 |
+| Flevoland | 144 | 516.601 | 5,1 | 3,9 | 1.419 |
+| Fryslân | 300 | 940.483 | 9,9 | 8,4 | 1.750 |
+| Gelderland | 330 | 2.096.964 | 22,7 | 13,0 | 2.900 |
+| Groningen | 195 | 528.754 | 6,1 | 4,4 | 1.331 |
+| Limburg | 152 | 1.068.707 | 11,9 | 5,4 | 2.109 |
+| Noord-Brabant | 264 | 1.872.016 | 21,2 | 12,4 | 3.105 |
+| Noord-Holland | 240 | 1.797.853 | 19,2 | 14,7 | 3.262 |
+| Overijssel | 224 | 1.366.696 | 14,0 | 7,2 | 2.276 |
+| Utrecht | 99 | 907.850 | 10,1 | 4,4 | 2.540 |
+| Zeeland | 144 | 477.050 | 5,6 | 3,6 | 1.171 |
+| Zuid-Holland | 224 | 2.065.047 | 22,3 | 6,8 | 4.011 |
+| **Totaal** | 2.460 | 14.495.283 | 156,9 | | |
+
+- **Tien tot veertig keer sneller dan de oude methode:** Utrecht 4,4 min (fase 0 met BGT-tegels: 64 min), Drenthe
+  4,3 min (80 min). De ondergrond is ~85% van de bouwtijd (bv. Noord-Holland 823 van 881 s), AHN ~30–50 s.
+- **De grootte klopt met de raming:** 14,5 mln wegstukken en 156,9 MB, net als fase 0 (14,49 mln, 155 MB geraamd).
+- Wegstukken en grootte per provincie verschillen hooguit 0,2% van fase 0 (andere OSM-dag).
+
+## Fase 3: samenvoegen en uitleveren (klaar, 2026-11-21)
+
+Zelfde run, jobs `samenvoegen` en `ophalen` (`tools/graaf/samenvoeg.mjs`, `tools/graaf/haal_release.sh`).
+
+| | Gemeten |
+|---|---|
+| Blokken heel NL | 1.260, waarvan 218 randblokken (uit twee provincies) en 64 lege binnen de provinciegrenzen |
+| Wegstukken | 14.469.851 (25.432 dubbele uit de randblokken eruit), 13,07 mln knopen |
+| Grootte | 156,0 MB gzip (623 MB uitgepakt); `actueel.json` 292 kB (NPG1, zelfde formaat als nu) |
+| Stations | 605 (zonder dubbele) |
+| Samenvoegen | 222 s, **11,0 GB geheugen** (runner 16 GB) |
+| Release | `graaf-nl20261121-r1` (proefversie), bijlage 151 MB |
+| Ophalen zoals de deploy | 4 s, alle 1.260 hashes in orde |
+
+- De deploy zet de graaf pas in de site (in `graaf-nl/`) als `public/graaf-nl/goedgekeurd.txt` een versie noemt;
+  dat bestand bestaat nog niet. De live site is dus ongewijzigd.
+- Toets van het samenvoegen (`npm run test:graaf`, ook in CI): op de echte graaf van de regio Delft geeft het
+  exact de oorspronkelijke graaf terug, ook als die in twee provincies met een gedeelde grens is geknipt.
+
+**Open punten na fase 3** (voor fase 4 en 5):
+
+1. **Zeeblokken aan de kust:** lege blokken buiten de provinciegrenzen (zee) staan niet in het manifest, dus de app
+   valt aan de kust terug op de kaarttegels (trager, wel juist). Oplossing: zeeblokken uit de BGT (waterdeel, type
+   zee) als gedekt markeren (fase 4).
+2. **Grensblokken met alleen Nederlandse wegen:** een blok over de grens met Duitsland of België heeft alleen de
+   Nederlandse wegen. Een route vlak langs de grens ziet de buitenlandse paden dan niet. Te meten in de
+   kwaliteitspoort (fase 5), eventueel blokken op de landsgrens als "deels" markeren zodat de app ook de
+   kaarttegels leest.
+3. **Geheugen van het samenvoegen** (11,0 GB van 16): per kolom blokken verwerken in plaats van alles tegelijk,
+   voordat de graaf groeit.
+4. **`public/graaf/` in git** (regio Delft, 14,7 MB per versie) verdwijnt bij de livegang (beslissing 1); tot dan
+   laten staan, eerst vastleggen in docs/branches-archief.md.
+5. **Wekelijkse bouw:** `graaf.yml` (Delft) vervangen door één workflow: BGT bijwerken met de delta's, `graaf-nl.yml`,
+   kwaliteitspoort, PR met `goedgekeurd.txt`.
 
 ## Planning per fase
 
