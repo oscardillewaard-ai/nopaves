@@ -1,8 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#14532d"/>
-  <path d="M0 360 C120 300 200 330 300 290 S460 250 512 270 V512 H0 Z" fill="#1c6b3a"/>
-  <path d="M150 512 C170 420 250 400 262 330 S330 220 300 150" fill="none" stroke="#f3e2b3" stroke-width="44" stroke-linecap="round"/>
-  <path d="M150 512 C170 420 250 400 262 330 S330 220 300 150" fill="none" stroke="#14532d" stroke-width="6" stroke-dasharray="18 22" stroke-linecap="round"/>
-  <circle cx="300" cy="150" r="34" fill="#fff"/>
-  <circle cx="300" cy="150" r="14" fill="#14532d"/>
+  <!-- Nopav.es, huisstijl Veldboek: een zandpad met korrel dat door het groen naar de horizon kronkelt.
+       Belangrijke vormen binnen de veilige zone (de middelste 80%). -->
+  <rect width="512" height="512" fill="#3E5A24"/>
+  <path d="M0 214 C90 196 160 206 256 196 S420 186 512 200 V512 H0 Z" fill="#4E6B2E"/>
+  <path d="M0 214 C90 196 160 206 256 196 S420 186 512 200" fill="none" stroke="#26291F" stroke-width="5"/>
+  <!-- het pad: smal bij de horizon, breed vooraan -->
+  <path d="M272 198 C262 230 300 250 296 284 C292 326 210 344 196 404 C188 440 196 486 204 512 L380 512 C352 470 330 432 344 392 C360 344 330 300 312 282 C292 262 282 236 284 198 Z"
+        fill="#EADCB8" stroke="#26291F" stroke-width="7" stroke-linejoin="round"/>
+  <g fill="#7A6446">
+    <circle cx="278" cy="226" r="3"/><circle cx="292" cy="262" r="4"/><circle cx="268" cy="318" r="5"/>
+    <circle cx="300" cy="300" r="4"/><circle cx="240" cy="376" r="6"/><circle cx="300" cy="360" r="5"/>
+    <circle cx="232" cy="452" r="7"/><circle cx="290" cy="430" r="7"/><circle cx="330" cy="476" r="7"/><circle cx="262" cy="490" r="6"/>
+  </g>
+  <!-- zon boven de horizon -->
+  <circle cx="352" cy="134" r="34" fill="#EADCB8"/>
 </svg>

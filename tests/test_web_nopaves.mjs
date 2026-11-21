@@ -21,14 +21,14 @@ page.on('pageerror', (e) => fouten.push('PAGEERROR ' + e.message))
 const basis = process.env.ONVERHARD_URL || 'http://localhost:8765/nopaves/'
 const stap = (tekst) => console.log(`✓ ${soort}: ${tekst}`)
 
-// ---- de kaart zelf: Korrel (vectortegels), met de bronvermelding ----
+// ---- de kaart zelf: vectortegels in de eigen stijl (Veldboek), met de bronvermelding ----
 await page.goto(`${basis}#p=52.0116,4.3571&rondje=10`)
 await page.waitForSelector('.maplibregl-canvas', { timeout: 20000 })
-assert.equal(await page.locator('.maplibregl-canvas').count(), 1, 'de Korrel-kaart (WebGL) staat aan')
+assert.equal(await page.locator('.maplibregl-canvas').count(), 1, 'de eigen kaart (WebGL) staat aan')
 assert.match(await page.locator('.leaflet-control-attribution').textContent(), /OpenFreeMap/, 'bronvermelding van OpenFreeMap')
 const basis_lagen = await page.evaluate(() => [...document.querySelectorAll('.leaflet-control-layers-base label')].map((l) => l.textContent.trim()))
-assert.deepEqual(basis_lagen, ['Korrel', 'OpenStreetMap', 'Luchtfoto (PDOK)'], 'Korrel staat bovenaan, de oude kaarten blijven kiesbaar')
-stap('kaart in Korrel (MapLibre), met OpenStreetMap en luchtfoto als alternatief')
+assert.deepEqual(basis_lagen, ['Kaart', 'OpenStreetMap', 'Luchtfoto (PDOK)'], 'de eigen kaart staat bovenaan, de andere kaarten blijven kiesbaar')
+stap('eigen kaart (MapLibre), met OpenStreetMap en luchtfoto als alternatief')
 
 // ---- laden: geen zichtbare tekst, wel een poppetje op de balk ----
 await page.goto(`${basis}#p=52.0116,4.3571&rondje=10&plan=1`)
@@ -880,6 +880,38 @@ assert.deepEqual(fouten.filter((f) => !/Failed to load resource/.test(f)), [], '
   assert.deepEqual(vf, [])
   await cg.close()
   await cg2.close()
+}
+
+// ---- Veldboek (v1.3.0): routelijnen per ondergrond, met rand; via de knoppen ----
+{
+  const oc = await browser.newContext(mobiel ? { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } : { viewport: { width: 1440, height: 900 } })
+  const o = await oc.newPage()
+  const of = []
+  o.on('pageerror', (e) => of.push('PAGEERROR ' + e.message))
+  await o.goto(`${basis}#p=52.0116,4.3571&rondje=10`)
+  await o.waitForSelector('#planKnop:not([disabled])', { timeout: 20000 })
+  // de oude ontwerpschakelaar bestaat niet meer
+  assert.equal(await o.locator('link[href^="ontwerp/"]').count(), 0, 'geen extra stijlblad van een ontwerprichting')
+  await o.click('#planKnop')
+  await o.waitForFunction(() => (!document.getElementById('resultaat').hidden && !(window.onverhard.bezig && window.onverhard.bezig())) || !document.getElementById('fout').hidden, null, { timeout: 300000 })
+  assert.equal(await o.locator('#fout').textContent(), '', 'geen foutmelding')
+  // hoe zachter de grond, hoe dikker de lijn: onverhard dikker dan asfalt, en elk stuk heeft een rand eronder
+  const lijnen = await o.evaluate(() => {
+    const st = getComputedStyle(document.documentElement)
+    const kleur = (n) => st.getPropertyValue(n).trim().toLowerCase()
+    const paden = [...document.querySelectorAll('.leaflet-overlay-pane path')].map((p) => ({ k: (p.getAttribute('stroke') || '').toLowerCase(), w: Number(p.getAttribute('stroke-width')) }))
+    const dikte = (n) => paden.filter((p) => p.k === kleur(n)).map((p) => p.w)
+    const tik = [...document.querySelectorAll('.leaflet-overlay-pane path.leaflet-interactive')].filter((p) => Number(p.getAttribute('stroke-width')) >= 18).length
+    return { onv: dikte('--onverhard'), ges: dikte('--gesloten'), half: dikte('--half'), rand: paden.filter((p) => p.k === '#26291f' || p.k === '#eef3ea').length, tik, n: paden.length }
+  })
+  // ook dunne stukken (asfalt, onbekend) zijn te raken: elk stuk heeft een brede, onzichtbare tikzone
+  assert.ok(lijnen.tik >= lijnen.onv.length + lijnen.ges.length, `elk stuk route heeft een tikzone (${lijnen.tik})`)
+  assert.ok(lijnen.onv.length + lijnen.half.length > 0, `route op de kaart in de klassekleuren (${JSON.stringify(lijnen)})`)
+  if (lijnen.onv.length && lijnen.ges.length) assert.ok(Math.max(...lijnen.onv) > Math.max(...lijnen.ges), 'onverhard is dikker dan asfalt')
+  assert.ok(lijnen.rand >= lijnen.onv.length, 'elk stuk route heeft een rand')
+  assert.deepEqual(of, [], 'geen paginafouten')
+  await oc.close()
+  stap('Veldboek: na Plan rondje staat de route per ondergrond op de kaart, onverhard dikker dan asfalt, met een rand en een tikzone per stuk')
 }
 
 await browser.close()

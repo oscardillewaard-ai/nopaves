@@ -1,10 +1,11 @@
 // Network-first: haal altijd de nieuwste versie op als er internet is, val
 // terug op de cache als je offline bent. Plannen zelf heeft internet nodig
 // (BRouter en PDOK); offline zie je alleen de app en je bewaarde punten.
-const CACHE = 'nopaves-app-v48'
+const CACHE = 'nopaves-app-v51'
 const SHELL = [
   './',
   'index.html',
+  'tokens.css',
   'styles.css',
   'app.js',
   'sheet.js',
@@ -14,7 +15,8 @@ const SHELL = [
   'datacache.js',
   'rekenen.js',
   'rekenwerker.js',
-  'korrelkaart.js',
+  'kaarttokens.js',
+  'kaartstijl.js',
   'bronnen.js',
   'kern.js',
   'graaf.js',
@@ -30,9 +32,8 @@ const SHELL = [
   'icons/icon-192.png',
   'icons/icon-512.png',
   'icons/apple-touch-icon.png',
-  'fonts/darker-grotesque-latin-variable.woff2',
   'fonts/karla-latin-variable.woff2',
-  'fonts/overpass-mono-latin-variable.woff2',
+  'fonts/literata-latin-variable.woff2',
 ]
 
 self.addEventListener('install', (event) => {

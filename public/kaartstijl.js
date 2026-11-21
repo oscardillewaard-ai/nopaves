@@ -1,28 +1,13 @@
-// De kaart in Korrel: vectortegels van OpenFreeMap (OpenMapTiles-schema) in een eigen stijl voor MapLibre.
-// Elke ondergrond krijgt een korrel (bos, heide, zand, water, wetland), asfalt is grijs en effen, en wat
-// onverhard is (paden, karrensporen, wegen met surface=unpaved) is gestippeld. Zo laat de kaart zelf zien
-// waar je wilt lopen. Puur rekenwerk en tekenwerk: het laden van de tegels doet MapLibre.
+// De kaart van Nopav.es (huisstijl Veldboek): vectortegels van OpenFreeMap (OpenMapTiles-schema) in een
+// eigen stijl voor MapLibre. Een aardse, rustige grond met een vleug korrel op de natuur, asfalt licht en
+// effen, en wat onverhard is (paden, karrensporen, wegen met surface=unpaved) gestippeld in veenbruin. Zo
+// laat de kaart zelf zien waar je wilt lopen, en blijft de route het meest opvallende op het scherm.
+// Alle kleuren en keuzes komen uit kaarttokens.js. Het laden van de tegels doet MapLibre.
+import { kaartTokens } from './kaarttokens.js'
 
 const GLYPHS = 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf'
 const TILEJSON = 'https://tiles.openfreemap.org/planet'
 
-/** De kleuren per thema. 'ink' is de kleur van de korrel zelf. */
-export const THEMA = {
-  licht: {
-    bg: '#DDE6B0', wood: '#8FB05A', grass: '#C9DA8E', scrub: '#B8C77C', heath: '#D3A7C2', farm: '#E4E9B5', sand: '#EAD59C',
-    wetland: '#B3CE9C', water: '#8FB8C2', res: '#E4DFAB', comm: '#DDD49C', ind: '#D3CB98', campus: '#E3E5B0', pitch: '#B9D47E',
-    rail: '#D5D8A8', building: '#D8D09A', buildingLijn: '#BDB67E', ink: '#2E3320', ink2: '#4A5235', halo: '#F1F3D4',
-    snel: '#4F535A', hoofd: '#5E636A', klein: '#80848B', fiets: '#8C9096', onverhard: '#6B4A2E', pad: '#2E3320',
-    waterLabel: '#2F6070', park: '#4F6B2A', grens: '#9B4A7A', korrelInkt: [46, 51, 32],
-  },
-  donker: {
-    bg: '#222B1A', wood: '#3A5428', grass: '#43572A', scrub: '#394A26', heath: '#5B3F52', farm: '#2A3320', sand: '#5A4F2E',
-    wetland: '#34503A', water: '#2E4F5A', res: '#2A3220', comm: '#30382A', ind: '#363B2A', campus: '#2C3523', pitch: '#3C5726',
-    rail: '#2C3324', building: '#363C2A', buildingLijn: '#4C5538', ink: '#EEF1CC', ink2: '#CCD4A2', halo: '#222B1A',
-    snel: '#B8BCC2', hoofd: '#9FA3A9', klein: '#82868C', fiets: '#6F7378', onverhard: '#D9B77A', pad: '#EEF1CC',
-    waterLabel: '#9FC9CF', park: '#A9CF52', grens: '#C77BA7', korrelInkt: [238, 241, 204],
-  },
-}
 
 /**
  * De korrels als plaatje: kleur van de ondergrond met inkt erover. Elk plaatje is een tegel die naadloos
@@ -105,11 +90,10 @@ const KORRELS = {
 }
 
 /** Teken een korrel in dit thema; doet niets (null) als de naam niet bestaat. */
-export function korrelBeeld(naam, donker, schaal = 2) {
+export function korrelBeeld(naam, donker, schaal = 2, t = kaartTokens(donker)) {
   const def = KORRELS[naam]
   if (!def) return null
   const [maat, teken, doorzicht, kleur] = def
-  const t = THEMA[donker ? 'donker' : 'licht']
   const canvas = document.createElement('canvas')
   canvas.width = canvas.height = maat * schaal
   const c = canvas.getContext('2d')
@@ -117,7 +101,7 @@ export function korrelBeeld(naam, donker, schaal = 2) {
   c.fillStyle = t[kleur]
   c.fillRect(0, 0, maat, maat)
   const [r, g, b] = t.korrelInkt
-  const inkt = `rgba(${r},${g},${b},${donker ? doorzicht * 0.55 : doorzicht})`
+  const inkt = `rgba(${r},${g},${b},${doorzicht * t.korrelSterkte})`
   c.strokeStyle = inkt
   c.fillStyle = inkt
   teken(c, inkt)
@@ -126,45 +110,47 @@ export function korrelBeeld(naam, donker, schaal = 2) {
 export const KORRELNAMEN = Object.keys(KORRELS)
 
 /** Een MapLibre-stijl voor het licht of het donker. */
-export function korrelStijl(donker) {
-  const t = THEMA[donker ? 'donker' : 'licht']
+export function kaartStijl(donker, t = kaartTokens(donker)) {
   const naam = ['coalesce', ['get', 'name:nl'], ['get', 'name']]
   const dikte = (...stops) => ['interpolate', ['exponential', 1.4], ['zoom'], ...stops]
   const klasse = (...lijst) => ['in', ['get', 'class'], ['literal', lijst]]
   const geenTunnel = ['!=', ['get', 'brunnel'], 'tunnel']
   const onverhard = ['==', ['get', 'surface'], 'unpaved']
   const verhard = ['==', ['get', 'surface'], 'paved']
+  // vlak met korrel, of effen als de richting geen patronen heeft
   const pat = (n) => `korrel-${n}-${donker ? 'd' : 'l'}`
-  const tekst = { 'text-font': ['Noto Sans Regular'], 'text-field': naam }
+  const vlak = (n) => (t.patronen ? { 'fill-pattern': pat(n) } : { 'fill-color': t[KORRELS[n][3]] })
+  const tekst = { 'text-font': [t.font], 'text-field': naam }
   const halo = { 'text-color': t.ink, 'text-halo-color': t.halo, 'text-halo-width': 1.6, 'text-halo-blur': 0.4 }
 
   const lagen = [
     { id: 'achtergrond', type: 'background', paint: { 'background-color': t.bg } },
     // landcover: elke soort een eigen korrel
     { id: 'akker', type: 'fill', source: 'ofm', 'source-layer': 'landcover', filter: ['==', ['get', 'class'], 'farmland'], paint: { 'fill-color': t.farm } },
-    { id: 'gras', type: 'fill', source: 'ofm', 'source-layer': 'landcover', filter: ['all', ['==', ['get', 'class'], 'grass'], ['!', ['in', ['get', 'subclass'], ['literal', ['heath', 'scrub']]]]], paint: { 'fill-pattern': pat('gras') } },
-    { id: 'struweel', type: 'fill', source: 'ofm', 'source-layer': 'landcover', filter: ['==', ['get', 'subclass'], 'scrub'], paint: { 'fill-pattern': pat('struweel') } },
-    { id: 'heide', type: 'fill', source: 'ofm', 'source-layer': 'landcover', filter: ['==', ['get', 'subclass'], 'heath'], paint: { 'fill-pattern': pat('heide') } },
-    { id: 'zand', type: 'fill', source: 'ofm', 'source-layer': 'landcover', filter: ['==', ['get', 'class'], 'sand'], paint: { 'fill-pattern': pat('zand') } },
-    { id: 'wetland', type: 'fill', source: 'ofm', 'source-layer': 'landcover', filter: ['==', ['get', 'class'], 'wetland'], paint: { 'fill-pattern': pat('wetland') } },
-    { id: 'bos', type: 'fill', source: 'ofm', 'source-layer': 'landcover', filter: ['==', ['get', 'class'], 'wood'], paint: { 'fill-pattern': pat('bos') } },
+    { id: 'gras', type: 'fill', source: 'ofm', 'source-layer': 'landcover', filter: ['all', ['==', ['get', 'class'], 'grass'], ['!', ['in', ['get', 'subclass'], ['literal', ['heath', 'scrub']]]]], paint: vlak('gras') },
+    { id: 'struweel', type: 'fill', source: 'ofm', 'source-layer': 'landcover', filter: ['==', ['get', 'subclass'], 'scrub'], paint: vlak('struweel') },
+    { id: 'heide', type: 'fill', source: 'ofm', 'source-layer': 'landcover', filter: ['==', ['get', 'subclass'], 'heath'], paint: vlak('heide') },
+    { id: 'zand', type: 'fill', source: 'ofm', 'source-layer': 'landcover', filter: ['==', ['get', 'class'], 'sand'], paint: vlak('zand') },
+    { id: 'wetland', type: 'fill', source: 'ofm', 'source-layer': 'landcover', filter: ['==', ['get', 'class'], 'wetland'], paint: vlak('wetland') },
+    { id: 'bos', type: 'fill', source: 'ofm', 'source-layer': 'landcover', filter: ['==', ['get', 'class'], 'wood'], paint: vlak('bos') },
     // landgebruik: effen, een tint donkerder dan de grond
     { id: 'wonen', type: 'fill', source: 'ofm', 'source-layer': 'landuse', filter: ['in', ['get', 'class'], ['literal', ['residential', 'neighbourhood', 'suburb', 'quarter']]], paint: { 'fill-color': t.res } },
     { id: 'handel', type: 'fill', source: 'ofm', 'source-layer': 'landuse', filter: ['in', ['get', 'class'], ['literal', ['commercial', 'retail']]], paint: { 'fill-color': t.comm } },
     { id: 'industrie', type: 'fill', source: 'ofm', 'source-layer': 'landuse', filter: ['in', ['get', 'class'], ['literal', ['industrial', 'railway']]], paint: { 'fill-color': t.ind } },
     { id: 'campus', type: 'fill', source: 'ofm', 'source-layer': 'landuse', filter: ['in', ['get', 'class'], ['literal', ['school', 'education', 'college', 'university', 'hospital']]], paint: { 'fill-color': t.campus } },
     { id: 'sportveld', type: 'fill', source: 'ofm', 'source-layer': 'landuse', filter: ['in', ['get', 'class'], ['literal', ['pitch', 'playground']]], paint: { 'fill-color': t.pitch } },
-    { id: 'begraafplaats', type: 'fill', source: 'ofm', 'source-layer': 'landuse', filter: ['==', ['get', 'class'], 'cemetery'], paint: { 'fill-pattern': pat('gras') } },
+    { id: 'begraafplaats', type: 'fill', source: 'ofm', 'source-layer': 'landuse', filter: ['==', ['get', 'class'], 'cemetery'], paint: vlak('gras') },
     // beschermde natuur: een streeplijn
-    { id: 'natuur-vlak', type: 'fill', source: 'ofm', 'source-layer': 'park', paint: { 'fill-color': t.park, 'fill-opacity': donker ? 0.1 : 0.08 } },
+    { id: 'natuur-vlak', type: 'fill', source: 'ofm', 'source-layer': 'park', paint: { 'fill-color': t.park, 'fill-opacity': t.natuurDoorzicht } },
     { id: 'natuur-lijn', type: 'line', source: 'ofm', 'source-layer': 'park', minzoom: 8, paint: { 'line-color': t.park, 'line-width': 1.2, 'line-opacity': 0.8, 'line-dasharray': [4, 3] } },
     // water
-    { id: 'water', type: 'fill', source: 'ofm', 'source-layer': 'water', paint: { 'fill-pattern': pat('water') } },
-    { id: 'waterloop', type: 'line', source: 'ofm', 'source-layer': 'waterway', paint: { 'line-color': t.water, 'line-width': dikte(8, 0.6, 14, 2, 18, 8) } },
+    // water altijd effen: golfjes maken grote wateren op lage zoom onrustig
+    { id: 'water', type: 'fill', source: 'ofm', 'source-layer': 'water', paint: { 'fill-color': t.water } },
+    { id: 'waterloop', type: 'line', source: 'ofm', 'source-layer': 'waterway', paint: { 'line-color': t.waterLijn, 'line-width': dikte(8, 0.6, 14, 2, 18, 8) } },
     { id: 'gebouwen', type: 'fill', source: 'ofm', 'source-layer': 'building', minzoom: 13, paint: { 'fill-color': t.building, 'fill-outline-color': t.buildingLijn } },
     // wegen: eerst een rand in de kleur van de grond, dan de weg zelf
     { id: 'weg-rand', type: 'line', source: 'ofm', 'source-layer': 'transportation', minzoom: 9, filter: ['all', geenTunnel, klasse('motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'busway')],
-      layout: { 'line-cap': 'butt', 'line-join': 'round' }, paint: { 'line-color': t.halo, 'line-opacity': donker ? 0.18 : 0.9, 'line-width': dikte(9, 1.2, 14, 6, 18, 24) } },
+      layout: { 'line-cap': 'butt', 'line-join': 'round' }, paint: { 'line-color': t.wegRand, 'line-opacity': t.wegRandDoorzicht, 'line-width': dikte(9, 1.2, 14, 6, 18, 24) } },
     { id: 'weg-snel', type: 'line', source: 'ofm', 'source-layer': 'transportation', minzoom: 5, filter: ['all', geenTunnel, klasse('motorway', 'trunk')],
       layout: { 'line-join': 'round' }, paint: { 'line-color': t.snel, 'line-width': dikte(5, 0.7, 14, 5, 18, 20) } },
     { id: 'weg-hoofd', type: 'line', source: 'ofm', 'source-layer': 'transportation', minzoom: 7, filter: ['all', geenTunnel, klasse('primary', 'secondary')],
@@ -186,25 +172,25 @@ export function korrelStijl(donker) {
       ['any', onverhard, ['in', ['get', 'subclass'], ['literal', ['path', 'bridleway']]]]],
       layout: { 'line-cap': 'round' }, paint: { 'line-color': t.pad, 'line-width': dikte(12, 1.1, 14, 2, 18, 5), 'line-dasharray': [0.1, 2.1] } },
     { id: 'spoor-lijn', type: 'line', source: 'ofm', 'source-layer': 'transportation', minzoom: 8, filter: ['all', ['==', ['get', 'class'], 'rail'], ['!=', ['get', 'brunnel'], 'tunnel']],
-      paint: { 'line-color': t.ink2, 'line-width': dikte(8, 0.6, 14, 1.6, 18, 4) } },
+      paint: { 'line-color': t.rail, 'line-width': dikte(8, 0.6, 14, 1.6, 18, 4) } },
     { id: 'spoor-streep', type: 'line', source: 'ofm', 'source-layer': 'transportation', minzoom: 11, filter: ['all', ['==', ['get', 'class'], 'rail'], ['!=', ['get', 'brunnel'], 'tunnel']],
-      paint: { 'line-color': t.bg, 'line-width': dikte(11, 0.6, 14, 1, 18, 2.4), 'line-dasharray': [3, 3] } },
+      paint: { 'line-color': t.railStreep, 'line-width': dikte(11, 0.6, 14, 1, 18, 2.4), 'line-dasharray': [3, 3] } },
     { id: 'veer', type: 'line', source: 'ofm', 'source-layer': 'transportation', filter: ['==', ['get', 'class'], 'ferry'], paint: { 'line-color': t.waterLabel, 'line-width': 1.4, 'line-dasharray': [3, 3] } },
     { id: 'landsgrens', type: 'line', source: 'ofm', 'source-layer': 'boundary', filter: ['<=', ['get', 'admin_level'], 2], paint: { 'line-color': t.grens, 'line-width': 1.4, 'line-dasharray': [5, 3] } },
     // namen
-    { id: 'naam-water', type: 'symbol', source: 'ofm', 'source-layer': 'water_name', minzoom: 8, layout: { ...tekst, 'text-font': ['Noto Sans Italic'], 'text-size': 12, 'text-max-width': 6 }, paint: { ...halo, 'text-color': t.waterLabel } },
+    { id: 'naam-water', type: 'symbol', source: 'ofm', 'source-layer': 'water_name', minzoom: 8, layout: { ...tekst, 'text-font': [t.fontSchuin], 'text-size': 12, 'text-max-width': 6 }, paint: { ...halo, 'text-color': t.waterLabel } },
     { id: 'naam-weg', type: 'symbol', source: 'ofm', 'source-layer': 'transportation_name', minzoom: 14, filter: klasse('minor', 'service', 'tertiary', 'secondary', 'primary', 'track', 'path'),
       layout: { ...tekst, 'symbol-placement': 'line', 'text-size': 10.5, 'text-letter-spacing': 0.02 }, paint: { ...halo, 'text-color': t.ink2 } },
     { id: 'naam-wijk', type: 'symbol', source: 'ofm', 'source-layer': 'place', minzoom: 11, filter: klasse('suburb', 'hamlet', 'neighbourhood'),
       layout: { ...tekst, 'text-size': 11.5, 'text-transform': 'uppercase', 'text-letter-spacing': 0.08, 'text-max-width': 7 }, paint: { ...halo, 'text-color': t.ink2 } },
     { id: 'naam-dorp', type: 'symbol', source: 'ofm', 'source-layer': 'place', minzoom: 8, filter: klasse('village'),
-      layout: { ...tekst, 'text-font': ['Noto Sans Bold'], 'text-size': dikte(8, 11, 14, 14), 'text-max-width': 7 }, paint: halo },
+      layout: { ...tekst, 'text-font': [t.fontVet], 'text-size': dikte(8, 11, 14, 14), 'text-max-width': 7 }, paint: halo },
     { id: 'naam-stad', type: 'symbol', source: 'ofm', 'source-layer': 'place', minzoom: 5, filter: klasse('town', 'city'),
-      layout: { ...tekst, 'text-font': ['Noto Sans Bold'], 'text-size': dikte(5, 12, 10, 16, 14, 22), 'text-max-width': 8 }, paint: halo },
+      layout: { ...tekst, 'text-font': [t.fontVet], 'text-size': dikte(5, 12, 10, 16, 14, 22), 'text-max-width': 8 }, paint: halo },
   ]
   return {
     version: 8,
-    name: donker ? 'Korrel donker' : 'Korrel',
+    name: `Nopav.es${donker ? ' donker' : ''}`,
     glyphs: GLYPHS,
     sources: { ofm: { type: 'vector', url: TILEJSON, attribution: '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> Data van <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' } },
     layers: lagen,

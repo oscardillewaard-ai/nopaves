@@ -45,3 +45,10 @@ geschiedenis van nopaves).
 |---|---|
 | `main` | blijft |
 | `claude/admiring-ritchie-23anos` | sessiebranch van de verhuizing; mag weg als de verhuizing af is (na elke merge hergebruikt) |
+
+## Ontwerp (2026-11-21): wat weggehaald werd bij de nieuwe look
+
+| Wat | Waar terug te vinden |
+|---|---|
+| Huisstijl Korrel (styles.css, korrelkaart.js, Darker Grotesque, Overpass Mono) | `main` op `e9a86a5b84e2b3b4d84e096dbd3bb9e6f7324f69` (v1.2.0) |
+| Richtingen A Stil, B Startnummer, C Veldboek achter `?ontwerp=`, de 30 schetsen, Atkinson en Archivo | branch `ccr-770e2665-7wxjk9` op `92a807cd8449751665a03ed6237490d42a63f049` |
