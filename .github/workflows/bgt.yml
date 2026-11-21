@@ -11,8 +11,8 @@ on:
   workflow_dispatch:
     inputs:
       stromen:
-        description: 'Stromen per objecttype (5 typen tegelijk)'
-        default: '3'
+        description: 'Stromen voor onbegroeid terreindeel (de andere vier typen 1); samen hooguit 6 (beslissing 7)'
+        default: '2'
   push:
     branches-ignore: [main]
     paths:
@@ -54,7 +54,9 @@ jobs:
           T0=$(date +%s)
           PIDS=""
           for c in wegdeel onbegroeidterreindeel begroeidterreindeel waterdeel ondersteunendwegdeel; do
-            node --max-old-space-size=3000 tools/bgt/bouw_bgt.mjs $c ~/bgt --adres "$BGT_ADRES" --stromen ${{ inputs.stromen || '3' }} > uit/$c.log 2>&1 &
+            # hooguit 6 verbindingen bij PDOK (beslissing 7): het grootste type 2, de andere 1
+            S=1; [ $c = onbegroeidterreindeel ] && S=${{ inputs.stromen || '2' }}
+            node --max-old-space-size=3000 tools/bgt/bouw_bgt.mjs $c ~/bgt --adres "$BGT_ADRES" --stromen $S > uit/$c.log 2>&1 &
             PIDS="$PIDS $!"
           done
           FOUT=0
