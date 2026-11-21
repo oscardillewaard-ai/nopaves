@@ -1,8 +1,8 @@
-// De kaart in Korrel: vectortegels van OpenFreeMap (OpenMapTiles-schema) in een eigen stijl voor MapLibre.
-// Elke ondergrond krijgt een korrel (bos, heide, zand, water, wetland), asfalt is grijs en effen, en wat
-// onverhard is (paden, karrensporen, wegen met surface=unpaved) is gestippeld. Zo laat de kaart zelf zien
-// waar je wilt lopen. Puur rekenwerk en tekenwerk: het laden van de tegels doet MapLibre.
-// Alle kleuren en keuzes komen uit kaarttokens.js; een richting zonder patronen krijgt effen vlakken.
+// De kaart van Nopav.es (huisstijl Veldboek): vectortegels van OpenFreeMap (OpenMapTiles-schema) in een
+// eigen stijl voor MapLibre. Een aardse, rustige grond met een vleug korrel op de natuur, asfalt licht en
+// effen, en wat onverhard is (paden, karrensporen, wegen met surface=unpaved) gestippeld in veenbruin. Zo
+// laat de kaart zelf zien waar je wilt lopen, en blijft de route het meest opvallende op het scherm.
+// Alle kleuren en keuzes komen uit kaarttokens.js. Het laden van de tegels doet MapLibre.
 import { kaartTokens } from './kaarttokens.js'
 
 const GLYPHS = 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf'
@@ -110,7 +110,7 @@ export function korrelBeeld(naam, donker, schaal = 2, t = kaartTokens(donker)) {
 export const KORRELNAMEN = Object.keys(KORRELS)
 
 /** Een MapLibre-stijl voor het licht of het donker. */
-export function korrelStijl(donker, t = kaartTokens(donker)) {
+export function kaartStijl(donker, t = kaartTokens(donker)) {
   const naam = ['coalesce', ['get', 'name:nl'], ['get', 'name']]
   const dikte = (...stops) => ['interpolate', ['exponential', 1.4], ['zoom'], ...stops]
   const klasse = (...lijst) => ['in', ['get', 'class'], ['literal', lijst]]

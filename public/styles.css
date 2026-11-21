@@ -724,3 +724,85 @@ details.details { margin-top: 10px; }
 .kern p.laadregel > span:nth-child(2) { flex: 1 1 auto; }
 .kern p.laadregel .piekloop { animation: none; }
 .kern i.voorlopig { font-style: normal; background: var(--let-op-vlak); color: var(--inkt); padding: 0 4px; border: 1px solid var(--let-op-rand); }
+
+/* =====================================================================
+   Veldboek: vorm en toon. Kaders alleen om wat je kunt aantikken, vlakken voor wat je leest.
+   ===================================================================== */
+body { font-variant-numeric: tabular-nums; }
+button { background: var(--vlak); }
+button.hoofd { background: var(--route); color: var(--route-inkt); border-color: var(--route); }
+button.hoofd:disabled { background: transparent; color: var(--inkt-3); border-color: var(--rand); opacity: 1; }
+:focus-visible { outline: 2px solid var(--heide); outline-offset: 2px; }
+/* koppen en grote cijfers in de boekletter, met lining cijfers */
+h1, h2, h3, .stapkop, .subkop, .kern b, .afstandwaarde b, .piekbalk .pscore, .optie .badge { font-variant-numeric: lining-nums tabular-nums; }
+
+/* kop: het woordteken, met 'pav' doorgestreept in heide */
+header { border-bottom: var(--scheiding); }
+h1, .wm { font-weight: 700; letter-spacing: -.02em; }
+.wm .pav { color: var(--inkt-3); background: none; -webkit-background-clip: border-box; background-clip: border-box; }
+.wm .pav::after { height: 1.5px; top: 58%; background: var(--heide); transform: rotate(-3deg); }
+@media (max-width: 700px) { [data-ui="nieuw"] header .wm { font-size: 34px; } }
+header button.klein { background: var(--vlak); }
+
+@media (max-width: 700px) {
+  main { border-top: var(--lijn) solid var(--inkt); }
+  .sheetgreep { min-height: 28px; }
+  .sheetgreep span { width: 32px; height: 3px; }
+}
+
+/* keuzes: de gekozen in mos (donker: frisgroen) */
+.segment button { font-weight: 600; font-size: 19px; }
+.segment button[aria-pressed="true"], .keuze button[aria-pressed="true"], .meerlijst > button[aria-pressed="true"] { background: var(--route); color: var(--route-inkt); }
+.snelkeuzes button { border-color: transparent; background: transparent; color: var(--inkt-2); }
+.snelkeuzes button[aria-pressed="true"] { background: var(--inkt); color: var(--vlak); border-color: var(--inkt); }
+/* rijen van de plankaart: een vlak, geen kader */
+.startregel { border: 0; background: var(--vlak-2); border-radius: var(--hoek-vlak); }
+.voorkeurregel { border: 0; background: transparent; color: var(--inkt-2); padding-left: 2px; }
+.binnenchip { border: 0; background: var(--vlak-2); box-shadow: inset 3px 0 0 var(--heide); border-radius: var(--hoek-vlak); }
+.plankaart.aanpassen { border-top: var(--scheiding); }
+.plankaart.aanpassen::before { text-transform: none; letter-spacing: 0; font-size: 24px; font-weight: 650; }
+
+/* resultaat: de score in mos, de rest rustige vlakken */
+.kern div { border: 0; background: var(--vlak-2); }
+.kern .score { background: var(--balk); color: var(--balk-tekst); border: 0; }
+.kern .score b { color: var(--balk-tekst); font-size: 58px; font-weight: 600; }
+.kern .score span { color: var(--balk-tekst-2); }
+.kern p.waarom b { text-transform: none; letter-spacing: 0; font-family: var(--kop); font-size: 15px; }
+.piekbalk .pscore { background: var(--balk); color: var(--balk-tekst); font-weight: 600; }
+.optie .badge { background: var(--balk); color: var(--balk-tekst); font-weight: 600; }
+[data-ui="nieuw"] #opties .kies { border: var(--lijn) solid var(--lijn-kleur); }
+[data-ui="nieuw"] #opties .gekozen .kies { background: var(--route); color: var(--route-inkt); border-color: var(--route); }
+[data-ui="nieuw"] #opties .gekozen .badge { background: var(--route-inkt); color: var(--route); }
+details.blok, details.blok.stap { border-top: var(--scheiding); }
+details.blok > summary { text-transform: none; letter-spacing: 0; font-weight: 650; }
+.kern div.strook { border: var(--lijn) solid var(--inkt); background: var(--vlak); }
+.strook i { border-right: var(--lijn) solid var(--inkt); }
+.strookleg i, .legenda i, td i, .ondergrondnaam i { border: 1px solid var(--inkt); }
+
+/* dialogen en meldingen */
+dialog, #hulp, #voorkeuren { border: var(--lijn) solid var(--inkt); }
+.hulp-kop { border-bottom: var(--scheiding); }
+.hulp-kop h2 { font-weight: 650; }
+.hulp-ico, .modi .mico { background: var(--vlak-2); color: var(--inkt); }
+.toast { border: 0; box-shadow: var(--schaduw-zwevend); }
+.welkom { box-shadow: var(--schaduw-zwevend); }
+
+/* kaart: bediening met een fijne lijn, pinnen in veen */
+.leaflet-bar, .leaflet-control-layers, .kaartlagen { border: var(--lijn) solid var(--inkt) !important; }
+.leaflet-bar a { border-bottom: var(--scheiding); }
+.punt { border-width: 2px; background: var(--inkt); color: var(--vlak); font-family: var(--kop); font-weight: 600; }
+.punt.via { background: var(--vlak); color: var(--inkt); border-color: var(--inkt); border-radius: var(--hoek); }
+.punt.alt { background: var(--vlak); border: 2px solid var(--station-halte); color: var(--inkt); }
+.waterico, .stationico { border: var(--lijn) solid var(--inkt); width: 26px; height: 26px; }
+.waterico .ico, .stationico .ico { width: 16px; height: 16px; }
+.kaartlagen button[aria-pressed="true"] { background: var(--route); color: var(--route-inkt); }
+.kaartlagen button + button { border-top: var(--scheiding); }
+.balkje { border: var(--lijn) solid var(--inkt); height: 8px; }
+.balkje i, .baan.onbepaald .balkje i { background: var(--route); }
+.ico { stroke-width: 1.6; }
+
+/* aanraakdoelen: alles wat je aantikt minstens 44 × 44 px */
+.kopknoppen button.klein, header button.klein { min-height: var(--doel); min-width: var(--doel); }
+.segment button, .keuze button, [data-ui="nieuw"] #opties .kies, .andereknop, .snelkeuzes button, .startknoppen button,
+#afspeel, .omwegknop, .voorkeurregel, .eindknoppen button { min-height: var(--doel); }
+.snelkeuzes button, .startknoppen button, #afspeel { min-width: var(--doel); }

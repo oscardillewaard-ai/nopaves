@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="description" content="Nopav.es: plan trailrunroutes over zo veel mogelijk onverharde paden, met een score voor hoe onverhard een route is, routes naar treinstations en groene omwegen." />
-    <meta name="theme-color" content="#F1F3D4" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#28301F" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#F7F7F1" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#163A28" media="(prefers-color-scheme: dark)" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -25,16 +25,6 @@
         document.documentElement.dataset.theme = donker ? 'dark' : 'light'
       } catch {
         // geen opslag: de media-query in de css regelt het
-      }
-      // ontwerprichting om te proberen (?ontwerp=a, b of c); zonder blijft het huidige ontwerp
-      const ontwerp = new URLSearchParams(location.search).get('ontwerp')
-      if (/^[abc]$/.test(ontwerp || '')) {
-        document.documentElement.dataset.ontwerp = ontwerp
-        document.write('<link rel="stylesheet" href="ontwerp/' + ontwerp + '.css" />')
-        const kleur = { a: ['#FFFFFF', '#161817'], b: ['#FFFFFF', '#0C1330'], c: ['#F7F7F1', '#1A1C16'] }[ontwerp]
-        const metas = document.querySelectorAll('meta[name="theme-color"]')
-        metas[0].content = kleur[0]
-        metas[1].content = kleur[1]
       }
     </script>
     <title>Nopav.es</title>

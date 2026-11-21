@@ -5,7 +5,7 @@ import * as K from './kern.js'
 import { maakSheet } from './sheet.js'
 import * as Teller from './teller.js'
 import * as Meting from './meting.js'
-import { korrelStijl as kaartStijl, koppelKorrels, kanWebgl, KAART_BRON } from './korrelkaart.js'
+import { kaartStijl, koppelKorrels, kanWebgl, KAART_BRON } from './kaartstijl.js'
 import { routeTokens } from './kaarttokens.js'
 import * as Gebieden from './gebieden.js'
 import { voorafOphalen, haalTegels, bekijkRoute, haalOpeningstijden, importeerGpx, pasRouteAan, routeNaarStation, zoekOmwegen, maakPlan, luchtfotoUrl, details, zoekPlaats } from './bronnen.js'
@@ -101,16 +101,15 @@ const korrelKlasse = (klasse) => `kl kl-${String(klasse).split(' ')[0]}`
 /** Naam van een klasse zoals in de tokens: 'half verhard' wordt 'half'. */
 const klasseNaam = (klasse) => String(klasse).split(' ')[0]
 /**
- * De lijn van één stuk route. Een richting kan per klasse een eigen dikte en streep geven (RT.klassen);
- * zonder die tokens is elke klasse even dik (Korrel).
+ * De lijn van één stuk route: hoe zachter de grond, hoe dikker de lijn, en een eigen streep voor klinkers
+ * en onbekend (kaarttokens.js), zodat de klasse niet alleen aan kleur hangt.
  */
 function lijnStijl(klasse) {
-  const k = RT.klassen && RT.klassen[klasseNaam(klasse)]
-  return { color: KLEUR[klasse], weight: k ? k.dikte : RT.lijn.dikte, dashArray: k ? k.streep || null : null, lineCap: k ? k.kap || RT.lijn.kap : RT.lijn.kap }
+  const k = RT.klassen[klasseNaam(klasse)] || {}
+  return { color: KLEUR[klasse], weight: k.dikte || RT.lijn.dikte, dashArray: k.streep || null, lineCap: k.kap || RT.lijn.kap }
 }
-/** De rand onder één stuk route, of null als de richting één doorlopende rand gebruikt. */
+/** De rand onder één stuk route: even dik als de lijn plus een rand aan elke kant. */
 function randStijl(klasse) {
-  if (!RT.klassen) return null
   return { color: RT.rand.kleur, weight: lijnStijl(klasse).weight + 2 * RT.rand.breedte, opacity: RT.rand.doorzicht, lineCap: 'round', lineJoin: 'round' }
 }
 function korrelStijl(klasse) {
@@ -288,7 +287,7 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
 
 // ---------- Kaart ----------
 const kaart = L.map('kaart', { maxZoom: 21 }).setView([52.1, 5.3], 8)
-// De kaart in Korrel (vectortegels met MapLibre). Zonder WebGL, of als de tegels niet laden, blijft de
+// De kaart van Nopav.es (vectortegels met MapLibre, stijl in kaartstijl.js). Zonder WebGL, of als de tegels niet laden, blijft de
 // gewone OpenStreetMap-kaart over.
 const donkerNu = () => document.documentElement.dataset.theme === 'dark'
 let korrelLaag = null
@@ -311,7 +310,7 @@ if (kanWebgl() && window.maplibregl && L.maplibreGL) {
   })
 }
 const lagen = {
-  ...(korrelLaag ? { Korrel: korrelLaag } : {}),
+  ...(korrelLaag ? { Kaart: korrelLaag } : {}),
   OpenStreetMap: L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 21,
     maxNativeZoom: 19,
@@ -1181,7 +1180,7 @@ const naarLatLon = (xy) => xy.map(([x, y]) => {
 })
 let lijnen = [] // [[polyline, stuk], ...]
 let korrels = [] // [[polyline, stuk], ...]: de korrel op de route
-let randen = [] // [[polyline, stuk], ...]: de rand per stuk (alleen als de richting per klasse tekent)
+let randen = [] // [[polyline, stuk], ...]: de rand per stuk
 let twijfelLijn = {}
 
 /** De wegsoort in gewone woorden, voor de korte regel in de popup. */
@@ -1241,12 +1240,8 @@ function tekenRoute(passend) {
   randen = []
   twijfelLijn = {}
   const alles = naarLatLon(plan.analyse.xy)
-  if (RT.klassen) {
-    // eerst alle randen, dan alle lijnen: zo valt geen rand over een lijn heen bij een overgang
-    for (const s of plan.analyse.samengevoegd) randen.push([L.polyline(naarLatLon(s.xy), { ...randStijl(s[bron]), interactive: false }).addTo(routeLaag), s])
-  } else {
-    L.polyline(alles, { color: RT.rand.kleur, weight: RT.rand.dikte, opacity: RT.rand.doorzicht, interactive: false }).addTo(routeLaag)
-  }
+  // eerst alle randen, dan alle lijnen: zo valt geen rand over een lijn heen bij een overgang
+  for (const s of plan.analyse.samengevoegd) randen.push([L.polyline(naarLatLon(s.xy), { ...randStijl(s[bron]), interactive: false }).addTo(routeLaag), s])
   for (const s of plan.analyse.samengevoegd) {
     const pad = naarLatLon(s.xy)
     const lijn = L.polyline(pad, { ...lijnStijl(s[bron]), opacity: 1, bubblingMouseEvents: false }).addTo(routeLaag)

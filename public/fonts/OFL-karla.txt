@@ -1,6 +1,5 @@
-Darker Grotesque, Karla en Overpass Mono staan onder de SIL Open Font License 1.1 (via Google Fonts).
-De auteursrechthebbenden staan per lettertype op https://fonts.google.com/specimen/Darker+Grotesque,
-https://fonts.google.com/specimen/Karla en https://fonts.google.com/specimen/Overpass+Mono.
+Karla staat onder de SIL Open Font License 1.1 (via Google Fonts).
+De auteursrechthebbenden staan op https://fonts.google.com/specimen/Karla.
 
 -----------------------------------------------------------
 SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007

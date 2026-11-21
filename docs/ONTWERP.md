@@ -12,10 +12,10 @@ bestand en ga verder bij de eerste stap die niet `klaar` is. Werk op de sessiebr
 | 1 Ontwerptokens | klaar (pixelgelijk, Playwright telefoon en desktop groen) | `public/tokens.css`, `public/kaarttokens.js` |
 | 2 Drie richtingen achter `?ontwerp=a\|b\|c` | gebouwd en gecontroleerd; PR en samenvoegen volgen | `public/ontwerp/`, [ontwerp/richtingen.md](ontwerp/richtingen.md) |
 | Schetsen | klaar: 30 schetsen van het eerste scherm (op Oscars verzoek, in plaats van drie uitgewerkte richtingen) | [ontwerp/schetsen/](ontwerp/schetsen/) |
-| STOP | Oscar kiest één schets (op nummer, mag combineren); die wordt uitgewerkt volgens stap 3 en 4 | |
-| 3 Uitrollen | open | |
+| Keuze | klaar: Oscar koos **4 Veldboek** met het donkere paneel van **12 Bosgroen** als donker thema (2026-11-21); zoekbalk boven: nee (zie hieronder) | |
+| 3 Uitrollen | bezig: Veldboek is standaard, Korrel en A/B/C weg; alle schermen, review-lussen en CLAUDE.md volgen | `public/tokens.css`, `public/kaarttokens.js`, `public/kaartstijl.js` |
 | 4 Beter testen | open | |
-| Release v1.2.0 | open | |
+| Release v1.3.0 | open (v1.2.0 bestond al: de Nopave-router) | |
 
 ## Hulpmiddelen
 
@@ -74,3 +74,14 @@ Alternatieven: één neutrale kleur, dunner, met een letter. Zo hangt de klasse 
 Code van stap 2 staat in `public/ontwerp/a.css|b.css|c.css` (component- en tokenwaarden
 per richting, alleen geladen bij `?ontwerp=`), `public/kaarttokens.js` (KAART/ROUTE per richting) en
 `tools/ontwerp/paletten.mjs` (voor de controle).
+
+## Keuze en wat eruit volgde (2026-11-21)
+
+- **Gekozen**: schets 4 Veldboek (licht) met schets 12 Bosgroen als donker thema. Advies en afweging: niet te
+  veel Komoot (wit, rond, felgroen), wel groen; Veldboek houdt de identiteit van Korrel maar is rustiger.
+- **Zoekbalk boven (schets 27)**: niet doen. Zoeken is niet de hoofdtaak (meestal locatie of tikken), past
+  slecht bij A naar B (twee plekken), kost kaart bovenin en is een functionele verandering.
+- **Versie**: v1.3.0, omdat v1.2.0 al bestond.
+- **Weggehaald** (vastgelegd in docs/branches-archief.md): Korrel (Darker Grotesque, Overpass Mono,
+  korrelkaart.js, nu kaartstijl.js), de richtingen A/B/C en `?ontwerp=`, Atkinson en Archivo.
+- **Lettertypen**: Literata (52 kB) en Karla (24 kB) = 76 kB; was 70 kB (Darker Grotesque, Karla, Overpass Mono).
