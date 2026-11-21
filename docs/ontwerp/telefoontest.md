@@ -15,7 +15,7 @@ en valt alleen zonder internet terug op wat bewaard is).
 
 ## 2. Een rondje plannen (1 min)
 
-- [ ] Tik **Gebruik mijn locatie** of tik op de kaart: er verschijnt een donkere pin met S.
+- [ ] Tik het locatieknopje (vizier) in de startregel, of tik op de kaart: er verschijnt een donkere pin met S.
 - [ ] Zet de afstand met − en + of met 5 · 10 · 15 · 20: de gekozen waarde is groen.
 - [ ] Tik **Plan rondje**: tijdens het rekenen loopt het poppetje over de balk.
 - [ ] De route staat op de kaart, met een **donkere rand** (licht) of **lichte rand** (donker), en is

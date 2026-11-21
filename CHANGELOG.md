@@ -3,6 +3,20 @@
 Alle noemenswaardige wijzigingen aan Nopav.es, in gewone taal. Versies volgen
 [semver](https://semver.org/lang/nl/): groot.klein.reparatie.
 
+## v1.3.0 (2026-11-21): Een nieuwe look, Veldboek
+
+- **Nopav.es ziet er anders uit.** Een rustige, aardse stijl: mos, veen, stro en heide op salie-grijs papier,
+  een boekletter voor koppen en cijfers, fijne lijnen. In het donker het diepe groen van het bos.
+- **De kaart is kalmer**, zodat je route beter opvalt. Geen golfjes meer op het water, nog maar een vleugje korrel op bos en heide; onverharde paden
+  staan als veenbruine stippellijntjes op de kaart.
+- **De route vertelt zelf de ondergrond.** Hoe zachter de grond, hoe dikker de lijn: onverhard dik, asfalt
+  dun, klinkers gestreept, onbekend gestippeld. Elke route heeft een rand, zodat hij op elke achtergrond te
+  zien is. Ook als je kleuren slecht onderscheidt, zie je het verschil.
+- **De andere routes zijn grijs**, met een letter. Zo zie je meteen welke route je gekozen hebt.
+- **Grotere knoppen**: alles wat je aantikt is minstens 44 pixels, handig met koude vingers.
+- **Een nieuw pictogram**: een zandpad naar de horizon.
+- Alles werkt verder precies zoals het werkte. In de lagenkeuze heet de eigen kaart nu "Kaart".
+
 ## v1.2.0 (2026-11-20): De Nopave-router
 
 - **Van A naar B rond Delft rekent Nopav.es nu zelf.** Binnen de regio Delft plant de Nopave-router je route

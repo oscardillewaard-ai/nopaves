@@ -1,4 +1,5 @@
-# Unit-tests, lint en Playwright (telefoon en desktop) bij elke pull request en elke push naar main.
+# Unit-tests, lint, Playwright (telefoon en desktop), de wandeling en de visuele regressie bij elke pull request
+# en elke push naar main.
 name: test
 
 on:
@@ -17,7 +18,7 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
@@ -47,6 +48,12 @@ jobs:
 
       - name: Playwright desktop
         run: npm run test:desktop
+
+      - name: Wandeling door vijf reizen (telefoon)
+        run: npm run test:wandeling
+
+      - name: Visuele regressie (schermafbeeldingen tegen de basisbeelden)
+        run: npm run test:visueel
 
       - name: Schermafbeeldingen bewaren
         if: always()

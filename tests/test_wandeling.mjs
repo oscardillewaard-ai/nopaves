@@ -45,7 +45,7 @@ await p.evaluate(() => { localStorage.clear(); localStorage.setItem('onverhard.i
 await p.goto(basis)
 
 // ---- 1. Rondje vanaf je locatie ----
-await p.locator('#welkomLocatie').click()
+await p.locator('#startregel [data-start="locatie"]').click()
 await p.locator('#planKnop:not([disabled])').waitFor({ timeout: 20000 })
 await p.locator('#snelkeuzes [data-waarde="10"]').click()
 await p.locator('#planKnop').click()
@@ -53,7 +53,7 @@ await klaar()
 await geenFout('rondje')
 assert.ok(Number(await p.locator('#kern .score b').textContent()) >= 0, 'rondje: een score')
 await foto('1-rondje-vanaf-locatie')
-stap('1. rondje vanaf je locatie: Gebruik mijn locatie, 10 km, Plan rondje')
+stap('1. rondje vanaf je locatie: locatieknop in de startregel, 10 km, Plan rondje')
 
 // ---- 5a. Bewaren (de terugvindstap volgt na de andere reizen) ----
 await p.locator('#bewaar').click()
@@ -78,8 +78,11 @@ stap('2. naar een station: Station, mijn locatie, Plan')
 // ---- 3. Van A naar B ----
 await p.locator('#nieuwKnop').click()
 await p.locator('[data-soort="route"]').click()
-await p.evaluate(() => window.onverhard.kaart.setView([52.005, 4.375], 14, { animate: false }))
-await p.waitForTimeout(500)
+// paneel klein en iets uitzoomen: beide punten liggen dan op het zichtbare deel van de kaart
+await p.evaluate(() => window.onverhard.sheet.zet('piek'))
+await p.waitForTimeout(600)
+await p.evaluate(() => window.onverhard.kaart.setView([51.995, 4.374], 13, { animate: false }))
+await p.waitForTimeout(800)
 await tikKaart(52.0116, 4.3571)
 await tikKaart(51.998, 4.392)
 await p.locator('#planKnop:not([disabled])').waitFor({ timeout: 20000 })
