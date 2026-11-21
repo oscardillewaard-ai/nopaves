@@ -1,5 +1,11 @@
 # Stap 2: drie richtingen
 
+> **Afgesloten (2026-11-21).** Op Oscars verzoek is daarna gekozen uit 30 schetsen
+> ([schetsen/](schetsen/)): **Veldboek** (richting C hieronder) met **Bosgroen** als donker thema. De
+> richtingen zelf, `?ontwerp=` en de beelden in `a/`, `b/`, `c/` en `vergelijk/` zijn weggehaald; ze staan nog
+> op branch `ccr-770e2665-7wxjk9`, commit `92a807cd8449751665a03ed6237490d42a63f049`. De links en beelden
+> hieronder werken daarom niet meer; de tekst blijft als verslag van de afweging.
+
 Live te proberen op je telefoon (standaard blijft Korrel):
 
 - **A Stil**: https://oscardillewaard-ai.github.io/nopaves/?ontwerp=a

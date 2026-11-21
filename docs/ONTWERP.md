@@ -1,5 +1,30 @@
 # Nopav.es: nieuwe look & feel
 
+## Samenvatting
+
+Nopav.es heeft een nieuwe huisstijl: **Veldboek**. Een veldgids voor onverharde paden: aardse kleuren
+(veen, mos, stro, heide) op salie-grijs papier, een boekletter voor koppen en cijfers, fijne lijnen, en een
+rustige kaart waarop de route het meest opvallende is. In het donker het diepe groen van het bos
+(**Bosgroen**). Gekozen door Oscar uit 30 schetsen (2026-11-21).
+
+**De routelijn vertelt nu zelf de ondergrond**: hoe zachter de grond, hoe dikker de lijn (onverhard dik,
+asfalt dun, klinkers gestreept, onbekend gestippeld), met een rand die tegen elk kaartvlak ruim 3:1 haalt.
+Alternatieven zijn grijs. Gemeten: tekst overal ≥ 4,5:1, de vijf ondergronden blijven uit elkaar bij
+kleurenblindheid, axe vindt geen overtredingen, alle knoppen ≥ 44 px.
+
+| | Voor (Korrel) | Na (Veldboek) |
+|---|---|---|
+| Plankaart | ![](ontwerp/huidig/plankaart_telefoon_licht.png) | ![](ontwerp/na/plankaart_telefoon_licht.png) |
+| Resultaat | ![](ontwerp/huidig/resultaat-half_telefoon_licht.png) | ![](ontwerp/na/resultaat-half_telefoon_licht.png) |
+| Donker | ![](ontwerp/huidig/resultaat-half_telefoon_donker.png) | ![](ontwerp/na/resultaat-half_telefoon_donker.png) |
+| Desktop | ![](ontwerp/huidig/resultaat-piek_desktop_licht.png) | ![](ontwerp/na/resultaat-piek_desktop_licht.png) |
+
+Alle schermen en toestanden: [ontwerp/huidig/](ontwerp/huidig/) en [ontwerp/na/](ontwerp/na/). Op je eigen
+telefoon testen: [ontwerp/telefoontest.md](ontwerp/telefoontest.md).
+
+---
+
+
 Voortgangsbestand van de ontwerpopdracht (2026-11-20). Begint een sessie met "ga verder": lees dit
 bestand en ga verder bij de eerste stap die niet `klaar` is. Werk op de sessiebranch; PR's heten
 `feat: ontwerp …`.
