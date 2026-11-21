@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nopav.es schetsen</title>
+<style>
+@font-face { font-family: 'Darker Grotesque'; font-weight: 500 900; size-adjust: 112%; src: url('../../../public/fonts/darker-grotesque-latin-variable.woff2'); }
+@font-face { font-family: 'Karla'; font-weight: 400 700; src: url('../../../public/fonts/karla-latin-variable.woff2'); }
+@font-face { font-family: 'Overpass Mono'; font-weight: 500 700; src: url('../../../public/fonts/overpass-mono-latin-variable.woff2'); }
+@font-face { font-family: 'Atkinson'; font-weight: 400 800; src: url('../../../public/fonts/atkinson-hyperlegible-next-latin-variable.woff2'); }
+@font-face { font-family: 'Archivo'; font-weight: 400 700; src: url('../../../public/fonts/archivo-latin-variable.woff2'); }
+@font-face { font-family: 'Archivo Smal'; font-weight: 500 900; src: url('../../../public/fonts/archivo-smal-latin-variable.woff2'); }
+@font-face { font-family: 'Literata'; font-weight: 400 800; src: url('../../../public/fonts/literata-latin-variable.woff2'); }
+* { box-sizing: border-box; }
+body { margin: 0; padding: 24px 16px 48px; background: #E8E8E4; color: #1d1d1b; font: 15px/1.4 'Karla', system-ui, sans-serif; }
+h1 { font: 800 28px/1.1 'Archivo', sans-serif; margin: 0 0 4px; }
+.intro { margin: 0 0 20px; max-width: 60ch; }
+.vel { display: grid; grid-template-columns: repeat(auto-fill, 300px); gap: 28px 20px; justify-content: center; }
+figure { margin: 0; }
+figcaption { margin-top: 8px; font: 700 15px/1.25 'Archivo', sans-serif; }
+figcaption small { display: block; font: 400 13px/1.35 'Karla', sans-serif; color: #555; margin-top: 2px; }
+figcaption b { display: inline-block; min-width: 26px; }
+
+/* ---- het telefoonscherm: alles via variabelen ---- */
+.tel { position: relative; width: 300px; height: 620px; overflow: hidden; border-radius: 26px; background: var(--kaart-bg);
+  box-shadow: 0 0 0 6px #1d1d1b, 0 10px 24px rgb(0 0 0 / .18); font-family: var(--tekst); color: var(--inkt); }
+.tel svg.kaart { position: absolute; inset: 0; width: 100%; height: 100%; }
+.kaart .land { fill: var(--kaart-bg); } .kaart .akker { fill: var(--akker); } .kaart .bos { fill: var(--bos); } .kaart .heide { fill: var(--heide); }
+.kaart .zand { fill: var(--zand); } .kaart .water { fill: var(--water); } .kaart .bebouwd { fill: var(--bebouwd); }
+.kaart .weg-rand { stroke: var(--weg-rand); stroke-width: 9; fill: none; stroke-linecap: round; }
+.kaart .weg { stroke: var(--weg); stroke-width: 6; fill: none; stroke-linecap: round; }
+.kaart .straat { stroke: var(--straat); stroke-width: 2.2; fill: none; }
+.kaart .pad { stroke: var(--pad); stroke-width: 1.6; fill: none; stroke-dasharray: 1.5 3; stroke-linecap: round; }
+.kaart .label { fill: var(--label); font: 600 9px var(--tekst); letter-spacing: .04em; }
+.kaart .r-rand { stroke: var(--route-rand); fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.kaart .r { fill: none; stroke-linejoin: round; }
+.kaart .alt { stroke: var(--alt); stroke-width: 3.5; fill: none; stroke-linecap: round; stroke-dasharray: var(--alt-streep, none); }
+.kaart .start { fill: var(--knop); stroke: var(--start-rand); stroke-width: 2.5; }
+.kaart .start-t { fill: var(--knop-t); font: 800 10px var(--kop); text-anchor: middle; }
+
+/* kaartknoppen */
+.kk { position: absolute; top: 14px; display: flex; flex-direction: column; background: var(--zwevend); border-radius: var(--hoek); border: var(--kaartknop-rand);
+  box-shadow: var(--schaduw); overflow: hidden; }
+.kk span { width: 34px; height: 34px; display: grid; place-items: center; font: 600 18px/1 system-ui; color: var(--inkt); }
+.kk span + span { border-top: 1px solid var(--lijntje); }
+.kk.l { left: 12px; } .kk.r { right: 12px; }
+
+/* het paneel */
+.vel-p { position: absolute; left: var(--p-x, 0); right: var(--p-x, 0); bottom: var(--p-y, 0); background: var(--vlak);
+  border-radius: var(--p-hoek) var(--p-hoek) var(--p-hoek-o, 0) var(--p-hoek-o, 0); border-top: var(--p-rand, 0 solid transparent);
+  box-shadow: var(--p-schaduw, none); padding: 8px 14px 14px; }
+.greep { width: 34px; height: 4px; border-radius: 4px; background: var(--greep); margin: 0 auto 8px; }
+.kop { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.wm { font: var(--wm-gewicht, 800) var(--wm-maat, 24px)/1 var(--kop); letter-spacing: var(--wm-spatie, -.02em); text-transform: var(--wm-kast, none); color: var(--inkt); }
+.wm i { font-style: normal; position: relative; color: var(--wm-pav, inherit); }
+.wm i::after { content: ''; position: absolute; left: -3%; right: -3%; top: 54%; height: var(--wm-streep-dik, 2px); background: var(--accent); transform: rotate(var(--wm-hoek, -4deg)); }
+.kop .vraag { width: 30px; height: 30px; display: grid; place-items: center; border-radius: var(--hoek); background: var(--knop2); border: var(--rand2); font: 700 14px var(--tekst); color: var(--inkt); }
+/* segment in vier smaken */
+.seg { display: grid; grid-template-columns: repeat(4, 1fr); margin-bottom: 8px; font: var(--seg-gewicht, 700) var(--seg-maat, 13px)/1 var(--kop); }
+.seg span { display: grid; place-items: center; height: 34px; color: var(--inkt-2); text-align: center; }
+.seg-baan { background: var(--knop2); border-radius: calc(var(--hoek) + 3px); padding: 3px; gap: 3px; }
+.seg-baan span { border-radius: var(--hoek); height: 30px; }
+.seg-baan span.aan { background: var(--vlak); color: var(--inkt); box-shadow: 0 1px 3px rgb(0 0 0 / .18); }
+.seg-pil { gap: 5px; } .seg-pil span { border-radius: 999px; background: var(--knop2); } .seg-pil span.aan { background: var(--knop); color: var(--knop-t); }
+.seg-blok { border: var(--rand); border-radius: var(--hoek); overflow: hidden; } .seg-blok span + span { border-left: var(--rand); } .seg-blok span.aan { background: var(--knop); color: var(--knop-t); }
+.seg-tab { border-bottom: 1px solid var(--lijntje); } .seg-tab span { height: 32px; } .seg-tab span.aan { color: var(--inkt); box-shadow: inset 0 -3px 0 var(--accent); }
+/* regels */
+.rij { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 4px 6px 4px 10px; margin-bottom: 8px; border-radius: var(--hoek); background: var(--rij-bg, var(--knop2)); border: var(--rij-rand, 0 solid transparent); font-size: 12px; }
+.rij b { display: block; font: 700 13px/1.15 var(--tekst); }
+.rij small { color: var(--inkt-2); font-size: 10.5px; }
+.rij .ik { margin-left: auto; display: flex; gap: 4px; }
+.rij .ik span { width: 28px; height: 28px; display: grid; place-items: center; border-radius: var(--hoek); background: var(--vlak); border: var(--rand2); font-size: 13px; }
+.km { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.km .st { width: 34px; height: 34px; display: grid; place-items: center; border-radius: var(--hoek-st, var(--hoek)); border: var(--rand); background: var(--vlak); font: 600 18px/1 system-ui; color: var(--inkt); }
+.km .w { height: 34px; padding: 0 10px; display: flex; align-items: baseline; gap: 4px; border-radius: var(--hoek); border: var(--rand); background: var(--vlak); }
+.km .w b { font: var(--getal-gewicht, 800) 24px/34px var(--getal); letter-spacing: -.02em; }
+.km .w small { font: 600 11px var(--tekst); color: var(--inkt-2); }
+.km .snel { margin-left: auto; display: flex; gap: 3px; }
+.km .snel span { min-width: 26px; height: 28px; padding: 0 4px; display: grid; place-items: center; border-radius: var(--hoek-snel, var(--hoek)); font: 700 12px var(--getal); color: var(--inkt-2); border: var(--snel-rand, 0 solid transparent); }
+.km .snel span.aan { background: var(--inkt); color: var(--vlak); border-color: var(--inkt); }
+.voork { font-size: 11.5px; color: var(--inkt-2); margin: 0 2px 8px; display: flex; justify-content: space-between; }
+.plan { height: 42px; display: grid; place-items: center; border-radius: var(--hoek-knop, var(--hoek)); background: var(--knop); color: var(--knop-t);
+  font: var(--knop-gewicht, 800) var(--knop-maat, 16px)/1 var(--kop); letter-spacing: var(--knop-spatie, 0); text-transform: var(--knop-kast, none); border: var(--knop-rand, 0 solid transparent); }
+/* indeling 'balk': zoekbalk bovenin, compact paneel */
+.zoekbalk { position: absolute; top: 12px; left: 56px; right: 56px; height: 36px; border-radius: 999px; background: var(--zwevend); box-shadow: var(--schaduw);
+  display: flex; align-items: center; gap: 6px; padding: 0 12px; font-size: 12px; color: var(--inkt-2); }
+.ond { position: absolute; left: 12px; right: 12px; bottom: 112px; height: 30px; display: flex; gap: 0; border-radius: 999px; overflow: hidden; }
+.dun .ond { display: none; }
+</style>
+</head>
+<body>
+<h1>Nopav.es: 30 schetsen van het eerste scherm</h1>
+<p class="intro">Alleen het uiterlijk: kleuren, letters, vormen, kaart en routelijn. Niets is uitgewerkt of getest. Kies er een paar die goed voelen (of combineer: "kaart van 7, knoppen van 18"), dan werken we die uit. De routelijn laat steeds de vijf ondergronden zien: onverhard, half verhard, klinkers, asfalt, onbekend.</p>
+<div class="vel" id="vel"></div>
+
+<template id="scherm">
+  <svg class="kaart" viewBox="0 0 300 620" aria-hidden="true">
+    <rect class="land" width="300" height="620"/>
+    <path class="akker" d="M0 0h120v90H0zM200 40h100v120H200z"/>
+    <path class="bebouwd" d="M150 180h150v110H150zM0 250h70v80H0z"/>
+    <path class="bos" d="M20 100c30-20 80-10 95 20s0 80-30 95-70 10-80-25 0-70 15-90zM190 300c40 0 90 20 110 60v80c-40 10-90 0-115-30s-20-110 5-110z"/>
+    <path class="heide" d="M120 330c25-15 60-5 65 25s-25 55-50 50-35-60-15-75z"/>
+    <path class="zand" d="M0 380c30 0 50 30 45 60s-30 40-45 40z"/>
+    <path class="water" d="M200 170c30-15 70-5 85 15s0 45-35 50-70-5-75-30 0-25 25-35zM0 520c60-10 120 15 170 5s90-20 130-10v105H0z"/>
+    <path class="weg-rand" d="M-10 165C80 150 140 175 310 140M95 -10C105 120 90 300 120 640"/>
+    <path class="weg" d="M-10 165C80 150 140 175 310 140M95 -10C105 120 90 300 120 640"/>
+    <path class="straat" d="M150 200h150M150 230h150M150 260h150M190 180v110M240 180v110M0 280h70M0 305h70M30 250v80"/>
+    <path class="pad" d="M40 120c20 30 50 40 70 30M200 320c20 40 60 50 90 40M130 350c10 20 30 30 45 20M10 400c15 20 25 40 20 60"/>
+    <text class="label" x="198" y="196">DELFT</text><text class="label" x="215" y="215" style="font-size:8px">Kleine Plas</text>
+    <path class="alt" d="M118 268C150 300 170 290 200 270S260 230 280 250"/>
+    <g class="route"></g>
+    <circle class="start" cx="118" cy="268" r="10"/><text class="start-t" x="118" y="271.5">S</text>
+  </svg>
+  <div class="kk l"><span>+</span><span>−</span></div>
+  <div class="kk r"><span>≡</span></div>
+  <div class="vel-p">
+    <div class="greep"></div>
+    <div class="kop"><span class="wm">no<i>pav</i>.es</span><span class="vraag">?</span></div>
+    <div class="seg"><span class="aan">Rondje</span><span>Station</span><span>A naar B</span><span>Meer</span></div>
+    <div class="rij"><span>◎</span><span><b>Start: Delft centrum</b><small>sleep de pin om te verschuiven</small></span><span class="ik"><span>⌖</span><span>⌕</span></span></div>
+    <div class="km"><span class="st">−</span><span class="w"><b>10</b><small>km</small></span><span class="st">+</span><span class="snel"><span>5</span><span class="aan">10</span><span>15</span><span>20</span></span></div>
+    <div class="voork"><span>Paadjes · strand overslaan</span><span>›</span></div>
+    <div class="plan">Plan rondje</div>
+  </div>
+</template>
+
+<script>
+// De routelijn: vijf stukken, elk een ondergrond. Volgorde: onverhard, half, open (klinkers), asfalt, onbekend.
+const STUKKEN = [
+  ['onv', 'M118 268C125 240 120 215 110 200S60 170 55 140'],
+  ['half', 'M55 140C50 110 75 90 100 95S160 115 175 150'],
+  ['open', 'M175 150C185 170 200 175 215 172'],
+  ['ges', 'M215 172C235 168 250 190 245 215'],
+  ['onv', 'M245 215C240 250 270 280 255 310S200 340 175 330'],
+  ['onb', 'M175 330C150 320 140 300 118 268'],
+]
+// Lijntaal: 'dik' = hoe zachter hoe dikker; 'gelijk' = alles even dik met streep; 'kleur' = alleen kleur
+const DIKTE = { dik: { onv: 7, half: 6, open: 4.5, ges: 3, onb: 3 }, gelijk: { onv: 5, half: 5, open: 5, ges: 5, onb: 5 }, kleur: { onv: 5, half: 5, open: 5, ges: 5, onb: 5 } }
+const STREEP = { dik: { open: '6 4', onb: '0.1 5' }, gelijk: { half: '8 3', open: '4 3', onb: '0.1 5' }, kleur: {} }
+
+// De 30 ontwerpen. Elk: naam, idee, variabelen (v), segmentstijl, lijntaal, indeling.
+const W = '#FFFFFF'
+const O = [
+  { n: 'Korrel (nu)', i: 'Ter vergelijking: de huidige stand.', seg: 'blok', lijn: 'gelijk',
+    v: { tekst: "'Karla'", kop: "'Darker Grotesque'", getal: "'Darker Grotesque'", 'kaart-bg': '#DDE6B0', akker: '#E4E9B5', bos: '#8FB05A', heide: '#D3A7C2', zand: '#EAD59C', water: '#8FB8C2', bebouwd: '#E4DFAB', 'weg-rand': '#F1F3D4', weg: '#5E636A', straat: '#80848B', pad: '#2E3320', label: '#2E3320',
+      'route-rand': '#F6F7DD', r: ['#008300', '#eda100', '#e87ba4', '#6250d6', '#8a8985'], alt: '#eda100', 'alt-streep': '6 6', vlak: '#F1F3D4', inkt: '#2E3320', 'inkt-2': '#4A5235', knop: '#9BC046', 'knop-t': '#1F2A12', knop2: '#E3E9BD', accent: '#9B4A7A', zwevend: '#F1F3D4',
+      hoek: '0px', 'p-hoek': '0px', rand: '2px solid #2E3320', rand2: '2px solid #2E3320', 'rij-rand': '2px solid #2E3320', 'rij-bg': '#F1F3D4', lijntje: '#2E3320', greep: '#F6F6DA', 'p-rand': '3px solid #4F6B2A', schaduw: 'none', 'kaartknop-rand': '2px solid #2E3320', 'wm-gewicht': 900, 'wm-maat': '28px', 'snel-rand': '2px solid #2E3320', 'knop-gewicht': 900, 'knop-maat': '19px', 'start-rand': W } },
+  { n: 'Stil', i: 'Kaart eerst. Grijs en wit, de route is de enige kleur.', seg: 'baan', lijn: 'dik',
+    v: { tekst: "'Atkinson'", kop: "'Atkinson'", getal: "'Atkinson'", 'kaart-bg': '#F2F2EF', akker: '#F0F0EB', bos: '#D3E0C8', heide: '#E8E1E6', zand: '#EFE9DA', water: '#C9D9E2', bebouwd: '#E6E4DF', 'weg-rand': '#CBCBC5', weg: W, straat: W, pad: '#8E8576', label: '#737975',
+      'route-rand': '#1B1E1C', r: ['#0B8A5C', '#E19100', '#C4559C', '#4D5A66', '#A3A9AE'], alt: '#7D8580', vlak: W, inkt: '#1B1E1C', 'inkt-2': '#4A504C', knop: '#1B1E1C', 'knop-t': W, knop2: '#EEF0ED', accent: '#0B8A5C', zwevend: W,
+      hoek: '10px', 'p-hoek': '18px', rand: '1px solid #8F9691', rand2: '0 solid transparent', lijntje: '#DCDFDB', greep: '#C3C7C3', schaduw: '0 4px 14px rgb(0 0 0 / .14)', 'kaartknop-rand': '0 solid transparent', 'p-schaduw': '0 -4px 20px rgb(0 0 0 / .12)', 'wm-gewicht': 700, 'knop-gewicht': 700, 'start-rand': W } },
+  { n: 'Startnummer', i: 'Sportief: kobalt, startnummergeel, smalle cijfers.', seg: 'pil', lijn: 'dik',
+    v: { tekst: "'Archivo'", kop: "'Archivo Smal'", getal: "'Archivo Smal'", 'kaart-bg': '#E6EAEE', akker: '#EAEDEF', bos: '#AFD3B0', heide: '#DCCBE0', zand: '#F0E2BE', water: '#9CC2EA', bebouwd: '#DDE1E7', 'weg-rand': '#A3ADBC', weg: W, straat: W, pad: '#7A6E5A', label: '#1E2B4D',
+      'route-rand': '#12204A', r: ['#00A272', '#FF9A1A', '#D9479C', '#46506A', '#BCC2CE'], alt: '#7F89A3', vlak: '#EEF1F6', inkt: '#12204A', 'inkt-2': '#3D4A6B', knop: '#2347E8', 'knop-t': W, knop2: W, 'rij-bg': W, accent: '#2347E8', zwevend: W,
+      hoek: '8px', 'p-hoek': '16px', rand: '0 solid transparent', rand2: '0 solid transparent', lijntje: '#CDD4E0', greep: '#B3BDD0', schaduw: '0 6px 16px rgb(18 32 74 / .2)', 'kaartknop-rand': '0 solid transparent', 'wm-kast': 'uppercase', 'wm-gewicht': 900, 'wm-maat': '28px', 'seg-maat': '15px', 'knop-maat': '18px', 'hoek-st': '999px', 'hoek-snel': '999px', 'getal-gewicht': 900, 'start-rand': W } },
+  { n: 'Veldboek', i: 'Opvolger van Korrel: mos, veen, salie, boekletter.', seg: 'blok', lijn: 'dik',
+    v: { tekst: "'Karla'", kop: "'Literata'", getal: "'Literata'", 'kaart-bg': '#ECEADF', akker: '#EFEBDC', bos: '#BFD0A8', heide: '#DFCFD7', zand: '#EADCB8', water: '#B5CCCF', bebouwd: '#E4E1D6', 'weg-rand': '#CFCABB', weg: '#FBFAF5', straat: '#FBFAF5', pad: '#6F5A3E', label: '#3E4234',
+      'route-rand': '#26291F', r: ['#2F7D4A', '#C98A12', '#A64F86', '#3D4250', '#ABA69A'], alt: '#8C8778', vlak: '#F7F7F1', inkt: '#26291F', 'inkt-2': '#4B5040', knop: '#3E5A24', 'knop-t': '#F7F7F1', knop2: '#E0E3D6', accent: '#8E4A73', zwevend: '#F7F7F1',
+      hoek: '4px', 'p-hoek': '6px', rand: '1.5px solid #4B5040', rand2: '1.5px solid #4B5040', 'rij-rand': '1.5px solid #4B5040', 'rij-bg': '#F7F7F1', lijntje: '#C5C9B6', greep: '#8C917D', schaduw: 'none', 'kaartknop-rand': '1.5px solid #26291F', 'p-rand': '1.5px solid #26291F', 'wm-gewicht': 700, 'seg-gewicht': 600, 'knop-gewicht': 600, 'getal-gewicht': 600, 'start-rand': '#F7F7F1' } },
+  { n: 'Nachtloop', i: 'Donker en warm: leisteen met amber, voor de avondrondjes.', seg: 'baan', lijn: 'dik',
+    v: { tekst: "'Archivo'", kop: "'Archivo'", getal: "'Archivo Smal'", 'kaart-bg': '#1E2226', akker: '#20252A', bos: '#1F2B26', heide: '#2B2430', zand: '#2E2A22', water: '#14202B', bebouwd: '#262B31', 'weg-rand': '#121519', weg: '#3E454D', straat: '#343A41', pad: '#8C7F6A', label: '#9AA3AD',
+      'route-rand': '#F4F1EA', r: ['#3CCB8B', '#FFB547', '#E0609F', '#AAB6C4', '#5B636C'], alt: '#6B737C', vlak: '#171A1D', inkt: '#EEF0F2', 'inkt-2': '#A9B1BA', knop: '#FFB547', 'knop-t': '#1B1508', knop2: '#252A2F', accent: '#FFB547', zwevend: '#252A2F',
+      hoek: '12px', 'p-hoek': '20px', rand: '1px solid #3B4249', rand2: '0 solid transparent', lijntje: '#2E343A', greep: '#454C53', schaduw: '0 4px 14px rgb(0 0 0 / .5)', 'kaartknop-rand': '0 solid transparent', 'wm-gewicht': 700, 'knop-gewicht': 700, 'start-rand': '#171A1D' } },
+  { n: 'Polder', i: 'Hollandse lucht en gras: helder blauw en groen, open en vriendelijk.', seg: 'pil', lijn: 'dik',
+    v: { tekst: "'Atkinson'", kop: "'Archivo'", getal: "'Archivo'", 'kaart-bg': '#EEF4E6', akker: '#E6F0D6', bos: '#B9DCA4', heide: '#E1D8EA', zand: '#F3E8C8', water: '#8EC5F0', bebouwd: '#E7E9EC', 'weg-rand': '#C9D2DC', weg: W, straat: W, pad: '#7C8A5C', label: '#36506B',
+      'route-rand': W, r: ['#1E9E4A', '#F2A900', '#D6589A', '#5A6B7D', '#B0B8C0'], alt: '#7E93A8', vlak: W, inkt: '#173450', 'inkt-2': '#466079', knop: '#1E7FD6', 'knop-t': W, knop2: '#EAF2FA', accent: '#1E7FD6', zwevend: W,
+      hoek: '14px', 'p-hoek': '24px', rand: '0 solid transparent', rand2: '0 solid transparent', lijntje: '#DDE6EF', greep: '#C3CFDB', schaduw: '0 4px 14px rgb(23 52 80 / .16)', 'kaartknop-rand': '0 solid transparent', 'p-schaduw': '0 -4px 20px rgb(23 52 80 / .12)', 'wm-gewicht': 700, 'knop-gewicht': 700, 'hoek-st': '999px', 'hoek-snel': '999px', 'hoek-knop': '999px', 'start-rand': W } },
+  { n: 'Duin', i: 'Zand en helmgras: warm beige, zacht groen, kalm.', seg: 'tab', lijn: 'dik',
+    v: { tekst: "'Karla'", kop: "'Karla'", getal: "'Literata'", 'kaart-bg': '#F1EBDD', akker: '#EEE6D2', bos: '#C7D3A8', heide: '#E5D3D6', zand: '#EAD8AE', water: '#B9D3D6', bebouwd: '#E6DFD0', 'weg-rand': '#D3C8B2', weg: '#FBF8F1', straat: '#FBF8F1', pad: '#9A7F55', label: '#6B5B42',
+      'route-rand': '#4A3F2E', r: ['#4F8A3C', '#D9962A', '#B7608F', '#55585E', '#B4AA98'], alt: '#A39A88', vlak: '#FBF8F1', inkt: '#3D3427', 'inkt-2': '#6B5E4B', knop: '#6E8B3D', 'knop-t': W, knop2: '#F1EADB', accent: '#6E8B3D', zwevend: '#FBF8F1',
+      hoek: '8px', 'p-hoek': '18px', rand: '1px solid #CFC3AB', rand2: '0 solid transparent', lijntje: '#E2D8C4', greep: '#CFC3AB', schaduw: '0 3px 10px rgb(61 52 39 / .14)', 'kaartknop-rand': '0 solid transparent', 'wm-gewicht': 700, 'knop-gewicht': 700, 'start-rand': '#FBF8F1' } },
+  { n: 'Heide', i: 'Paarse heide op lichtgrijs: één opvallende kleur, verder stil.', seg: 'baan', lijn: 'dik',
+    v: { tekst: "'Karla'", kop: "'Archivo'", getal: "'Archivo'", 'kaart-bg': '#F0EFF2', akker: '#EFEEF0', bos: '#D2DECB', heide: '#E3D2E6', zand: '#EFE7D8', water: '#CCD8E4', bebouwd: '#E5E3E8', 'weg-rand': '#CAC6CF', weg: W, straat: W, pad: '#8A7B8F', label: '#6A6170',
+      'route-rand': '#2B2430', r: ['#2E8A5A', '#E0A030', '#9B3D86', '#565C6B', '#A9A4AE'], alt: '#8F8896', vlak: W, inkt: '#2B2430', 'inkt-2': '#5A5161', knop: '#8A3D78', 'knop-t': W, knop2: '#F1EDF3', accent: '#8A3D78', zwevend: W,
+      hoek: '10px', 'p-hoek': '18px', rand: '1px solid #CFC8D4', rand2: '0 solid transparent', lijntje: '#E4DEE8', greep: '#CFC8D4', schaduw: '0 4px 14px rgb(43 36 48 / .14)', 'kaartknop-rand': '0 solid transparent', 'wm-gewicht': 700, 'knop-gewicht': 700, 'start-rand': W } },
+  { n: 'Stafkaart', i: 'Als een topografische kaart: rode wegen, groene bosstippen, zwart lettertje.', seg: 'blok', lijn: 'gelijk',
+    v: { tekst: "'Archivo'", kop: "'Archivo Smal'", getal: "'Archivo Smal'", 'kaart-bg': '#F6F3E4', akker: '#F2EEDB', bos: '#B8D49B', heide: '#E8D3DD', zand: '#F3E3B5', water: '#9CC9E0', bebouwd: '#E6D6CF', 'weg-rand': '#7A2E1C', weg: '#E5553B', straat: '#F5F1E6', pad: '#3A3A2A', label: '#1A1A14',
+      'route-rand': '#1A1A14', r: ['#167A3A', '#F0B000', '#C13F8C', '#3C3F46', '#9A9A8C'], alt: '#6E6E62', 'alt-streep': '5 4', vlak: '#FBF9EE', inkt: '#1A1A14', 'inkt-2': '#4A4A3C', knop: '#C8341E', 'knop-t': W, knop2: '#EFEBD8', accent: '#C8341E', zwevend: '#FBF9EE',
+      hoek: '2px', 'p-hoek': '2px', rand: '1.5px solid #1A1A14', rand2: '1.5px solid #1A1A14', 'rij-rand': '1.5px solid #1A1A14', 'rij-bg': '#FBF9EE', lijntje: '#1A1A14', greep: '#8A8A7A', schaduw: 'none', 'kaartknop-rand': '1.5px solid #1A1A14', 'p-rand': '1.5px solid #1A1A14', 'wm-kast': 'uppercase', 'wm-gewicht': 900, 'knop-kast': 'uppercase', 'knop-spatie': '.04em', 'start-rand': '#FBF9EE' } },
+  { n: 'Zwart-wit', i: 'Alles monochroom; alleen de route heeft kleur. Krantenkaart.', seg: 'tab', lijn: 'dik',
+    v: { tekst: "'Karla'", kop: "'Literata'", getal: "'Literata'", 'kaart-bg': '#F4F4F4', akker: '#F0F0F0', bos: '#E2E2E2', heide: '#EAEAEA', zand: '#EEEEEE', water: '#D6D6D6', bebouwd: '#E8E8E8', 'weg-rand': '#BDBDBD', weg: W, straat: W, pad: '#7A7A7A', label: '#555',
+      'route-rand': '#111', r: ['#0E8A4F', '#E8A000', '#CC4E9C', '#333', '#AAA'], alt: '#9A9A9A', vlak: W, inkt: '#111', 'inkt-2': '#555', knop: '#111', 'knop-t': W, knop2: '#F2F2F2', accent: '#111', zwevend: W,
+      hoek: '0px', 'p-hoek': '0px', rand: '1px solid #111', rand2: '1px solid #111', lijntje: '#DDD', greep: '#BBB', schaduw: '0 1px 0 #111', 'kaartknop-rand': '1px solid #111', 'p-rand': '1px solid #111', 'wm-gewicht': 600, 'seg-gewicht': 600, 'knop-gewicht': 600, 'getal-gewicht': 500, 'start-rand': W } },
+  { n: 'Oranje', i: 'Nederlands oranje als enige accent, wit en stevig.', seg: 'pil', lijn: 'dik',
+    v: { tekst: "'Archivo'", kop: "'Archivo'", getal: "'Archivo Smal'", 'kaart-bg': '#F3F2EE', akker: '#F1F0EA', bos: '#CFDFC4', heide: '#E7DEE6', zand: '#F1E7D2', water: '#C3D7E6', bebouwd: '#E7E4DE', 'weg-rand': '#CDC8BE', weg: W, straat: W, pad: '#8A7D6A', label: '#5C5850',
+      'route-rand': '#1E1C19', r: ['#178A55', '#F0A000', '#C9529C', '#4B5059', '#A8A6A0'], alt: '#8A8780', vlak: W, inkt: '#1E1C19', 'inkt-2': '#5C5850', knop: '#F26B0F', 'knop-t': W, knop2: '#F4F2EE', accent: '#F26B0F', zwevend: W,
+      hoek: '10px', 'p-hoek': '20px', rand: '0 solid transparent', rand2: '0 solid transparent', lijntje: '#E7E4DE', greep: '#D0CBC2', schaduw: '0 4px 12px rgb(0 0 0 / .14)', 'kaartknop-rand': '0 solid transparent', 'p-schaduw': '0 -4px 18px rgb(0 0 0 / .1)', 'wm-gewicht': 800, 'knop-gewicht': 800, 'hoek-knop': '999px', 'start-rand': W } },
+  { n: 'Bosgroen', i: 'Een diep groen paneel, de kaart blijft licht.', seg: 'pil', lijn: 'dik',
+    v: { tekst: "'Karla'", kop: "'Archivo'", getal: "'Archivo Smal'", 'kaart-bg': '#EEF0E8', akker: '#ECEEE4', bos: '#C4D8B4', heide: '#E3D9E2', zand: '#EFE6CF', water: '#BCD3DA', bebouwd: '#E3E4DE', 'weg-rand': '#C2C6BB', weg: W, straat: W, pad: '#6E6650', label: '#3F4A3A',
+      'route-rand': '#13261B', r: ['#1E8C52', '#E5A12A', '#C2569A', '#4E5560', '#A9AEA4'], alt: '#7C8578', vlak: '#163A28', inkt: '#EEF3EA', 'inkt-2': '#B6C9B9', knop: '#C6E36A', 'knop-t': '#14301F', knop2: '#1F4A34', accent: '#C6E36A', zwevend: '#163A28',
+      hoek: '10px', 'p-hoek': '22px', rand: '1px solid #2F6047', rand2: '0 solid transparent', lijntje: '#2A5640', greep: '#3E6E55', schaduw: '0 4px 14px rgb(0 0 0 / .25)', 'kaartknop-rand': '0 solid transparent', 'wm-gewicht': 800, 'knop-gewicht': 800, 'hoek-snel': '999px', 'start-rand': W } },
+  { n: 'Klei', i: 'Rivierklei en baksteen: warm rood-bruin met olijf.', seg: 'blok', lijn: 'dik',
+    v: { tekst: "'Karla'", kop: "'Literata'", getal: "'Literata'", 'kaart-bg': '#F0E9E1', akker: '#EDE4D8', bos: '#C9D1AE', heide: '#E3D0D2', zand: '#EBDAB8', water: '#BCCFD1', bebouwd: '#E7DCD2', 'weg-rand': '#CDBDAE', weg: '#FBF7F2', straat: '#FBF7F2', pad: '#8B5E44', label: '#5E4535',
+      'route-rand': '#3B2A20', r: ['#4E8A3A', '#D49327', '#B0548A', '#4F4B4E', '#ADA295'], alt: '#A2968A', vlak: '#FBF7F2', inkt: '#3B2A20', 'inkt-2': '#6B5345', knop: '#A64B2A', 'knop-t': W, knop2: '#F2E9E0', accent: '#A64B2A', zwevend: '#FBF7F2',
+      hoek: '6px', 'p-hoek': '10px', rand: '1.5px solid #6B5345', rand2: '1.5px solid #6B5345', lijntje: '#DCCDBF', greep: '#BFAE9F', schaduw: 'none', 'kaartknop-rand': '1.5px solid #3B2A20', 'p-rand': '1.5px solid #3B2A20', 'wm-gewicht': 700, 'knop-gewicht': 600, 'start-rand': '#FBF7F2' } },
+  { n: 'Pastel', i: 'Mint en lavendel, heel rond: zacht en speels.', seg: 'pil', lijn: 'dik',
+    v: { tekst: "'Atkinson'", kop: "'Atkinson'", getal: "'Atkinson'", 'kaart-bg': '#F4F6F4', akker: '#F1F4EF', bos: '#D2EBDD', heide: '#EADFF2', zand: '#F5EEDB', water: '#D2E6F2', bebouwd: '#ECEEF0', 'weg-rand': '#D6DAE0', weg: W, straat: W, pad: '#9A9AB0', label: '#6F7389',
+      'route-rand': '#3A3D52', r: ['#2EA372', '#F0AE3C', '#D46FB0', '#5D6378', '#B8BCC8'], alt: '#A0A4B5', vlak: W, inkt: '#2C2F44', 'inkt-2': '#5E6278', knop: '#7C6CE0', 'knop-t': W, knop2: '#F1EEFB', accent: '#7C6CE0', zwevend: W,
+      hoek: '16px', 'p-hoek': '28px', rand: '0 solid transparent', rand2: '0 solid transparent', lijntje: '#ECE9F7', greep: '#D3CEEE', schaduw: '0 6px 18px rgb(124 108 224 / .2)', 'kaartknop-rand': '0 solid transparent', 'wm-gewicht': 800, 'knop-gewicht': 700, 'hoek-st': '999px', 'hoek-snel': '999px', 'hoek-knop': '999px', 'p-x': '10px', 'p-y': '10px', 'p-hoek-o': '28px', 'start-rand': W } },
+  { n: 'Brutaal', i: 'Dikke zwarte lijnen, geel, mono: Korrel in het kwadraat.', seg: 'blok', lijn: 'gelijk',
+    v: { tekst: "'Overpass Mono'", kop: "'Archivo Smal'", getal: "'Archivo Smal'", 'kaart-bg': '#F2F2F2', akker: '#EFEFEF', bos: '#C8E6A0', heide: '#F0C8E6', zand: '#FFE89A', water: '#A8D8FF', bebouwd: '#E4E4E4', 'weg-rand': '#000', weg: W, straat: '#000', pad: '#000', label: '#000',
+      'route-rand': '#000', r: ['#00A650', '#FFB800', '#FF5FB0', '#3B3BFF', '#999'], alt: '#000', 'alt-streep': '3 4', vlak: '#FFE600', inkt: '#000', 'inkt-2': '#000', knop: '#000', 'knop-t': '#FFE600', knop2: W, 'rij-bg': W, accent: '#000', zwevend: W,
+      hoek: '0px', 'p-hoek': '0px', rand: '3px solid #000', rand2: '3px solid #000', 'rij-rand': '3px solid #000', lijntje: '#000', greep: '#000', schaduw: '4px 4px 0 #000', 'kaartknop-rand': '3px solid #000', 'p-rand': '3px solid #000', 'wm-kast': 'uppercase', 'wm-gewicht': 900, 'wm-maat': '26px', 'snel-rand': '2px solid #000', 'knop-kast': 'uppercase', 'knop-maat': '18px', 'knop-gewicht': 900, 'start-rand': '#FFE600' } },
+  { n: 'Kompas', i: 'Marineblauw en messing: rustig, degelijk, buitensport-uitrusting.', seg: 'tab', lijn: 'dik',
+    v: { tekst: "'Karla'", kop: "'Literata'", getal: "'Literata'", 'kaart-bg': '#EEF0F1', akker: '#ECEEEE', bos: '#C9D7C6', heide: '#DFD7E0', zand: '#EDE3CC', water: '#B7CCDA', bebouwd: '#E2E5E8', 'weg-rand': '#B9C1C9', weg: W, straat: W, pad: '#7E6E52', label: '#2C3E50',
+      'route-rand': '#0F1F33', r: ['#26875A', '#D9A23A', '#B9589A', '#4A5566', '#A8B0B8'], alt: '#7D8A97', vlak: '#13253B', inkt: '#F1EEE6', 'inkt-2': '#B8C2CE', knop: '#C9A45C', 'knop-t': '#13253B', knop2: '#1C3350', accent: '#C9A45C', zwevend: '#13253B',
+      hoek: '6px', 'p-hoek': '14px', rand: '1px solid #3A5272', rand2: '0 solid transparent', lijntje: '#2A4262', greep: '#3E5677', schaduw: '0 4px 12px rgb(0 0 0 / .25)', 'kaartknop-rand': '0 solid transparent', 'wm-gewicht': 600, 'seg-gewicht': 600, 'knop-gewicht': 600, 'getal-gewicht': 600, 'start-rand': '#F1EEE6' } },
+  { n: 'Mist', i: 'Grijsgroen en gedempt; alles fluistert, behalve de route.', seg: 'baan', lijn: 'dik',
+    v: { tekst: "'Karla'", kop: "'Karla'", getal: "'Karla'", 'kaart-bg': '#E7EAE6', akker: '#E5E8E3', bos: '#CCD6C9', heide: '#DCD7DC', zand: '#E6E1D5', water: '#C6D2D6', bebouwd: '#DEE1DD', 'weg-rand': '#C2C8C1', weg: '#F3F5F2', straat: '#F3F5F2', pad: '#8A9185', label: '#6E766C',
+      'route-rand': '#2B312A', r: ['#2E8B5E', '#D99A2B', '#B95C93', '#4D545C', '#A6ACA4'], alt: '#8D958B', vlak: '#F3F5F2', inkt: '#2B312A', 'inkt-2': '#5D665B', knop: '#4C5D4A', 'knop-t': '#F3F5F2', knop2: '#E2E6E0', accent: '#4C5D4A', zwevend: '#F3F5F2',
+      hoek: '8px', 'p-hoek': '16px', rand: '1px solid #C6CCC4', rand2: '0 solid transparent', lijntje: '#DCE0DA', greep: '#BFC6BD', schaduw: '0 3px 10px rgb(0 0 0 / .1)', 'kaartknop-rand': '0 solid transparent', 'wm-gewicht': 700, 'seg-gewicht': 600, 'knop-gewicht': 700, 'getal-gewicht': 700, 'start-rand': '#F3F5F2' } },
+  { n: 'Sprint', i: 'Rood en scherp, schuine smalle cijfers: wedstrijdgevoel.', seg: 'pil', lijn: 'dik',
+    v: { tekst: "'Archivo'", kop: "'Archivo Smal'", getal: "'Archivo Smal'", 'kaart-bg': '#F2F2F2', akker: '#F0F0F0', bos: '#CDE0C6', heide: '#E6DCE4', zand: '#F0E6D0', water: '#C2D6E8', bebouwd: '#E6E6E6', 'weg-rand': '#C4C4C4', weg: W, straat: W, pad: '#7E7A70', label: '#444',
+      'route-rand': '#1A1A1A', r: ['#119A55', '#F5A500', '#D2509E', '#4A4F57', '#AAAAAA'], alt: '#8A8A8A', vlak: W, inkt: '#151515', 'inkt-2': '#555', knop: '#E1261C', 'knop-t': W, knop2: '#F2F2F2', accent: '#E1261C', zwevend: W,
+      hoek: '4px', 'p-hoek': '14px', rand: '0 solid transparent', rand2: '0 solid transparent', lijntje: '#E2E2E2', greep: '#CCC', schaduw: '0 4px 12px rgb(0 0 0 / .16)', 'kaartknop-rand': '0 solid transparent', 'wm-kast': 'uppercase', 'wm-gewicht': 900, 'wm-maat': '28px', 'wm-spatie': '-.01em', 'seg-maat': '15px', 'knop-kast': 'uppercase', 'knop-maat': '18px', 'knop-gewicht': 900, 'getal-gewicht': 900, 'start-rand': W } },
+  { n: 'Zandpad', i: 'Warm grijs met oker: de onverharde kleur wordt het merk.', seg: 'baan', lijn: 'dik',
+    v: { tekst: "'Atkinson'", kop: "'Archivo'", getal: "'Archivo'", 'kaart-bg': '#EFEDEA', akker: '#EDEBE6', bos: '#D2DAC6', heide: '#E3DCE0', zand: '#EDDFBE', water: '#C7D4DB', bebouwd: '#E4E1DC', 'weg-rand': '#C9C4BC', weg: W, straat: W, pad: '#B07B2C', label: '#5F5A52',
+      'route-rand': '#2A2620', r: ['#2F8A56', '#C98A14', '#B8579A', '#4B4F57', '#AAA59C'], alt: '#8E8A82', vlak: W, inkt: '#2A2620', 'inkt-2': '#5F5A52', knop: '#B9771A', 'knop-t': W, knop2: '#F3EFE8', accent: '#B9771A', zwevend: W,
+      hoek: '10px', 'p-hoek': '18px', rand: '1px solid #D3CCBF', rand2: '0 solid transparent', lijntje: '#E7E2D9', greep: '#D3CCBF', schaduw: '0 4px 12px rgb(42 38 32 / .14)', 'kaartknop-rand': '0 solid transparent', 'wm-gewicht': 800, 'knop-gewicht': 700, 'start-rand': W } },
+  { n: 'Wadden', i: 'Zee en slik: blauwgrijs, wit en een zachte groen.', seg: 'tab', lijn: 'dik',
+    v: { tekst: "'Karla'", kop: "'Archivo'", getal: "'Archivo'", 'kaart-bg': '#EAEFF1', akker: '#E8EDEE', bos: '#C8D9CF', heide: '#DCD6E0', zand: '#E9E3D2', water: '#A9C3D1', bebouwd: '#E0E5E8', 'weg-rand': '#BCC8CF', weg: W, straat: W, pad: '#6F7E86', label: '#3D5260',
+      'route-rand': '#17303D', r: ['#24876A', '#DDA132', '#B95596', '#4B5867', '#A7B2B8'], alt: '#7E929D', vlak: '#F6F9FA', inkt: '#17303D', 'inkt-2': '#4B6170', knop: '#2E5C73', 'knop-t': W, knop2: '#E5EEF2', accent: '#2E5C73', zwevend: '#F6F9FA',
+      hoek: '8px', 'p-hoek': '16px', rand: '1px solid #C3D2DA', rand2: '0 solid transparent', lijntje: '#D7E2E8', greep: '#BCCBD3', schaduw: '0 3px 10px rgb(23 48 61 / .14)', 'kaartknop-rand': '0 solid transparent', 'wm-gewicht': 700, 'knop-gewicht': 700, 'start-rand': W } },
+  { n: 'Speels', i: 'Grote ronde vormen, fris groen, vrolijk en duidelijk.', seg: 'pil', lijn: 'dik',
+    v: { tekst: "'Atkinson'", kop: "'Archivo'", getal: "'Archivo'", 'kaart-bg': '#F2F7EE', akker: '#EEF5E6', bos: '#BFE3A8', heide: '#EBD9EE', zand: '#F8EBC4', water: '#A8D6F5', bebouwd: '#EAEDEA', 'weg-rand': '#CFD8C8', weg: W, straat: W, pad: '#7F9A5A', label: '#3D5530',
+      'route-rand': '#1F3318', r: ['#22A35A', '#FFB020', '#E0589F', '#536070', '#B6BEB0'], alt: '#90A088', vlak: W, inkt: '#1F3318', 'inkt-2': '#4E6644', knop: '#2BB35F', 'knop-t': W, knop2: '#EEF6E8', accent: '#2BB35F', zwevend: W,
+      hoek: '18px', 'p-hoek': '30px', rand: '2px solid #DCEBD2', rand2: '0 solid transparent', lijntje: '#E2EFD9', greep: '#CFE3C0', schaduw: '0 6px 0 rgb(31 51 24 / .12)', 'kaartknop-rand': '0 solid transparent', 'wm-gewicht': 800, 'wm-maat': '26px', 'knop-gewicht': 800, 'knop-maat': '18px', 'hoek-st': '999px', 'hoek-snel': '999px', 'hoek-knop': '999px', 'start-rand': W } },
+  { n: 'Lijntje', i: 'Alleen dunne lijnen, geen vlakken; veel lucht.', seg: 'tab', lijn: 'dik',
+    v: { tekst: "'Karla'", kop: "'Karla'", getal: "'Karla'", 'kaart-bg': '#FAFAF8', akker: '#FAFAF8', bos: '#E8EFE3', heide: '#F1ECF1', zand: '#F5F1E6', water: '#E1EBF0', bebouwd: '#F2F2EF', 'weg-rand': '#D8D8D2', weg: W, straat: '#E6E6E0', pad: '#A39C8E', label: '#8A8A84',
+      'route-rand': '#222', r: ['#16915A', '#E0A12E', '#C85C9E', '#555B64', '#B5B5B0'], alt: '#B0B0AA', vlak: W, inkt: '#222', 'inkt-2': '#777', knop: W, 'knop-t': '#222', knop2: W, accent: '#16915A', zwevend: W,
+      hoek: '6px', 'p-hoek': '14px', rand: '1px solid #CFCFC9', rand2: '1px solid #CFCFC9', 'rij-rand': '1px solid #E2E2DC', 'rij-bg': W, lijntje: '#E6E6E0', greep: '#DDD', schaduw: '0 0 0 1px #E2E2DC', 'kaartknop-rand': '0 solid transparent', 'p-rand': '1px solid #E2E2DC', 'wm-gewicht': 500, 'seg-gewicht': 500, 'knop-gewicht': 600, 'getal-gewicht': 400, 'knop-rand': '1.5px solid #222', 'start-rand': W } },
+  { n: 'Herfst', i: 'Roest, olijf en mosterd: aards maar met meer warmte dan Veldboek.', seg: 'blok', lijn: 'dik',
+    v: { tekst: "'Karla'", kop: "'Archivo'", getal: "'Archivo Smal'", 'kaart-bg': '#F1ECDF', akker: '#EEE7D5', bos: '#C7CC9A', heide: '#E2CCC6', zand: '#EBD6A6', water: '#B7CBC8', bebouwd: '#E5DED0', 'weg-rand': '#CDBFA6', weg: '#FBF8F0', straat: '#FBF8F0', pad: '#8A5A2B', label: '#5A4A30',
+      'route-rand': '#2F2618', r: ['#4C8233', '#D9A21E', '#B4567F', '#4E4C50', '#ADA392'], alt: '#9F9480', vlak: '#FBF8F0', inkt: '#2F2618', 'inkt-2': '#655640', knop: '#9C4A1C', 'knop-t': W, knop2: '#EFE7D6', accent: '#C9961A', zwevend: '#FBF8F0',
+      hoek: '6px', 'p-hoek': '12px', rand: '1.5px solid #655640', rand2: '0 solid transparent', 'rij-rand': '1.5px solid #D6C9AE', lijntje: '#DCCFB4', greep: '#BFAF90', schaduw: 'none', 'kaartknop-rand': '1.5px solid #2F2618', 'wm-gewicht': 800, 'knop-gewicht': 800, 'start-rand': '#FBF8F0' } },
+  { n: 'Hoog contrast', i: 'Zwart, wit en geel: zo goed mogelijk leesbaar in de zon.', seg: 'blok', lijn: 'dik',
+    v: { tekst: "'Atkinson'", kop: "'Atkinson'", getal: "'Atkinson'", 'kaart-bg': W, akker: W, bos: '#D7EBCB', heide: '#EEDDEE', zand: '#F6EBC8', water: '#BFE0FF', bebouwd: '#EEE', 'weg-rand': '#000', weg: W, straat: '#888', pad: '#000', label: '#000',
+      'route-rand': '#000', r: ['#007A3D', '#F2A900', '#C2187A', '#2B2B2B', '#9A9A9A'], alt: '#666', vlak: '#000', inkt: '#FFF', 'inkt-2': '#E6E6E6', knop: '#FFE14D', 'knop-t': '#000', knop2: '#222', accent: '#FFE14D', zwevend: '#000',
+      hoek: '6px', 'p-hoek': '14px', rand: '2px solid #FFF', rand2: '2px solid #FFF', 'rij-rand': '2px solid #FFF', 'rij-bg': '#000', lijntje: '#FFF', greep: '#FFF', schaduw: 'none', 'kaartknop-rand': '2px solid #FFF', 'wm-gewicht': 800, 'knop-gewicht': 800, 'snel-rand': '2px solid #FFF', 'start-rand': W } },
+  { n: 'Ochtend', i: 'Vroeg licht: zacht perzik en roze, met een donkere route.', seg: 'pil', lijn: 'dik',
+    v: { tekst: "'Karla'", kop: "'Literata'", getal: "'Literata'", 'kaart-bg': '#F7F0EC', akker: '#F5EDE7', bos: '#D5DFC8', heide: '#EED9DF', zand: '#F4E5CD', water: '#CFDCE6', bebouwd: '#EEE6E1', 'weg-rand': '#DACBC2', weg: W, straat: W, pad: '#A07E6E', label: '#7A6158',
+      'route-rand': '#3A2A2E', r: ['#2F8A5C', '#E09B2D', '#C2588E', '#55515A', '#B3A8A6'], alt: '#A8958F', vlak: '#FFFBF8', inkt: '#3A2A2E', 'inkt-2': '#6F5A5E', knop: '#D9776A', 'knop-t': W, knop2: '#F8EDE8', accent: '#D9776A', zwevend: '#FFFBF8',
+      hoek: '12px', 'p-hoek': '22px', rand: '0 solid transparent', rand2: '0 solid transparent', lijntje: '#F0E2DB', greep: '#E3CFC6', schaduw: '0 4px 14px rgb(58 42 46 / .12)', 'kaartknop-rand': '0 solid transparent', 'wm-gewicht': 700, 'seg-gewicht': 600, 'knop-gewicht': 600, 'getal-gewicht': 600, 'hoek-knop': '999px', 'start-rand': W } },
+  { n: 'Zwevende kaart', i: 'Indeling: geen vel maar een losse kaart boven de kaart. Meer kaart zichtbaar.', seg: 'baan', lijn: 'dik',
+    v: { tekst: "'Atkinson'", kop: "'Archivo'", getal: "'Archivo'", 'kaart-bg': '#EFF1EE', akker: '#EDEFEA', bos: '#CBDDBE', heide: '#E4DCE6', zand: '#EEE6D2', water: '#C1D6E3', bebouwd: '#E3E5E1', 'weg-rand': '#C7CBC4', weg: W, straat: W, pad: '#857C6C', label: '#5C625A',
+      'route-rand': '#1B1E1C', r: ['#0B8A5C', '#E19100', '#C4559C', '#4D5A66', '#A3A9AE'], alt: '#7D8580', vlak: W, inkt: '#1B1E1C', 'inkt-2': '#4A504C', knop: '#0B8A5C', 'knop-t': W, knop2: '#EEF0ED', accent: '#0B8A5C', zwevend: W,
+      hoek: '10px', 'p-hoek': '20px', 'p-hoek-o': '20px', 'p-x': '10px', 'p-y': '10px', rand: '1px solid #C6CBC6', rand2: '0 solid transparent', lijntje: '#DCDFDB', greep: '#C3C7C3', schaduw: '0 4px 14px rgb(0 0 0 / .14)', 'p-schaduw': '0 8px 30px rgb(0 0 0 / .2)', 'kaartknop-rand': '0 solid transparent', 'wm-gewicht': 800, 'knop-gewicht': 700, 'start-rand': W } },
+  { n: 'Zoekbalk boven', i: 'Indeling: zoeken bovenin zoals in kaart-apps, een smal paneel onderin.', seg: 'pil', lijn: 'dik', balk: true,
+    v: { tekst: "'Atkinson'", kop: "'Archivo'", getal: "'Archivo'", 'kaart-bg': '#F0F2F0', akker: '#EEF0EC', bos: '#CDE0C2', heide: '#E5DCE7', zand: '#EFE6D0', water: '#BED6E6', bebouwd: '#E4E6E3', 'weg-rand': '#C6CBC6', weg: W, straat: W, pad: '#857C6C', label: '#5C625A',
+      'route-rand': W, r: ['#139160', '#EB9A00', '#CF5AA4', '#55606C', '#A7ADB2'], alt: '#7E8A86', vlak: W, inkt: '#1C211F', 'inkt-2': '#525A56', knop: '#139160', 'knop-t': W, knop2: '#EFF3F1', accent: '#139160', zwevend: W,
+      hoek: '12px', 'p-hoek': '22px', rand: '0 solid transparent', rand2: '0 solid transparent', lijntje: '#E1E6E3', greep: '#C9D0CC', schaduw: '0 3px 12px rgb(0 0 0 / .16)', 'kaartknop-rand': '0 solid transparent', 'p-schaduw': '0 -4px 20px rgb(0 0 0 / .1)', 'wm-gewicht': 800, 'knop-gewicht': 700, 'hoek-knop': '999px', 'hoek-st': '999px', 'start-rand': '#139160' } },
+  { n: 'Zwitsers', i: 'Raster, één schreefloze letter, rood alleen voor de knop.', seg: 'tab', lijn: 'gelijk',
+    v: { tekst: "'Archivo'", kop: "'Archivo'", getal: "'Archivo'", 'kaart-bg': '#F1F1F1', akker: '#EEEEEE', bos: '#D5E0D0', heide: '#E6DFE5', zand: '#EEE8DA', water: '#CCD9E2', bebouwd: '#E5E5E5', 'weg-rand': '#C9C9C9', weg: W, straat: W, pad: '#888', label: '#333',
+      'route-rand': '#111', r: ['#0F8F55', '#EFA300', '#D2509E', '#3F4650', '#ABABAB'], alt: '#999', vlak: W, inkt: '#111', 'inkt-2': '#666', knop: '#E3001B', 'knop-t': W, knop2: '#F3F3F3', accent: '#E3001B', zwevend: W,
+      hoek: '0px', 'p-hoek': '0px', rand: '1px solid #111', rand2: '0 solid transparent', lijntje: '#111', greep: '#BBB', schaduw: 'none', 'kaartknop-rand': '1px solid #111', 'p-rand': '1px solid #111', 'wm-gewicht': 700, 'wm-spatie': '-.04em', 'seg-gewicht': 600, 'knop-gewicht': 600, 'getal-gewicht': 600, 'start-rand': W } },
+  { n: 'Markering', i: 'Zoals de verfstrepen op bomen in het bos: rood, wit en geel op donkergroen.', seg: 'blok', lijn: 'dik',
+    v: { tekst: "'Archivo'", kop: "'Archivo Smal'", getal: "'Archivo Smal'", 'kaart-bg': '#EEF1EA', akker: '#ECEFE6', bos: '#C3D9B5', heide: '#E3D9E3', zand: '#EFE5CC', water: '#BBD4E0', bebouwd: '#E3E5E0', 'weg-rand': '#C2C8BE', weg: W, straat: W, pad: '#5F6B4E', label: '#3A4A34',
+      'route-rand': '#1E2E22', r: ['#1E8C50', '#E9A31B', '#C7529A', '#4C5560', '#A9AFA6'], alt: '#7E897B', vlak: '#22352A', inkt: '#F3F5EF', 'inkt-2': '#BFCDBF', knop: '#D7301F', 'knop-t': W, knop2: '#2C4335', 'rij-bg': '#2C4335', accent: '#F2C94C', zwevend: '#22352A',
+      hoek: '3px', 'p-hoek': '8px', rand: '2px solid #F3F5EF', rand2: '0 solid transparent', lijntje: '#3A5444', greep: '#F3F5EF', schaduw: '0 3px 10px rgb(0 0 0 / .25)', 'kaartknop-rand': '0 solid transparent', 'p-rand': '6px solid #D7301F', 'wm-kast': 'uppercase', 'wm-gewicht': 900, 'wm-maat': '27px', 'knop-gewicht': 900, 'knop-maat': '18px', 'start-rand': W } },
+  { n: 'Graniet', i: 'Koel steengrijs met petrol: zakelijk en modern, een outdoormerk-gevoel.', seg: 'baan', lijn: 'dik',
+    v: { tekst: "'Archivo'", kop: "'Archivo'", getal: "'Archivo Smal'", 'kaart-bg': '#ECEEEF', akker: '#EAECEC', bos: '#C9D8CC', heide: '#E0DAE2', zand: '#ECE5D4', water: '#BDD2DC', bebouwd: '#E2E4E6', 'weg-rand': '#BFC5C9', weg: W, straat: W, pad: '#7D7A70', label: '#4A5560',
+      'route-rand': '#1B2329', r: ['#13896A', '#E39A1E', '#C2539A', '#4B5560', '#A8AFB4'], alt: '#7F8A92', vlak: '#2A3238', inkt: '#EEF2F4', 'inkt-2': '#AEB9C1', knop: '#1C8C8C', 'knop-t': W, knop2: '#36404A', accent: '#3FC1C1', zwevend: '#2A3238',
+      hoek: '6px', 'p-hoek': '14px', rand: '1px solid #4A5560', rand2: '0 solid transparent', lijntje: '#3B464F', greep: '#56626C', schaduw: '0 4px 12px rgb(0 0 0 / .3)', 'kaartknop-rand': '0 solid transparent', 'wm-gewicht': 800, 'knop-gewicht': 700, 'start-rand': W } },
+  { n: 'Diepzee donker', i: 'Donker met koel blauw en mint: rustig in het donker.', seg: 'pil', lijn: 'dik',
+    v: { tekst: "'Karla'", kop: "'Archivo'", getal: "'Archivo Smal'", 'kaart-bg': '#121A22', akker: '#141D26', bos: '#16262A', heide: '#211E2C', zand: '#24231F', water: '#0B1825', bebouwd: '#18222C', 'weg-rand': '#0A1016', weg: '#2E3B48', straat: '#25313D', pad: '#6E8790', label: '#8EA3B4',
+      'route-rand': '#E9F2F7', r: ['#33D1A0', '#FFC35A', '#EC6FB3', '#A9BACB', '#4F6070'], alt: '#5E7080', vlak: '#0F161D', inkt: '#E9F2F7', 'inkt-2': '#9FB2C2', knop: '#5FE3C0', 'knop-t': '#062018', knop2: '#1A2530', accent: '#5FE3C0', zwevend: '#1A2530',
+      hoek: '12px', 'p-hoek': '22px', rand: '1px solid #2A3846', rand2: '0 solid transparent', lijntje: '#22303D', greep: '#34465A', schaduw: '0 4px 14px rgb(0 0 0 / .5)', 'kaartknop-rand': '0 solid transparent', 'wm-gewicht': 800, 'knop-gewicht': 800, 'hoek-knop': '999px', 'start-rand': '#0F161D' } },
+]
+
+const sjabloon = document.getElementById('scherm')
+const vel = document.getElementById('vel')
+O.forEach((o, nr) => {
+  const fig = document.createElement('figure')
+  const tel = document.createElement('div')
+  tel.className = 'tel'
+  for (const [k, w] of Object.entries(o.v)) if (k !== 'r') tel.style.setProperty('--' + k, w)
+  tel.appendChild(sjabloon.content.cloneNode(true))
+  tel.querySelector('.seg').classList.add('seg-' + o.seg)
+  // routelijn: per stuk een rand en een lijn
+  const g = tel.querySelector('.route')
+  const kleur = { onv: o.v.r[0], half: o.v.r[1], open: o.v.r[2], ges: o.v.r[3], onb: o.v.r[4] }
+  const randDik = o.lijn === 'kleur' ? 0 : 3
+  let h = ''
+  for (const [k, d] of STUKKEN) h += `<path class="r-rand" d="${d}" stroke-width="${DIKTE[o.lijn][k] + randDik}"/>`
+  for (const [k, d] of STUKKEN) {
+    const s = STREEP[o.lijn][k]
+    h += `<path class="r" d="${d}" stroke="${kleur[k]}" stroke-width="${DIKTE[o.lijn][k]}" stroke-linecap="${s && s.startsWith('0.1') ? 'round' : 'butt'}" ${s ? `stroke-dasharray="${s}"` : ''}/>`
+    if (k === 'half' && o.lijn === 'dik') h += `<path d="${d}" fill="none" stroke="#fff" stroke-opacity=".85" stroke-width="1.6" stroke-dasharray="0.1 4" stroke-linecap="round"/>`
+  }
+  g.innerHTML = h
+  if (o.balk) {
+    const z = document.createElement('div')
+    z.className = 'zoekbalk'
+    z.textContent = '⌕  Zoek een plek of tik op de kaart'
+    tel.appendChild(z)
+    tel.querySelector('.kk.r').style.display = 'none'
+    tel.querySelector('.rij').style.display = 'none'
+    tel.querySelector('.kop').style.display = 'none'
+  }
+  fig.appendChild(tel)
+  const cap = document.createElement('figcaption')
+  cap.innerHTML = `<b>${nr + 1}</b>${o.n}<small>${o.i}</small>`
+  fig.appendChild(cap)
+  vel.appendChild(fig)
+})
+</script>
+</body>
+</html>
