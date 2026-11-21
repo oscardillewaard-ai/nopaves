@@ -1,6 +1,6 @@
 # Plan: de vooraf bewerkte graaf voor heel Nederland, in één keer
 
-Status: **fase 0 gemeten** (2026-11-20, `fase0.yml` run 4). Alle metingen zijn binnen; de BGT-download
+Status: **fase 0 gemeten** (2026-11-20, `fase0.yml` run 4); **fase 1 loopt** (2026-11-21, zie onder). Alle metingen zijn binnen; de BGT-download
 van Noord-Brabant brak de eerste keer af na 1,77 GB en slaagde bij de herstart. Conclusie: heel NL past ruim, de
 OSM-kant is licht, en de BGT is het zware deel. Hieronder de cijfers, wat dat aan het plan verandert, een
 planning per fase en een kostenraming. Nog niets gebouwd voor de app.
@@ -113,16 +113,12 @@ samen (1 job)           randblokken samenvoegen, index per provincie, de kwalite
 2. **Alle provincies parallel.** 12 bouwjobs tegelijk, gevoed door één knipjob. Blokken op de provinciegrens
    maakt de samenvoegjob één keer (wegstukken samenvoegen op OSM-id). De eerste livegang is **alles of
    niets**; daarna houdt een provincie die mislukt haar vorige versie.
-3. **BGT: één download voor heel NL in plaats van 12 rechthoeken** (gewijzigd na fase 0). De rechthoeken
-   overlappen te veel en zijn samen al groter dan heel NL. Kandidaten, te meten in fase 1:
-   (a) `full/custom` zonder geofilter, 5 objecttypes (één bestand, kleiner dan 28 GB);
-   (b) het kant-en-klare bestand van 28,0 GB, in stukken opgehaald (PDOK ondersteunt `Range`: nagekeken,
-   antwoord 206) zodat het hervat kan worden en meerdere stukken tegelijk kunnen lopen;
-   (c) `full/custom` per provincie met de echte provinciegrens in plaats van de bbox.
-   Bij 1,1 MB/s duurt 20–28 GB in één stroom 5–7 uur: te lang voor één job. Daarom hervatbaar en in stukken.
-   Bij het inlezen gaat de historie (`eindRegistratie`, ~60%) eruit. Bewaard wordt alleen het afgeleide
-   bestand (ondergrondvlakken per blok, zonder historie), als release-bijlage. Wekelijks de delta toepassen
-   (53 MB); elke paar maanden opnieuw volledig.
+3. **BGT: het kant-en-klare NL-bestand, alleen de vijf objecttypes, in parallelle stukken** (gekozen in
+   fase 1, zie hieronder). Per objecttype haalt de bouw alleen zijn eigen bytes uit de zip van 28 GB (19,7 GB
+   voor de vijf typen), in stukken die tegelijk lopen en op volgorde worden uitgepakt en gelezen. Een
+   mislukt stuk wordt opnieuw gehaald. De historie gaat er bij het lezen uit. Bewaard wordt alleen het
+   afgeleide bestand (NBV1, zie fase 1), als release-bijlage. Wekelijks de delta toepassen (53 MB, beslissing
+   2), of, als dat eenvoudiger blijkt, wekelijks opnieuw volledig (~30 min): te beslissen na fase 1.
 4. **Compacter formaat:** na de livegang (zie boven), voor minder dataverkeer per planning.
 5. **App.** Een index per provincie in plaats van één manifest; stations per blok; de app ziet zelf of een
    plek binnen de dekking valt en valt anders terug op de kaarttegels (buiten NL, of als een blok ontbreekt).
@@ -130,6 +126,53 @@ samen (1 job)           randblokken samenvoegen, index per provincie, de kwalite
    per provincie ≥ 3 A-naar-B-paren, 2 rondjes en 1 station, deels achtergehouden; Playwright groen;
    Nopave-router op die paren minstens zo goed als BRouter. Alle 12 groen = live.
 7. **Uitrol.** Achter `?graaf=nl` tot de poort voor alle provincies groen is; dan in één keer de standaard.
+
+## Fase 1: de BGT-bron (loopt, 2026-11-21)
+
+Code in `tools/bgt/`, workflow `.github/workflows/bgt.yml`, unit-tests in `tests/test_bgt.mjs`.
+
+**Gekozen route: het kant-en-klare NL-bestand, alleen de vijf typen, in parallelle stukken.** Gemeten:
+
+- **PDOK begrenst per verbinding, niet per afnemer.** Eén stroom 1,36 MB/s; 4 stromen elk 1,25–1,37 MB/s
+  (samen 5,4 MB/s); 8 stromen samen 10,6 MB/s; 16 stromen samen 19,3 MB/s (enkele zakten naar 0,7 MB/s).
+- **Alleen de nodige bytes:** de inhoudsopgave van de zip (ZIP64) is via `Range` te lezen. De vijf typen
+  zijn 19,7 GB van de 28,0 GB (onbegroeid 6,36, wegdeel 5,17, begroeid 4,73, waterdeel 1,91, ondersteunend
+  wegdeel 1,57 GB); uitgepakt 141 GB XML.
+- **Eén versie vastzetten:** het cache-adres achter de 307 van PDOK hoort bij één nachtversie (20-11:
+  `4154950d…`, 21-11: `dd32cdcd…`). Alle processen gebruiken hetzelfde adres; verdwijnt het, dan faalt de
+  job in plaats van twee versies te mengen.
+- **Doorvoer, heel NL `ondersteunendwegdeel`** (in de sessie, 8 stromen): 148 s, 10,6 MB/s, 13 GB XML,
+  117 CPU-seconden, 482 MB geheugen; 6,09 mln objecten, waarvan 4,03 mln historie (66%); 2,07 mln actueel,
+  gemiddeld 29 punten per vlak. Geraamd voor de vijf typen: ~30 min ophalen, ~21 CPU-minuten lezen.
+
+Waarom niet (a) of (c): (c) houdt de overlap van 5 km-vakken en 12 wachtrijen; (a) moet eerst bij PDOK
+worden klaargezet en is één stroom. Het kant-en-klare bestand staat er al en is in stukken te halen.
+
+**Gelijkheid met de vectortegels** (dezelfde code als `bouw.mjs`, `tools/bgt/vergelijk_*.mjs`):
+
+| Toets | Gebied | Uitkomst |
+|---|---|---|
+| Objecten per tegel | Delft, 225 tegels | 62.265 in beide, 1 alleen in de tegel (1,04 m buiten de tegel, de rand die vectortegels meenemen), 0 alleen in de download, 0 veldverschillen |
+| Objecten per tegel | Drenthe, 144 tegels | 2.559 in beide, 0 / 0, 0 veldverschillen |
+| Oordeel per wegstuk | Delft, 3 × 3 km | 99,95% van 382 km (22.277 stukken); verschil 0,2 km, op de rand van twee verhardingen |
+| Oordeel per wegstuk | kust (Meijendel) | 100% van 28 km; strand 4,6 km en natuur 13 km gelijk |
+| Zelfde, via het afgeleide bestand | Delft en kust | 99,95% en 100%, vlaggen gelijk |
+| Controle meetopzet | beide | tegels nu tegen de opgeslagen graaf: 100% |
+
+De oppervlakte per vlak wijkt mediaan 0,46% af (p99 4,9%): de vectortegels zijn op 5 cm afgerond en dunne
+stroken voelen dat. De geometrie zelf ligt in beide richtingen binnen 5 cm (nagekeken op een voorbeeld).
+
+**Het afgeleide bestand (NBV1):** per vak van 32 × 32 tegels (6,88 km) en per objecttype één gzip-bestand;
+per vlak een 64-bits sleutel van de `lokaal_id` (voor delta's), de velden als index in een tabel, en de
+coördinaten op centimeters met delta-codering. Proefvak Delft (~25 km²): 5,1 MB, tegen 48,7 MB in de
+PDOK-zip. Geraamd voor heel NL ~1,5–2,5 GB (~26 mln vlakken); de NL-run meet het.
+
+**Gevonden en opgelost:** een object ging verloren als de grens tussen twee tekststukken midden in het
+beginlabel viel (gevonden door een unit-test; verklaarde 1 van de 2 "alleen in de tegel" bij Delft).
+
+**Nog open in fase 1:** de NL-run (`bgt.yml`, run 1 loopt): tijd, grootte en de oordeeltoets op vier vakken
+(Delft, kust, Zoetermeer, Westland). Daarna: delta's toepassen of wekelijks volledig (beslissen), en de bouw
+laten lezen uit het afgeleide bestand (fase 2).
 
 ## Planning per fase
 
@@ -164,8 +207,10 @@ server bij. De echte kosten zijn tijd en limieten:
 
 ## Risico's en open vragen
 
-- **BGT-download van uren** (gemeten: 0,8–1,6 MB/s per download, één afgebroken na 1,77 GB). Hervatbaar
-  ophalen met `Range` is nodig; of meerdere stukken tegelijk sneller gaan, meet fase 1.
+- **BGT-download van uren:** grotendeels opgelost in fase 1. PDOK begrenst per verbinding; met 8–16
+  parallelle stukken is 19,7 GB in ~17–31 min binnen, en een mislukt stuk wordt opnieuw gehaald. Blijft:
+  hoe PDOK 15 stromen tegelijk vindt (fair use), en of het cache-adres van een nachtversie lang genoeg blijft
+  bestaan.
 - **AHN voor heel NL** is nog niet gemeten. In de regio Delft zat AHN in de cache van 1,47 GB; voor heel NL
   past dat niet in de Actions-cache (10 GB). Mogelijke oplossing: de hoogtes uit de vorige graafversie
   hergebruiken voor ongewijzigde wegstukken.
