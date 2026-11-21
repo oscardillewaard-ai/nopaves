@@ -20,9 +20,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -31,6 +31,9 @@ jobs:
 
       - name: Unit-tests
         run: npm run test:unit
+
+      - name: Graaf samenvoegen (provincies -> heel NL, op de graaf van de regio Delft)
+        run: npm run test:graaf
 
       - name: Lint
         run: npm run lint
@@ -63,7 +66,7 @@ jobs:
 
       - name: Schermafbeeldingen bewaren
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: schermafbeeldingen
           path: test-uitvoer/

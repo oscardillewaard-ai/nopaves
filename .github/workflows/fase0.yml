@@ -1,0 +1,232 @@
+# Fase 0 van docs/PLAN-heel-nederland.md: proefmetingen voor de graaf van heel Nederland, alle
+# provincies tegelijk. Niets gaat live: de uitkomst is alleen een samenvatting (en artifacts, 7 dagen).
+#
+#  knip       het NL-extract één keer ophalen en met osmium in 12 provincies knippen (porties van 3)
+#  osm (×12)  per provincie de graaf bouwen zoals bouw.mjs, zonder BGT en AHN: knopen, wegstukken, km
+#             (kalibratieprovincies: ook de echte bouw met BGT-tegels en AHN, voor grootte en bouwtijd)
+#  bgt (×12)  per provincie BGT full/custom bij PDOK (5 objecttypes): wachttijd, grootte, downloadtijd
+#  delta      BGT delta/custom voor heel NL, de laatste 7 dagen
+#  samen      alles in één tabel ($GITHUB_STEP_SUMMARY en het artifact fase0-samenvatting)
+#
+# Start: handmatig (workflow_dispatch, vanaf main) of door een push van dit bestand of tools/fase0/ op
+# een andere branch dan main. Tijden en geheugen: GNU time (wandklok en maximaal RSS).
+name: Fase 0 heel Nederland
+
+on:
+  workflow_dispatch:
+    inputs:
+      kalibratie:
+        description: 'Provincies met de echte bouw (BGT-tegels + AHN), met spaties; "alle" = alle 12 (zware belasting voor PDOK)'
+        default: 'utrecht drenthe'
+  push:
+    branches-ignore: [main]
+    paths:
+      - .github/workflows/fase0.yml
+      - tools/fase0/**
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fase0
+  cancel-in-progress: false
+
+env:
+  KALIBRATIE: ${{ inputs.kalibratie || 'utrecht drenthe' }}
+
+jobs:
+  knip:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: sudo apt-get update -q && sudo apt-get install -yq osmium-tool time
+
+      # Grenzen van PDOK (Bestuurlijke Gebieden): de .poly-bestanden van Geofabrik gaven in run 1 herhaald 404.
+      - name: NL-extract (Geofabrik, anders openstreetmap.fr) en provinciegrenzen (PDOK) ophalen
+        run: |
+          mkdir -p ~/osm/poly uit
+          T0=$(date +%s)
+          # Geofabrik eerst; in run 2 weigerde Geofabrik 6 minuten lang elke verbinding, dus daarna
+          # openstreetmap.fr (zelfde OSM-data, andere aanbieder). Welke bron het werd, staat in bron.txt.
+          OK=""
+          for URL in https://download.geofabrik.de/europe/netherlands-latest.osm.pbf \
+                     https://download.openstreetmap.fr/extracts/europe/netherlands-latest.osm.pbf; do
+            if curl -fsSL --retry 3 --retry-delay 30 --retry-all-errors --max-redirs 10 -o ~/osm/nl.osm.pbf "$URL"; then OK=$URL; break; fi
+            echo "::warning::$URL niet bereikbaar, volgende bron"
+          done
+          [ -n "$OK" ] || { echo "::error::Geen OSM-extract te halen (Geofabrik en openstreetmap.fr)"; exit 1; }
+          echo "$OK" > uit/bron.txt
+          echo $(( $(date +%s) - T0 )) > uit/download-seconden.txt
+          node tools/fase0/grenzen.mjs ~/osm/poly
+          for p in $(node -p "require('./tools/fase0/provincies.json').provincies.map(p=>p.slug).join(' ')"); do
+            node tools/fase0/poly.mjs ~/osm/poly/$p.poly uit/grens/$p
+          done
+          stat -c %s ~/osm/nl.osm.pbf > uit/nl-bytes.txt
+          ls -l ~/osm
+
+      # Run 3: osmium met alle 12 extracts in één run liet de runner na 30 s stoppen ("shutdown signal",
+      # vermoedelijk geheugen vol). Daarom in porties van 3 provincies, met het vrije geheugen in de log.
+      - name: Knippen in 12 provincies (osmium extract, 4 porties van 3)
+        run: |
+          mkdir -p ~/osm/prov
+          ( while true; do echo "geheugen $(date +%T) $(free -m | awk '/Mem:/ {print "gebruikt " $3 " MB, beschikbaar " $7 " MB"}')"; sleep 10; done ) &
+          LOG=$!
+          SLUGS=($(node -p "require('./tools/fase0/provincies.json').provincies.map(p=>p.slug).join(' ')"))
+          for i in 0 3 6 9; do
+            DEEL="${SLUGS[*]:$i:3}"
+            DEEL=$DEEL node -e "
+              const c = { directory: process.env.HOME + '/osm/prov', extracts: process.env.DEEL.split(' ').map(s => ({ output: s + '.osm.pbf', polygon: { file_name: process.env.HOME + '/osm/poly/' + s + '.poly', file_type: 'poly' } })) }
+              require('fs').writeFileSync(process.env.HOME + '/osm/knip.json', JSON.stringify(c))"
+            echo "== portie $i: $DEEL"
+            /usr/bin/time -v -o uit/tijd-knip-$i.txt osmium extract --overwrite --config ~/osm/knip.json --strategy complete_ways ~/osm/nl.osm.pbf
+            grep -E "Elapsed|Maximum resident" uit/tijd-knip-$i.txt
+          done
+          kill $LOG
+          ls -l ~/osm/prov | tee uit/provincies-bytes.txt
+          nproc > uit/nproc.txt; free -m > uit/geheugen.txt
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: provincies-pbf
+          path: ~/osm/prov/
+          retention-days: 2
+          compression-level: 0
+      - uses: actions/upload-artifact@v6
+        with:
+          name: fase0-knip
+          path: uit/
+          retention-days: 7
+
+  osm:
+    needs: knip
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    strategy:
+      fail-fast: false
+      matrix:
+        provincie: [drenthe, flevoland, friesland, gelderland, groningen, limburg, noord-brabant, noord-holland, overijssel, utrecht, zeeland, zuid-holland]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: pip install osmium && sudo apt-get install -yq time
+      - uses: actions/download-artifact@v7
+        with:
+          name: provincies-pbf
+          path: ~/osm/prov
+      - uses: actions/download-artifact@v7
+        with:
+          name: fase0-knip
+          path: knip
+
+      - name: Elementen uit het extract (bron_pbf.py)
+        run: |
+          P=${{ matrix.provincie }}
+          mkdir -p uit
+          /usr/bin/time -v -o uit/tijd-bron.txt python3 -I tools/graaf/bron_pbf.py ~/osm/prov/$P.osm.pbf ~/osm/$P.ndjson $(cat knip/grens/$P/bbox.txt)
+          stat -c %s ~/osm/$P.ndjson > uit/ndjson-bytes.txt
+
+      - name: Graaf zonder BGT en AHN (osm_stats.mjs)
+        run: |
+          P=${{ matrix.provincie }}
+          /usr/bin/time -v -o uit/tijd-graaf.txt node --max-old-space-size=12000 tools/fase0/osm_stats.mjs ~/osm/$P.ndjson knip/grens/$P/regio.json uit/osm.json
+
+      - name: Echte bouw met BGT-tegels en AHN (alleen kalibratieprovincies)
+        if: contains(env.KALIBRATIE, matrix.provincie) || env.KALIBRATIE == 'alle'
+        run: |
+          P=${{ matrix.provincie }}
+          /usr/bin/time -v -o uit/tijd-bouw.txt node --max-old-space-size=13000 tools/graaf/bouw.mjs --bron ~/osm/$P.ndjson --regio knip/grens/$P/regio.json --versie fase0-$P --uit ~/graaf
+          cp ~/graaf/fase0-$P/manifest.json uit/manifest.json
+          du -sb ~/graaf/fase0-$P | cut -f1 > uit/graaf-bytes.txt
+          du -sb ~/.cache/nopaves-graaf/* > uit/cache-bytes.txt || true
+
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: fase0-osm-${{ matrix.provincie }}
+          path: uit/
+          retention-days: 7
+
+  bgt:
+    needs: knip
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        provincie: [drenthe, flevoland, friesland, gelderland, groningen, limburg, noord-brabant, noord-holland, overijssel, utrecht, zeeland, zuid-holland]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v7
+        with:
+          name: fase0-knip
+          path: knip
+
+      - name: BGT full/custom voor de bbox van de provincie
+        run: |
+          P=${{ matrix.provincie }}
+          mkdir -p uit
+          ZIP=""
+          if [ "$KALIBRATIE" = alle ] || echo " $KALIBRATIE " | grep -q " $P "; then ZIP=$HOME/bgt.zip; fi
+          node tools/fase0/bgt.mjs full knip/grens/$P/rd.wkt uit/bgt.json $ZIP
+          if [ -n "$ZIP" ]; then
+            unzip -l $ZIP > uit/bgt-inhoud.txt
+            # objecten en historische versies (eindRegistratie) per objecttype, zonder uitpakken op schijf
+            for f in $(unzip -Z1 $ZIP); do
+              echo "$f $(unzip -p $ZIP $f | grep -c '<gml:featureMember>') $(unzip -p $ZIP $f | grep -c '<imgeo-s:eindRegistratie>')" >> uit/bgt-objecten.txt
+            done
+          fi
+
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: fase0-bgt-${{ matrix.provincie }}
+          path: uit/
+          retention-days: 7
+
+  delta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: mkdir -p uit && node tools/fase0/bgt.mjs delta 7 uit/delta.json
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: fase0-delta
+          path: uit/
+          retention-days: 7
+
+  samen:
+    needs: [knip, osm, bgt, delta]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: fase0-*
+          path: res
+      - run: node tools/fase0/samenvatting.mjs res samenvatting.md samenvatting.json && cat samenvatting.md >> $GITHUB_STEP_SUMMARY && cat samenvatting.md
+      - uses: actions/upload-artifact@v6
+        with:
+          name: fase0-samenvatting
+          path: samenvatting.*
+          retention-days: 30

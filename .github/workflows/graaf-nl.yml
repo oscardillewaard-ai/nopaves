@@ -1,0 +1,262 @@
+# Fase 2 van docs/PLAN-heel-nederland.md: de vooraf bewerkte graaf voor alle 12 provincies tegelijk bouwen,
+# met het afgeleide BGT-bestand (fase 1, uit de laatste geslaagde run van bgt.yml) en AHN in blokken van 5 km.
+# Niets gaat live: de uitkomst is per provincie een artifact met de blokken en een samenvatting. Het
+# samenvoegen tot één graaf voor heel NL (randblokken, index, release) is fase 3.
+name: Graaf heel NL
+
+on:
+  workflow_dispatch:
+    inputs:
+      bgt_run:
+        description: 'Run-id van bgt.yml met het artifact bgt-afgeleid (leeg = de laatste geslaagde op deze branch)'
+        default: ''
+  # starten door .github/graaf-nl.start te wijzigen (zo kan deze workflow gepusht worden zonder dat hij
+  # meteen draait, bv. terwijl bgt.yml nog bezig is)
+  push:
+    branches-ignore: [main]
+    paths:
+      - .github/graaf-nl.start
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: graaf-nl
+  cancel-in-progress: false
+
+jobs:
+  knip:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    outputs:
+      bgt_run: ${{ steps.bgt.outputs.run }}
+      versie: ${{ steps.versie.outputs.versie }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: sudo apt-get update -q && sudo apt-get install -yq osmium-tool time
+
+      - name: Versie (één keer, voor alle provincies)
+        id: versie
+        run: echo "versie=nl$(date -u +%Y%m%d)-r${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+
+      - name: Welke BGT-run?
+        id: bgt
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RUN="${{ inputs.bgt_run }}"
+          if [ -z "$RUN" ]; then
+            RUN=$(gh run list -R "$GITHUB_REPOSITORY" --workflow bgt.yml --branch "$GITHUB_REF_NAME" --status success --limit 1 --json databaseId --jq '.[0].databaseId')
+          fi
+          [ -n "$RUN" ] || { echo "::error::Geen geslaagde run van bgt.yml gevonden"; exit 1; }
+          echo "BGT uit run $RUN"
+          echo "run=$RUN" >> "$GITHUB_OUTPUT"
+
+      - name: OSM-extract (Geofabrik, anders openstreetmap.fr) en provinciegrenzen (PDOK)
+        run: |
+          mkdir -p ~/osm/poly uit
+          OK=""
+          for URL in https://download.geofabrik.de/europe/netherlands-latest.osm.pbf \
+                     https://download.openstreetmap.fr/extracts/europe/netherlands-latest.osm.pbf; do
+            if curl -fsSL --retry 3 --retry-delay 30 --retry-all-errors --max-redirs 10 -o ~/osm/nl.osm.pbf "$URL"; then OK=$URL; break; fi
+            echo "::warning::$URL niet bereikbaar, volgende bron"
+          done
+          [ -n "$OK" ] || { echo "::error::Geen OSM-extract te halen"; exit 1; }
+          echo "$OK" > uit/bron.txt
+          node tools/fase0/grenzen.mjs ~/osm/poly
+          cp -r ~/osm/poly uit/poly
+          for p in $(node -p "require('./tools/fase0/provincies.json').provincies.map(p=>p.slug).join(' ')"); do
+            node tools/fase0/poly.mjs ~/osm/poly/$p.poly uit/grens/$p
+          done
+
+      - name: Knippen in 12 provincies (4 porties van 3)
+        run: |
+          mkdir -p ~/osm/prov
+          SLUGS=($(node -p "require('./tools/fase0/provincies.json').provincies.map(p=>p.slug).join(' ')"))
+          for i in 0 3 6 9; do
+            DEEL="${SLUGS[*]:$i:3}"
+            DEEL=$DEEL node -e "
+              const c = { directory: process.env.HOME + '/osm/prov', extracts: process.env.DEEL.split(' ').map(s => ({ output: s + '.osm.pbf', polygon: { file_name: process.env.HOME + '/osm/poly/' + s + '.poly', file_type: 'poly' } })) }
+              require('fs').writeFileSync(process.env.HOME + '/osm/knip.json', JSON.stringify(c))"
+            osmium extract --overwrite --config ~/osm/knip.json --strategy complete_ways ~/osm/nl.osm.pbf
+          done
+          ls -l ~/osm/prov
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: provincies-pbf
+          path: ~/osm/prov/
+          retention-days: 2
+          compression-level: 0
+      - uses: actions/upload-artifact@v6
+        with:
+          name: knip
+          path: uit/
+          retention-days: 7
+
+  bouw:
+    needs: knip
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    strategy:
+      fail-fast: false
+      matrix:
+        provincie: [drenthe, flevoland, friesland, gelderland, groningen, limburg, noord-brabant, noord-holland, overijssel, utrecht, zeeland, zuid-holland]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: pip install osmium && sudo apt-get install -yq time
+      - uses: actions/download-artifact@v7
+        with:
+          name: provincies-pbf
+          path: ~/osm/prov
+      - uses: actions/download-artifact@v7
+        with:
+          name: knip
+          path: knip
+      - name: Afgeleid BGT-bestand uit run ${{ needs.knip.outputs.bgt_run }}
+        uses: actions/download-artifact@v7
+        with:
+          name: bgt-afgeleid
+          path: ~/bgt
+          run-id: ${{ needs.knip.outputs.bgt_run }}
+          github-token: ${{ github.token }}
+
+      - name: Elementen uit het extract
+        run: |
+          P=${{ matrix.provincie }}
+          mkdir -p uit
+          python3 -I tools/graaf/bron_pbf.py ~/osm/prov/$P.osm.pbf ~/osm/$P.ndjson $(cat knip/grens/$P/bbox.txt)
+
+      - name: Graaf bouwen (BGT uit het afgeleide bestand, AHN in blokken van 5 km)
+        run: |
+          P=${{ matrix.provincie }}
+          VERSIE=${{ needs.knip.outputs.versie }}
+          ( while true; do echo "geheugen $(date +%T) $(free -m | awk '/Mem:/ {print "gebruikt " $3 " MB, beschikbaar " $7 " MB"}')"; sleep 120; done ) &
+          LOG=$!
+          /usr/bin/time -v -o uit/tijd-bouw.txt node --max-old-space-size=13000 tools/graaf/bouw.mjs --bron ~/osm/$P.ndjson --regio knip/grens/$P/regio.json \
+            --bgt ~/bgt --ahn-blok 5000 --versie $VERSIE --uit ~/graaf/$P
+          kill $LOG
+          grep -E "Elapsed|Maximum resident" uit/tijd-bouw.txt
+          cp ~/graaf/$P/$VERSIE/manifest.json uit/manifest.json
+          node -p "const m=require('./uit/manifest.json'); JSON.stringify({ provincie: '$P', ...m.totaal, bouwtijdSeconden: m.bouwtijdSeconden })" | tee uit/totaal.json
+
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: uitkomst-${{ matrix.provincie }}
+          path: uit/
+          retention-days: 30
+      - uses: actions/upload-artifact@v6
+        with:
+          name: graaf-${{ matrix.provincie }}
+          path: ~/graaf/${{ matrix.provincie }}/
+          retention-days: 7
+          compression-level: 0
+
+  samen:
+    needs: [knip, bouw]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: uitkomst-*
+          path: res
+      - name: Samenvatting
+        run: |
+          node --input-type=module -e "
+            import fs from 'node:fs'
+            const tijd = (t) => { const w = t.match(/Elapsed \(wall clock\) time.*: ([\d:.]+)/)?.[1]; const rss = Number(t.match(/Maximum resident set size \(kbytes\): (\d+)/)?.[1]); return { min: w ? (w.split(':').reduce((a, v) => a * 60 + Number(v), 0) / 60).toFixed(1) : '–', rssMB: rss ? Math.round(rss / 1024) : '–' } }
+            const r = ['# Graaf heel NL (fase 2)', '', 'BGT uit bgt.yml-run ${{ needs.knip.outputs.bgt_run }}.', '', '| Provincie | blokken | wegstukken | gz MB | bouw min | geheugen MB | fasen (s) |', '|---|---:|---:|---:|---:|---:|---|']
+            let som = { blokken: 0, ws: 0, gz: 0 }
+            for (const d of fs.readdirSync('res').sort()) {
+              const p = d.replace('uitkomst-', '')
+              let t = null, m = null
+              try { t = JSON.parse(fs.readFileSync('res/' + d + '/totaal.json', 'utf8')) } catch {}
+              try { m = tijd(fs.readFileSync('res/' + d + '/tijd-bouw.txt', 'utf8')) } catch {}
+              if (!t) { r.push('| ' + p + ' | mislukt | | | | | |'); continue }
+              som.blokken += t.blokken; som.ws += t.wegstukken; som.gz += t.gz
+              r.push('| ' + p + ' | ' + t.blokken + ' | ' + t.wegstukken.toLocaleString('nl-NL') + ' | ' + (t.gz / 1e6).toFixed(1) + ' | ' + (m?.min ?? '–') + ' | ' + (m?.rssMB ?? '–') + ' | ' + JSON.stringify(t.bouwtijdSeconden) + ' |')
+            }
+            r.push('| **Totaal** | ' + som.blokken + ' | ' + som.ws.toLocaleString('nl-NL') + ' | ' + (som.gz / 1e6).toFixed(1) + ' | | | |')
+            fs.writeFileSync('samenvatting.md', r.join('\n'))"
+          cat samenvatting.md >> $GITHUB_STEP_SUMMARY
+          cat samenvatting.md
+      - uses: actions/upload-artifact@v6
+        with:
+          name: samenvatting
+          path: samenvatting.md
+          retention-days: 30
+
+  # Fase 3: samenvoegen tot één graaf voor heel NL en als release-bijlage uitleveren (proefversie). Niets gaat
+  # live: de deploy zet hem pas in de site als public/graaf-nl/goedgekeurd.txt deze versie noemt.
+  samenvoegen:
+    needs: [knip, bouw]
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: graaf-*
+          path: ~/prov
+      - uses: actions/download-artifact@v7
+        with:
+          name: knip
+          path: knip
+      - name: Samenvoegen
+        run: |
+          VERSIE=${{ needs.knip.outputs.versie }}
+          /usr/bin/time -v -o tijd-samen.txt node --max-old-space-size=13000 tools/graaf/samenvoeg.mjs --versie $VERSIE --uit ~/nl --grenzen knip/poly ~/prov/graaf-* | tee samen.json
+          grep -E "Elapsed|Maximum resident" tijd-samen.txt
+          du -sh ~/nl
+      - name: Release graaf-${{ needs.knip.outputs.versie }} (proefversie)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSIE=${{ needs.knip.outputs.versie }}
+          tar -cf graaf-$VERSIE.tar -C ~/nl .
+          ls -l graaf-$VERSIE.tar
+          gh release create "graaf-$VERSIE" graaf-$VERSIE.tar --prerelease --target "$GITHUB_SHA" \
+            --title "Graaf heel NL $VERSIE (proef, niet live)" \
+            --notes "Vooraf bewerkte graaf voor heel Nederland, gebouwd door workflow Graaf heel NL (run ${GITHUB_RUN_ID}). Proefversie: gaat pas live als public/graaf-nl/goedgekeurd.txt deze versie noemt. $(cat samen.json)"
+      - uses: actions/upload-artifact@v6
+        with:
+          name: samenvoegen
+          path: |
+            samen.json
+            tijd-samen.txt
+          retention-days: 30
+
+  # Wat de deploy straks doet, hier alvast getest: de bijlage ophalen, uitpakken en elk blok controleren.
+  ophalen:
+    needs: [knip, samenvoegen]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Bijlage ophalen zoals deploy.yml
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: tools/graaf/haal_release.sh public/graaf-nl ${{ needs.knip.outputs.versie }}

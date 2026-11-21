@@ -1,0 +1,18 @@
+{
+  "omschrijving": "De 12 provincies voor fase 0 (docs/PLAN-heel-nederland.md). slug = naam bij Geofabrik (download.geofabrik.de/europe/netherlands/<slug>.poly). landKm2 = landoppervlak, afgerond (CBS, uit het hoofd overgenomen: controleren voor gebruik in een raming).",
+  "kalibratie": ["utrecht", "drenthe"],
+  "provincies": [
+    { "slug": "drenthe", "naam": "Drenthe", "landKm2": 2633 },
+    { "slug": "flevoland", "naam": "Flevoland", "landKm2": 1412 },
+    { "slug": "friesland", "naam": "Fryslân", "landKm2": 3341 },
+    { "slug": "gelderland", "naam": "Gelderland", "landKm2": 4964 },
+    { "slug": "groningen", "naam": "Groningen", "landKm2": 2325 },
+    { "slug": "limburg", "naam": "Limburg", "landKm2": 2148 },
+    { "slug": "noord-brabant", "naam": "Noord-Brabant", "landKm2": 4905 },
+    { "slug": "noord-holland", "naam": "Noord-Holland", "landKm2": 2662 },
+    { "slug": "overijssel", "naam": "Overijssel", "landKm2": 3317 },
+    { "slug": "utrecht", "naam": "Utrecht", "landKm2": 1485 },
+    { "slug": "zeeland", "naam": "Zeeland", "landKm2": 1781 },
+    { "slug": "zuid-holland", "naam": "Zuid-Holland", "landKm2": 2700 }
+  ]
+}
