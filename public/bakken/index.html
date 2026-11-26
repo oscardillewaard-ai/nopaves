@@ -30,6 +30,9 @@
   #kaart { flex: 1; }
   .knoppen { display: flex; gap: 6px; margin-top: 8px; }
   .knoppen button { flex: 1; padding: 0 8px; }
+  #pijl svg { display: block; transition: transform .3s linear; }
+  #gpsfout { margin: 0; padding: 8px 10px; background: #fff; border-bottom: 1.5px solid #b91c1c; color: #7f1d1d; }
+  #gpsfout[hidden] { display: none; }
   .leaflet-tooltip.aantal { background: none; border: 0; box-shadow: none; color: #fff; font-weight: 700; padding: 0; }
   .leaflet-tooltip.aantal::before { display: none; }
 </style>
@@ -39,6 +42,7 @@
   <button id="b-adressen">Adressen</button>
   <button id="b-verberg">Verberg geleegd</button>
   <button id="b-fout" class="mislukt" hidden></button>
+  <button id="b-gps" aria-pressed="false">GPS aan</button>
   <button id="b-installeer" hidden>Installeer</button>
   <span id="teller"></span>
 </header>
@@ -51,6 +55,7 @@
   <p id="melding" role="status"></p>
   <div id="fouten" role="alert" hidden></div>
 </div>
+<p id="gpsfout" role="alert" hidden></p>
 <div id="kaart"></div>
 
 <script src="../vendor/leaflet.js"></script>
@@ -197,6 +202,76 @@ $('b-verberg').onclick = () => {
   $('b-verberg').textContent = verberg ? 'Toon geleegd' : 'Verberg geleegd';
   teken();
 };
+
+// GPS: pijl op je plek, draait mee met je rijrichting, kaart volgt je
+let gpsId = null, volgen = false, vorige = null, kop = null, slot = null;
+let gpsMark = null, gpsKring = null;
+const rad = g => g * Math.PI / 180;
+function afstand(a, b) {   // meters
+  const dl = rad(b[0] - a[0]), dg = rad(b[1] - a[1]);
+  const h = Math.sin(dl / 2) ** 2 + Math.cos(rad(a[0])) * Math.cos(rad(b[0])) * Math.sin(dg / 2) ** 2;
+  return 12742000 * Math.asin(Math.sqrt(h));
+}
+function peiling(a, b) {   // graden, 0 = noord
+  const dg = rad(b[1] - a[1]);
+  const y = Math.sin(dg) * Math.cos(rad(b[0]));
+  const x = Math.cos(rad(a[0])) * Math.sin(rad(b[0])) - Math.sin(rad(a[0])) * Math.cos(rad(b[0])) * Math.cos(dg);
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+}
+function gpsKnop() {
+  const b = $('b-gps');
+  const aan = gpsId !== null;
+  b.setAttribute('aria-pressed', String(aan));
+  b.classList.toggle('aan', aan && volgen);
+  b.textContent = !aan ? 'GPS aan' : volgen ? 'GPS uit' : 'Volg mij';
+}
+function gpsFout(tekst) { $('gpsfout').hidden = !tekst; $('gpsfout').textContent = tekst || ''; }
+function gpsStop() {
+  if (gpsId !== null) navigator.geolocation.clearWatch(gpsId);
+  gpsId = null; volgen = false; vorige = null; kop = null;
+  if (gpsMark) { gpsMark.remove(); gpsKring.remove(); gpsMark = gpsKring = null; }
+  if (slot) { slot.release().catch(() => {}); slot = null; }
+  gpsKnop();
+}
+function gpsPositie(e) {
+  const c = e.coords, ll = [c.latitude, c.longitude];
+  gpsFout('');
+  // rijrichting: die van het toestel als je beweegt, anders de richting van de laatste verplaatsing
+  if (c.heading != null && !isNaN(c.heading) && (c.speed == null || c.speed > 1)) kop = c.heading;
+  else if (vorige && afstand(vorige, ll) > 8) kop = peiling(vorige, ll);
+  if (!vorige || afstand(vorige, ll) > 8) vorige = ll;
+  if (!gpsMark) {
+    gpsKring = L.circle(ll, { radius: c.accuracy, weight: 1, color: '#111', fillOpacity: 0.08, interactive: false }).addTo(kaart);
+    gpsMark = L.marker(ll, {
+      interactive: false, keyboard: false, zIndexOffset: 1000,
+      icon: L.divIcon({ className: '', iconSize: [40, 40], iconAnchor: [20, 20],
+        html: '<div id="pijl"><svg viewBox="0 0 40 40" width="40" height="40" aria-hidden="true"><path d="M20 3 L33 35 L20 28 L7 35 Z" fill="#111" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg></div>' })
+    }).addTo(kaart);
+    kaart.setView(ll, Math.max(kaart.getZoom(), 16));
+  } else {
+    gpsMark.setLatLng(ll); gpsKring.setLatLng(ll); gpsKring.setRadius(c.accuracy);
+    if (volgen) kaart.panTo(ll);
+  }
+  const svg = gpsMark.getElement().querySelector('svg');
+  if (svg && kop != null) svg.style.transform = 'rotate(' + Math.round(kop) + 'deg)';
+}
+async function scherm() {   // scherm aan houden onderweg
+  try { slot = await navigator.wakeLock.request('screen'); } catch (e) {}
+}
+$('b-gps').onclick = () => {
+  if (gpsId !== null && !volgen) { volgen = true; if (gpsMark) kaart.panTo(gpsMark.getLatLng()); gpsKnop(); return; }
+  if (gpsId !== null) { gpsStop(); gpsFout(''); return; }
+  if (!('geolocation' in navigator)) { gpsFout('Deze browser kan je locatie niet geven.'); return; }
+  volgen = true;
+  gpsId = navigator.geolocation.watchPosition(gpsPositie, err => {
+    gpsFout(err.code === 1 ? 'Geen toestemming voor je locatie. Zet locatie aan voor deze pagina in je browser en tik op GPS aan.'
+      : err.code === 2 ? 'Je locatie is nu niet beschikbaar.' : 'De GPS reageert niet. Even wachten of buiten proberen.');
+    if (err.code === 1) gpsStop();
+  }, { enableHighAccuracy: true, maximumAge: 1000, timeout: 20000 });
+  scherm(); gpsKnop();
+};
+kaart.on('dragstart', () => { if (gpsId !== null && volgen) { volgen = false; gpsKnop(); } });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && gpsId !== null && !slot) scherm(); });
 
 // installeren (Android en desktop; op iPhone: Deel, dan Zet op beginscherm)
 let installeer = null;

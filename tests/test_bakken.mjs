@@ -68,6 +68,38 @@ await p.evaluate(() => navigator.serviceWorker.ready)
 const sw = await p.evaluate(async () => (await navigator.serviceWorker.getRegistration('./'))?.scope)
 assert.ok(sw && sw.endsWith('/bakken/'), 'eigen service worker onder /bakken/')
 
+// GPS: pijl op mijn plek, draait mee met de rijrichting, kaart volgt, pauzeert bij slepen
+const ctx2 = await browser.newContext({ viewport: { width: 390, height: 844 }, permissions: ['geolocation'], geolocation: { latitude: 52.0, longitude: 4.36 } })
+const g = await ctx2.newPage()
+await g.route('**/tile.openstreetmap.org/**', (r) => r.abort())
+await g.goto(url)
+await g.click('#b-gps')
+await g.waitForSelector('#pijl svg')
+assert.equal(await g.getAttribute('#b-gps', 'aria-pressed'), 'true')
+await ctx2.setGeolocation({ latitude: 52.0003, longitude: 4.36 })   // ongeveer 33 m naar het noorden
+await g.waitForFunction(() => /rotate\((0|360)deg\)/.test(document.querySelector('#pijl svg').style.transform))
+await ctx2.setGeolocation({ latitude: 52.0003, longitude: 4.3605 })  // naar het oosten
+await g.waitForFunction(() => /rotate\(9\d deg\)|rotate\((8\d|9\d)deg\)/.test(document.querySelector('#pijl svg').style.transform))
+// slepen pauzeert het volgen; Volg mij zet het weer aan; nog een tik zet GPS uit
+const k = await g.locator('#kaart').boundingBox()
+await g.mouse.move(k.x + 200, k.y + 300); await g.mouse.down(); await g.mouse.move(k.x + 80, k.y + 200, { steps: 5 }); await g.mouse.up()
+assert.equal(await g.textContent('#b-gps'), 'Volg mij')
+await g.click('#b-gps')
+assert.equal(await g.textContent('#b-gps'), 'GPS uit')
+await g.click('#b-gps')
+assert.equal(await g.locator('#pijl').count(), 0)
+assert.equal(await g.textContent('#b-gps'), 'GPS aan')
+
+// geen toestemming: duidelijke melding
+const ctx3 = await browser.newContext({ viewport: { width: 390, height: 844 } })
+const n = await ctx3.newPage()
+await n.route('**/tile.openstreetmap.org/**', (r) => r.abort())
+await n.goto(url)
+await n.click('#b-gps')
+await n.waitForSelector('#gpsfout:not([hidden])')
+assert.match(await n.textContent('#gpsfout'), /toestemming/)
+assert.equal(await n.textContent('#b-gps'), 'GPS aan')
+
 assert.deepEqual(fouten, [])
 await browser.close()
 console.log('bakken: alles groen')
