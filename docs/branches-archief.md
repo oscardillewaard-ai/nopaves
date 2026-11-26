@@ -52,3 +52,11 @@ geschiedenis van nopaves).
 |---|---|
 | Huisstijl Korrel (styles.css, korrelkaart.js, Darker Grotesque, Overpass Mono) | `main` op `e9a86a5b84e2b3b4d84e096dbd3bb9e6f7324f69` (v1.2.0) |
 | Richtingen A Stil, B Startnummer, C Veldboek achter `?ontwerp=`, de 30 schetsen, Atkinson en Archivo | branch `ccr-770e2665-7wxjk9` op `92a807cd8449751665a03ed6237490d42a63f049` |
+
+## Bakken-app (2026-11-26): weggehaald
+
+Losse mini-app `public/bakken/` (adressen op de kaart, geleegd of overgeslagen, GPS-pijl, installeerbaar) met `tests/test_bakken.mjs`. Niet meer nodig; de rest van nopaves is niet aangepast.
+
+| Wat | Waar terug te vinden |
+|---|---|
+| `public/bakken/`, `tests/test_bakken.mjs`, script `test:bakken` | `main` op `6990f41510f1dfa850720fc94c2743e229e52b35` (PR #29, #30, #31 en #32) |
