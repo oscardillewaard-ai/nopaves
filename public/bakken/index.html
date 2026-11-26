@@ -4,47 +4,71 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Bakken</title>
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Bakken">
 <link rel="stylesheet" href="../vendor/leaflet.css">
 <style>
   html, body { margin: 0; height: 100%; font: 16px/1.4 system-ui, sans-serif; }
   body { display: flex; flex-direction: column; }
   header { display: flex; gap: 8px; align-items: center; padding: 8px; background: #fff; border-bottom: 1px solid #ccc; flex-wrap: wrap; }
-  button { font: inherit; min-height: 44px; padding: 0 14px; border: 1.5px solid #333; border-radius: 6px; background: #fff; cursor: pointer; }
+  button { font: inherit; min-height: 44px; padding: 0 14px; border: 1.5px solid #333; border-radius: 6px; background: #fff; color: #000; cursor: pointer; }
   button.aan { background: #333; color: #fff; }
+  button.mislukt { border-color: #b91c1c; color: #b91c1c; font-weight: 600; }
+  button[hidden] { display: none; }
   #teller { margin-left: auto; }
-  #paneel { display: none; padding: 8px; background: #f4f4f4; border-bottom: 1px solid #ccc; }
+  #paneel { display: none; padding: 8px; background: #f4f4f4; border-bottom: 1px solid #ccc; max-height: 60vh; overflow: auto; }
   #paneel.open { display: block; }
   textarea { width: 100%; box-sizing: border-box; height: 8em; font: inherit; }
   #melding { margin: 6px 0 0; min-height: 1.4em; }
+  #fouten { margin: 8px 0 0; padding: 8px 10px; border: 1.5px solid #b91c1c; border-radius: 6px; background: #fff; color: #7f1d1d; }
+  #fouten[hidden] { display: none; }
+  #fouten ul { margin: 4px 0 0; padding-left: 1.2em; }
   #kaart { flex: 1; }
   .knoppen { display: flex; gap: 6px; margin-top: 8px; }
   .knoppen button { flex: 1; padding: 0 8px; }
+  .leaflet-tooltip.aantal { background: none; border: 0; box-shadow: none; color: #fff; font-weight: 700; padding: 0; }
+  .leaflet-tooltip.aantal::before { display: none; }
 </style>
 </head>
 <body>
 <header>
   <button id="b-adressen">Adressen</button>
   <button id="b-verberg">Verberg geleegd</button>
+  <button id="b-fout" class="mislukt" hidden></button>
+  <button id="b-installeer" hidden>Installeer</button>
   <span id="teller"></span>
 </header>
 <div id="paneel">
-  <textarea id="invoer" placeholder="Eén adres per regel, bv.&#10;Kerkstraat 1, Delft&#10;Markt 10, Delft"></textarea>
+  <textarea id="invoer" placeholder="Eén adres per regel, bv.&#10;Kerkstraat 1, Delft&#10;Markt 10, Delft&#10;Een adres dat er twee keer staat, telt voor twee bakken (één bolletje)."></textarea>
   <div class="knoppen">
     <button id="b-zet">Zet op de kaart</button>
     <button id="b-wis">Wis alles</button>
   </div>
   <p id="melding" role="status"></p>
+  <div id="fouten" role="alert" hidden></div>
 </div>
 <div id="kaart"></div>
 
 <script src="../vendor/leaflet.js"></script>
 <script>
 const SLEUTEL = 'bakken-v1';
+const FOUTSLEUTEL = 'bakken-mislukt-v1';
 const KLEUR = { open: '#2563eb', geleegd: '#16a34a', overgeslagen: '#9ca3af' };
 const LS = 'https://api.pdok.nl/bzk/locatieserver/search/v3_1/free';
 
-let bakken = [];
-try { bakken = JSON.parse(localStorage.getItem(SLEUTEL)) || []; } catch (e) {}
+const lees = (k, std) => { try { return JSON.parse(localStorage.getItem(k)) || std; } catch (e) { return std; } };
+const schrijf = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+
+let bakken = [];   // één per adres: { naam, lat, lng, aantal, status }
+for (const b of lees(SLEUTEL, [])) {
+  const al = bakken.find(x => x.naam === b.naam);
+  if (al) al.aantal += b.aantal || 1; else bakken.push({ ...b, aantal: b.aantal || 1 });
+}
+let mislukt = lees(FOUTSLEUTEL, []);   // [{ regel, reden }]
 let verberg = false;
 
 const kaart = L.map('kaart').setView([52.1, 5.3], 8);
@@ -54,72 +78,119 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 const laag = L.layerGroup().addTo(kaart);
 
 const $ = id => document.getElementById(id);
-const bewaar = () => { try { localStorage.setItem(SLEUTEL, JSON.stringify(bakken)); } catch (e) {} };
-
-function tekst(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+const bewaar = () => { schrijf(SLEUTEL, bakken); schrijf(FOUTSLEUTEL, mislukt); };
+const aantalBakken = lijst => lijst.reduce((n, b) => n + b.aantal, 0);
 
 function popup(b) {
   const el = document.createElement('div');
-  el.innerHTML = '<strong>' + tekst(b.naam) + '</strong><div class="knoppen"></div>';
-  const rij = el.querySelector('.knoppen');
-  [['geleegd', 'Geleegd'], ['overgeslagen', 'Overgeslagen'], ['open', 'Nog te doen']].forEach(([s, t]) => {
+  const t = document.createElement('strong');
+  t.textContent = b.naam;
+  el.appendChild(t);
+  if (b.aantal > 1) {
+    const n = document.createElement('div');
+    n.textContent = 'Let op: hier staan ' + b.aantal + ' bakken.';
+    el.appendChild(n);
+  }
+  const rij = document.createElement('div');
+  rij.className = 'knoppen';
+  [['geleegd', 'Geleegd'], ['overgeslagen', 'Overgeslagen'], ['open', 'Nog te doen']].forEach(([s, naam]) => {
     if (s === b.status) return;
     const k = document.createElement('button');
-    k.textContent = t;
+    k.textContent = naam;
     k.onclick = () => { b.status = s; bewaar(); teken(); kaart.closePopup(); };
     rij.appendChild(k);
   });
+  el.appendChild(rij);
   return el;
 }
 
 function teken() {
   laag.clearLayers();
   bakken.forEach(b => {
-    if (b.lat == null || (verberg && b.status === 'geleegd')) return;
-    L.circleMarker([b.lat, b.lng], {
-      radius: 11, weight: 2, color: '#fff', fillColor: KLEUR[b.status], fillOpacity: 1
+    if (verberg && b.status === 'geleegd') return;
+    const m = L.circleMarker([b.lat, b.lng], {
+      radius: b.aantal > 1 ? 13 : 11, weight: 2, color: '#fff', fillColor: KLEUR[b.status], fillOpacity: 1
     }).bindPopup(() => popup(b)).addTo(laag);
+    // meer dan één bak op dit adres: het aantal staat in het bolletje
+    if (b.aantal > 1) m.bindTooltip(String(b.aantal), { permanent: true, direction: 'center', className: 'aantal' });
   });
-  const n = s => bakken.filter(b => b.status === s).length;
-  $('teller').textContent = n('geleegd') + ' van ' + bakken.length + ' geleegd' +
+  const n = s => aantalBakken(bakken.filter(b => b.status === s));
+  $('teller').textContent = n('geleegd') + ' van ' + aantalBakken(bakken) + ' bakken geleegd' +
     (n('overgeslagen') ? ', ' + n('overgeslagen') + ' overgeslagen' : '');
+  toonFouten();
+}
+
+function toonFouten() {
+  const knop = $('b-fout'), vak = $('fouten');
+  knop.hidden = !mislukt.length;
+  knop.textContent = mislukt.length + ' adres' + (mislukt.length === 1 ? '' : 'sen') + ' niet gelukt';
+  vak.hidden = !mislukt.length;
+  vak.textContent = '';
+  if (!mislukt.length) return;
+  const kop = document.createElement('strong');
+  kop.textContent = mislukt.length + ' adres' + (mislukt.length === 1 ? '' : 'sen') + ' staat niet op de kaart. Ze staan in het vak hierboven; pas ze aan en probeer opnieuw.';
+  const ul = document.createElement('ul');
+  mislukt.forEach(m => {
+    const li = document.createElement('li');
+    li.textContent = m.regel + ' (' + m.reden + ')';
+    ul.appendChild(li);
+  });
+  vak.append(kop, ul);
 }
 
 async function zoek(adres) {
   const r = await fetch(LS + '?rows=1&fl=weergavenaam,centroide_ll&q=' + encodeURIComponent(adres));
+  if (!r.ok) throw new Error('http ' + r.status);
   const d = (await r.json()).response.docs[0];
   if (!d) return null;
   const m = /POINT\(([\d.]+) ([\d.]+)\)/.exec(d.centroide_ll);
   return { naam: d.weergavenaam, lng: +m[1], lat: +m[2] };
 }
 
+function pasKaartAan() {
+  if (bakken.length) kaart.fitBounds(bakken.map(b => [b.lat, b.lng]), { padding: [30, 30] });
+}
+
 $('b-zet').onclick = async () => {
   const regels = $('invoer').value.split('\n').map(s => s.trim()).filter(Boolean);
+  if (!regels.length) { $('melding').textContent = 'Plak eerst een of meer adressen.'; return; }
+  const gevonden = {};   // regel -> plaats, zodat een dubbele regel maar één keer gezocht wordt
+  const tel = {};        // hoe vaak een adres in deze lijst voorkomt
   const fout = [];
+  let nieuw = 0;
   $('b-zet').disabled = true;
   for (let i = 0; i < regels.length; i++) {
+    const regel = regels[i];
     $('melding').textContent = 'Zoeken ' + (i + 1) + ' van ' + regels.length + '…';
     try {
-      const p = await zoek(regels[i]);
-      if (!p) fout.push(regels[i]);
-      else if (!bakken.some(b => b.naam === p.naam)) bakken.push({ ...p, status: 'open' });
-    } catch (e) { fout.push(regels[i]); }
+      if (!(regel in gevonden)) gevonden[regel] = await zoek(regel);
+      const p = gevonden[regel];
+      if (!p) { fout.push({ regel, reden: 'niet gevonden' }); continue; }
+      tel[p.naam] = (tel[p.naam] || 0) + 1;
+      // staat dit adres al (bv. lijst opnieuw geplakt)? dan komt er alleen bij wat er nog niet is
+      const al = bakken.find(b => b.naam === p.naam);
+      if (!al) { bakken.push({ ...p, aantal: 1, status: 'open' }); nieuw++; }
+      else if (tel[p.naam] > al.aantal) { al.aantal = tel[p.naam]; nieuw++; }
+    } catch (e) {
+      fout.push({ regel, reden: 'geen verbinding met de adreszoeker' });
+    }
   }
   $('b-zet').disabled = false;
-  bewaar(); teken();
-  if (bakken.length) kaart.fitBounds(bakken.filter(b => b.lat != null).map(b => [b.lat, b.lng]), { padding: [30, 30] });
-  $('invoer').value = fout.join('\n');
-  $('melding').textContent = fout.length
-    ? 'Niet gevonden (staan nog in het vak): ' + fout.length
-    : 'Klaar. Tik op een bolletje.';
+  mislukt = fout;
+  bewaar(); teken(); pasKaartAan();
+  $('invoer').value = fout.map(m => m.regel).join('\n');
+  $('melding').textContent = nieuw + ' ' + (nieuw === 1 ? 'bak' : 'bakken') + ' toegevoegd.' +
+    (fout.length ? '' : ' Tik op een bolletje.');
   if (!fout.length) $('paneel').classList.remove('open');
 };
 
 $('b-wis').onclick = () => {
-  if (!bakken.length || !confirm('Alle ' + bakken.length + ' adressen en hun status wissen?')) return;
-  bakken = []; bewaar(); teken();
+  if (!bakken.length && !mislukt.length) return;
+  if (!confirm('Alle ' + aantalBakken(bakken) + ' bakken en hun status wissen?')) return;
+  bakken = []; mislukt = []; $('invoer').value = ''; bewaar(); teken();
 };
 $('b-adressen').onclick = () => $('paneel').classList.toggle('open');
+$('b-fout').onclick = () => $('paneel').classList.add('open');
 $('b-verberg').onclick = () => {
   verberg = !verberg;
   $('b-verberg').classList.toggle('aan', verberg);
@@ -127,9 +198,17 @@ $('b-verberg').onclick = () => {
   teken();
 };
 
+// installeren (Android en desktop; op iPhone: Deel, dan Zet op beginscherm)
+let installeer = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installeer = e; $('b-installeer').hidden = false; });
+$('b-installeer').onclick = async () => { if (!installeer) return; installeer.prompt(); await installeer.userChoice; installeer = null; $('b-installeer').hidden = true; };
+window.addEventListener('appinstalled', () => { $('b-installeer').hidden = true; });
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+
+$('invoer').value = mislukt.map(m => m.regel).join('\n');
 teken();
-const pnt = bakken.filter(b => b.lat != null).map(b => [b.lat, b.lng]);
-if (pnt.length) kaart.fitBounds(pnt, { padding: [30, 30] }); else $('paneel').classList.add('open');
+pasKaartAan();
+if (!bakken.length || mislukt.length) $('paneel').classList.add('open');
 </script>
 </body>
 </html>
