@@ -11,7 +11,6 @@
     "lint": "oxlint public",
     "test:mobiel": "node tests/test_web_nopaves.mjs test-uitvoer/mobiel mobiel",
     "test:desktop": "node tests/test_web_nopaves.mjs test-uitvoer/desktop desktop",
-    "test:bakken": "node tests/test_bakken.mjs",
     "test:wandeling": "node tests/test_wandeling.mjs test-uitvoer/wandeling",
     "test:visueel": "playwright test"
   },
