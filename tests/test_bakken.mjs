@@ -90,6 +90,37 @@ await g.click('#b-gps')
 assert.equal(await g.locator('#pijl').count(), 0)
 assert.equal(await g.textContent('#b-gps'), 'GPS aan')
 
+// scherm aanhouden: aangevraagd bij GPS aan, opnieuw aangevraagd als het systeem het intrekt, losgelaten bij GPS uit
+const ctx4 = await browser.newContext({ viewport: { width: 390, height: 844 }, permissions: ['geolocation'], geolocation: { latitude: 52.0, longitude: 4.36 } })
+await ctx4.addInitScript(() => {
+  window.__wl = { aangevraagd: 0, vrijgegeven: 0, sloten: [] }
+  Object.defineProperty(navigator, 'wakeLock', { configurable: true, value: { request: async () => {
+    const luisteraars = []
+    const slot = { addEventListener: (_t, f) => luisteraars.push(f), release: async () => { window.__wl.vrijgegeven++ }, trek: () => luisteraars.forEach((f) => f()) }
+    window.__wl.aangevraagd++; window.__wl.sloten.push(slot); return slot
+  } } })
+})
+const w = await ctx4.newPage()
+await w.route('**/tile.openstreetmap.org/**', (r) => r.abort())
+await w.goto(url)
+await w.click('#b-gps')
+await w.waitForFunction(() => window.__wl.aangevraagd === 1)
+await w.evaluate(() => window.__wl.sloten[0].trek())   // het systeem trekt het in
+await w.waitForFunction(() => window.__wl.aangevraagd === 2)
+await w.click('#b-gps'); await w.click('#b-gps')   // Volg mij is niet actief; tweede tik zet GPS uit
+await w.waitForFunction(() => window.__wl.vrijgegeven >= 1)
+assert.equal(await w.locator('#schermfout:not([hidden])').count(), 0)
+
+// browser zonder Wake Lock: melding in plaats van stilte
+const ctx5 = await browser.newContext({ viewport: { width: 390, height: 844 }, permissions: ['geolocation'], geolocation: { latitude: 52.0, longitude: 4.36 } })
+await ctx5.addInitScript(() => Object.defineProperty(navigator, 'wakeLock', { configurable: true, value: undefined }))
+const z = await ctx5.newPage()
+await z.route('**/tile.openstreetmap.org/**', (r) => r.abort())
+await z.goto(url)
+await z.click('#b-gps')
+await z.waitForSelector('#schermfout:not([hidden])')
+assert.match(await z.textContent('#schermfout'), /schermtime-out/)
+
 // geen toestemming: duidelijke melding
 const ctx3 = await browser.newContext({ viewport: { width: 390, height: 844 } })
 const n = await ctx3.newPage()
