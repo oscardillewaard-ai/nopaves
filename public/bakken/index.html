@@ -30,6 +30,8 @@
   #kaart { flex: 1; }
   .knoppen { display: flex; gap: 6px; margin-top: 8px; }
   .knoppen button { flex: 1; padding: 0 8px; }
+  .leaflet-tooltip.aantal { background: none; border: 0; box-shadow: none; color: #fff; font-weight: 700; padding: 0; }
+  .leaflet-tooltip.aantal::before { display: none; }
 </style>
 </head>
 <body>
@@ -41,7 +43,7 @@
   <span id="teller"></span>
 </header>
 <div id="paneel">
-  <textarea id="invoer" placeholder="Eén adres per regel, bv.&#10;Kerkstraat 1, Delft&#10;Markt 10, Delft&#10;Een adres dat er twee keer staat, telt voor twee bakken."></textarea>
+  <textarea id="invoer" placeholder="Eén adres per regel, bv.&#10;Kerkstraat 1, Delft&#10;Markt 10, Delft&#10;Een adres dat er twee keer staat, telt voor twee bakken (één bolletje)."></textarea>
   <div class="knoppen">
     <button id="b-zet">Zet op de kaart</button>
     <button id="b-wis">Wis alles</button>
@@ -61,7 +63,11 @@ const LS = 'https://api.pdok.nl/bzk/locatieserver/search/v3_1/free';
 const lees = (k, std) => { try { return JSON.parse(localStorage.getItem(k)) || std; } catch (e) { return std; } };
 const schrijf = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
 
-let bakken = lees(SLEUTEL, []).map(b => ({ nr: 1, ...b }));
+let bakken = [];   // één per adres: { naam, lat, lng, aantal, status }
+for (const b of lees(SLEUTEL, [])) {
+  const al = bakken.find(x => x.naam === b.naam);
+  if (al) al.aantal += b.aantal || 1; else bakken.push({ ...b, aantal: b.aantal || 1 });
+}
 let mislukt = lees(FOUTSLEUTEL, []);   // [{ regel, reden }]
 let verberg = false;
 
@@ -70,20 +76,19 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19, attribution: '© OpenStreetMap'
 }).addTo(kaart);
 const laag = L.layerGroup().addTo(kaart);
-kaart.on('zoomend', () => teken());
 
 const $ = id => document.getElementById(id);
 const bewaar = () => { schrijf(SLEUTEL, bakken); schrijf(FOUTSLEUTEL, mislukt); };
-const totaal = naam => bakken.filter(b => b.naam === naam).length;
+const aantalBakken = lijst => lijst.reduce((n, b) => n + b.aantal, 0);
 
 function popup(b) {
   const el = document.createElement('div');
   const t = document.createElement('strong');
   t.textContent = b.naam;
   el.appendChild(t);
-  if (totaal(b.naam) > 1) {
+  if (b.aantal > 1) {
     const n = document.createElement('div');
-    n.textContent = 'Bak ' + b.nr + ' van ' + totaal(b.naam);
+    n.textContent = 'Let op: hier staan ' + b.aantal + ' bakken.';
     el.appendChild(n);
   }
   const rij = document.createElement('div');
@@ -103,15 +108,14 @@ function teken() {
   laag.clearLayers();
   bakken.forEach(b => {
     if (verberg && b.status === 'geleegd') return;
-    // meerdere bakken op één adres: schuif ze naast elkaar (vaste afstand op het scherm) zodat je ze los kunt aantikken
-    const z = kaart.getZoom();
-    const pt = kaart.project([b.lat, b.lng], z).add([(b.nr - 1) * 26, 0]);
-    L.circleMarker(kaart.unproject(pt, z), {
-      radius: 11, weight: 2, color: '#fff', fillColor: KLEUR[b.status], fillOpacity: 1
+    const m = L.circleMarker([b.lat, b.lng], {
+      radius: b.aantal > 1 ? 13 : 11, weight: 2, color: '#fff', fillColor: KLEUR[b.status], fillOpacity: 1
     }).bindPopup(() => popup(b)).addTo(laag);
+    // meer dan één bak op dit adres: het aantal staat in het bolletje
+    if (b.aantal > 1) m.bindTooltip(String(b.aantal), { permanent: true, direction: 'center', className: 'aantal' });
   });
-  const n = s => bakken.filter(b => b.status === s).length;
-  $('teller').textContent = n('geleegd') + ' van ' + bakken.length + ' geleegd' +
+  const n = s => aantalBakken(bakken.filter(b => b.status === s));
+  $('teller').textContent = n('geleegd') + ' van ' + aantalBakken(bakken) + ' bakken geleegd' +
     (n('overgeslagen') ? ', ' + n('overgeslagen') + ' overgeslagen' : '');
   toonFouten();
 }
@@ -164,10 +168,9 @@ $('b-zet').onclick = async () => {
       if (!p) { fout.push({ regel, reden: 'niet gevonden' }); continue; }
       tel[p.naam] = (tel[p.naam] || 0) + 1;
       // staat dit adres al (bv. lijst opnieuw geplakt)? dan komt er alleen bij wat er nog niet is
-      if (tel[p.naam] > totaal(p.naam)) {
-        bakken.push({ ...p, nr: tel[p.naam], status: 'open' });
-        nieuw++;
-      }
+      const al = bakken.find(b => b.naam === p.naam);
+      if (!al) { bakken.push({ ...p, aantal: 1, status: 'open' }); nieuw++; }
+      else if (tel[p.naam] > al.aantal) { al.aantal = tel[p.naam]; nieuw++; }
     } catch (e) {
       fout.push({ regel, reden: 'geen verbinding met de adreszoeker' });
     }
@@ -183,7 +186,7 @@ $('b-zet').onclick = async () => {
 
 $('b-wis').onclick = () => {
   if (!bakken.length && !mislukt.length) return;
-  if (!confirm('Alle ' + bakken.length + ' bakken en hun status wissen?')) return;
+  if (!confirm('Alle ' + aantalBakken(bakken) + ' bakken en hun status wissen?')) return;
   bakken = []; mislukt = []; $('invoer').value = ''; bewaar(); teken();
 };
 $('b-adressen').onclick = () => $('paneel').classList.toggle('open');

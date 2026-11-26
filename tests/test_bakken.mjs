@@ -1,4 +1,4 @@
-// Test van de bakken-app (public/bakken/): dubbele adressen = twee bakken, mislukte adressen zichtbaar,
+// Test van de bakken-app (public/bakken/): dubbele adressen = één bolletje met het aantal bakken, mislukte adressen zichtbaar,
 // status bewaard, verbergen, installeerbaar. De adreszoeker wordt nagebootst.
 //   python3 tools/serve.py &  node tests/test_bakken.mjs
 import { chromium } from 'playwright'
@@ -25,29 +25,30 @@ await p.goto(url)
 await p.fill('#invoer', 'A1\nA1\nB2\nXfout')
 await p.click('#b-zet')
 await p.waitForSelector('#fouten:not([hidden])')
-assert.equal(await bol.count(), 3, 'dubbel adres = twee bakken, plus B2')
+assert.equal(await bol.count(), 2, 'dubbel adres = één bolletje, plus B2')
 assert.match(await p.textContent('#fouten'), /Xfout \(niet gevonden\)/)
 assert.match(await p.textContent('#b-fout'), /1 adres niet gelukt/)
 assert.equal(await p.inputValue('#invoer'), 'Xfout')
-assert.match(await p.textContent('#teller'), /0 van 3 geleegd/)
+assert.match(await p.textContent('#teller'), /0 van 3 bakken geleegd/)
 
 // opnieuw plakken voegt niets dubbel toe
 await p.fill('#invoer', 'A1\nA1\nB2')
 await p.click('#b-zet')
 await p.waitForFunction(() => document.querySelector('#melding').textContent.startsWith('0 bakken toegevoegd'))
-assert.equal(await bol.count(), 3)
+assert.equal(await bol.count(), 2)
 assert.equal(await p.locator('#fouten:not([hidden])').count(), 0)
 
-// één van de twee bakken op één adres afvinken
+// het adres met twee bakken zegt dat er twee staan en telt voor twee
 await bol.nth(0).click()
+assert.match(await p.textContent('.leaflet-popup'), /hier staan 2 bakken/)
 await p.click('.leaflet-popup button:text-is("Geleegd")')
-assert.match(await p.textContent('#teller'), /1 van 3 geleegd/)
+assert.match(await p.textContent('#teller'), /2 van 3 bakken geleegd/)
 await p.click('#b-verberg')
-assert.equal(await bol.count(), 2)
+assert.equal(await bol.count(), 1)
 
 // bewaard na herladen
 await p.reload()
-assert.match(await p.textContent('#teller'), /1 van 3 geleegd/)
+assert.match(await p.textContent('#teller'), /2 van 3 bakken geleegd/)
 
 // geen verbinding wordt apart benoemd en bewaard
 offline = true
