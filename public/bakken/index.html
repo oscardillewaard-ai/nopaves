@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bakken</title>
+<link rel="stylesheet" href="../vendor/leaflet.css">
+<style>
+  html, body { margin: 0; height: 100%; font: 16px/1.4 system-ui, sans-serif; }
+  body { display: flex; flex-direction: column; }
+  header { display: flex; gap: 8px; align-items: center; padding: 8px; background: #fff; border-bottom: 1px solid #ccc; flex-wrap: wrap; }
+  button { font: inherit; min-height: 44px; padding: 0 14px; border: 1.5px solid #333; border-radius: 6px; background: #fff; cursor: pointer; }
+  button.aan { background: #333; color: #fff; }
+  #teller { margin-left: auto; }
+  #paneel { display: none; padding: 8px; background: #f4f4f4; border-bottom: 1px solid #ccc; }
+  #paneel.open { display: block; }
+  textarea { width: 100%; box-sizing: border-box; height: 8em; font: inherit; }
+  #melding { margin: 6px 0 0; min-height: 1.4em; }
+  #kaart { flex: 1; }
+  .knoppen { display: flex; gap: 6px; margin-top: 8px; }
+  .knoppen button { flex: 1; padding: 0 8px; }
+</style>
+</head>
+<body>
+<header>
+  <button id="b-adressen">Adressen</button>
+  <button id="b-verberg">Verberg geleegd</button>
+  <span id="teller"></span>
+</header>
+<div id="paneel">
+  <textarea id="invoer" placeholder="Eén adres per regel, bv.&#10;Kerkstraat 1, Delft&#10;Markt 10, Delft"></textarea>
+  <div class="knoppen">
+    <button id="b-zet">Zet op de kaart</button>
+    <button id="b-wis">Wis alles</button>
+  </div>
+  <p id="melding" role="status"></p>
+</div>
+<div id="kaart"></div>
+
+<script src="../vendor/leaflet.js"></script>
+<script>
+const SLEUTEL = 'bakken-v1';
+const KLEUR = { open: '#2563eb', geleegd: '#16a34a', overgeslagen: '#9ca3af' };
+const LS = 'https://api.pdok.nl/bzk/locatieserver/search/v3_1/free';
+
+let bakken = [];
+try { bakken = JSON.parse(localStorage.getItem(SLEUTEL)) || []; } catch (e) {}
+let verberg = false;
+
+const kaart = L.map('kaart').setView([52.1, 5.3], 8);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19, attribution: '© OpenStreetMap'
+}).addTo(kaart);
+const laag = L.layerGroup().addTo(kaart);
+
+const $ = id => document.getElementById(id);
+const bewaar = () => { try { localStorage.setItem(SLEUTEL, JSON.stringify(bakken)); } catch (e) {} };
+
+function tekst(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+function popup(b) {
+  const el = document.createElement('div');
+  el.innerHTML = '<strong>' + tekst(b.naam) + '</strong><div class="knoppen"></div>';
+  const rij = el.querySelector('.knoppen');
+  [['geleegd', 'Geleegd'], ['overgeslagen', 'Overgeslagen'], ['open', 'Nog te doen']].forEach(([s, t]) => {
+    if (s === b.status) return;
+    const k = document.createElement('button');
+    k.textContent = t;
+    k.onclick = () => { b.status = s; bewaar(); teken(); kaart.closePopup(); };
+    rij.appendChild(k);
+  });
+  return el;
+}
+
+function teken() {
+  laag.clearLayers();
+  bakken.forEach(b => {
+    if (b.lat == null || (verberg && b.status === 'geleegd')) return;
+    L.circleMarker([b.lat, b.lng], {
+      radius: 11, weight: 2, color: '#fff', fillColor: KLEUR[b.status], fillOpacity: 1
+    }).bindPopup(() => popup(b)).addTo(laag);
+  });
+  const n = s => bakken.filter(b => b.status === s).length;
+  $('teller').textContent = n('geleegd') + ' van ' + bakken.length + ' geleegd' +
+    (n('overgeslagen') ? ', ' + n('overgeslagen') + ' overgeslagen' : '');
+}
+
+async function zoek(adres) {
+  const r = await fetch(LS + '?rows=1&fl=weergavenaam,centroide_ll&q=' + encodeURIComponent(adres));
+  const d = (await r.json()).response.docs[0];
+  if (!d) return null;
+  const m = /POINT\(([\d.]+) ([\d.]+)\)/.exec(d.centroide_ll);
+  return { naam: d.weergavenaam, lng: +m[1], lat: +m[2] };
+}
+
+$('b-zet').onclick = async () => {
+  const regels = $('invoer').value.split('\n').map(s => s.trim()).filter(Boolean);
+  const fout = [];
+  $('b-zet').disabled = true;
+  for (let i = 0; i < regels.length; i++) {
+    $('melding').textContent = 'Zoeken ' + (i + 1) + ' van ' + regels.length + '…';
+    try {
+      const p = await zoek(regels[i]);
+      if (!p) fout.push(regels[i]);
+      else if (!bakken.some(b => b.naam === p.naam)) bakken.push({ ...p, status: 'open' });
+    } catch (e) { fout.push(regels[i]); }
+  }
+  $('b-zet').disabled = false;
+  bewaar(); teken();
+  if (bakken.length) kaart.fitBounds(bakken.filter(b => b.lat != null).map(b => [b.lat, b.lng]), { padding: [30, 30] });
+  $('invoer').value = fout.join('\n');
+  $('melding').textContent = fout.length
+    ? 'Niet gevonden (staan nog in het vak): ' + fout.length
+    : 'Klaar. Tik op een bolletje.';
+  if (!fout.length) $('paneel').classList.remove('open');
+};
+
+$('b-wis').onclick = () => {
+  if (!bakken.length || !confirm('Alle ' + bakken.length + ' adressen en hun status wissen?')) return;
+  bakken = []; bewaar(); teken();
+};
+$('b-adressen').onclick = () => $('paneel').classList.toggle('open');
+$('b-verberg').onclick = () => {
+  verberg = !verberg;
+  $('b-verberg').classList.toggle('aan', verberg);
+  $('b-verberg').textContent = verberg ? 'Toon geleegd' : 'Verberg geleegd';
+  teken();
+};
+
+teken();
+const pnt = bakken.filter(b => b.lat != null).map(b => [b.lat, b.lng]);
+if (pnt.length) kaart.fitBounds(pnt, { padding: [30, 30] }); else $('paneel').classList.add('open');
+</script>
+</body>
+</html>
