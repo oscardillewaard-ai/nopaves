@@ -31,8 +31,8 @@
   .knoppen { display: flex; gap: 6px; margin-top: 8px; }
   .knoppen button { flex: 1; padding: 0 8px; }
   #pijl svg { display: block; transition: transform .3s linear; }
-  #gpsfout { margin: 0; padding: 8px 10px; background: #fff; border-bottom: 1.5px solid #b91c1c; color: #7f1d1d; }
-  #gpsfout[hidden] { display: none; }
+  #gpsfout, #schermfout { margin: 0; padding: 8px 10px; background: #fff; border-bottom: 1.5px solid #b91c1c; color: #7f1d1d; }
+  #gpsfout[hidden], #schermfout[hidden] { display: none; }
   .leaflet-tooltip.aantal { background: none; border: 0; box-shadow: none; color: #fff; font-weight: 700; padding: 0; }
   .leaflet-tooltip.aantal::before { display: none; }
 </style>
@@ -56,6 +56,7 @@
   <div id="fouten" role="alert" hidden></div>
 </div>
 <p id="gpsfout" role="alert" hidden></p>
+<p id="schermfout" role="status" hidden></p>
 <div id="kaart"></div>
 
 <script src="../vendor/leaflet.js"></script>
@@ -230,7 +231,8 @@ function gpsStop() {
   if (gpsId !== null) navigator.geolocation.clearWatch(gpsId);
   gpsId = null; volgen = false; vorige = null; kop = null;
   if (gpsMark) { gpsMark.remove(); gpsKring.remove(); gpsMark = gpsKring = null; }
-  if (slot) { slot.release().catch(() => {}); slot = null; }
+  if (slot) { const l = slot; slot = null; l.release().catch(() => {}); }
+  schermFout('');
   gpsKnop();
 }
 function gpsPositie(e) {
@@ -255,8 +257,26 @@ function gpsPositie(e) {
   const svg = gpsMark.getElement().querySelector('svg');
   if (svg && kop != null) svg.style.transform = 'rotate(' + Math.round(kop) + 'deg)';
 }
-async function scherm() {   // scherm aan houden onderweg
-  try { slot = await navigator.wakeLock.request('screen'); } catch (e) {}
+function schermFout(tekst) { $('schermfout').hidden = !tekst; $('schermfout').textContent = tekst || ''; }
+let schermBezig = false;
+async function scherm() {   // scherm aan houden zolang GPS aan staat; opnieuw aanvragen als het systeem het intrekt
+  if (schermBezig || slot) return;
+  if (!navigator.wakeLock) { schermFout('Deze browser kan het scherm niet aanhouden. Zet de schermtime-out van je telefoon langer.'); return; }
+  schermBezig = true;
+  try {
+    const l = await navigator.wakeLock.request('screen');
+    slot = l;
+    schermFout('');
+    l.addEventListener('release', () => {
+      if (slot === l) slot = null;
+      if (gpsId !== null && document.visibilityState === 'visible') scherm();
+    });
+    if (gpsId === null) gpsStop();   // GPS is intussen uitgezet
+  } catch (e) {
+    slot = null;
+    schermFout('Scherm aanhouden lukt niet (batterijbesparing aan?). Zet de schermtime-out van je telefoon langer.');
+  }
+  schermBezig = false;
 }
 $('b-gps').onclick = () => {
   if (gpsId !== null && !volgen) { volgen = true; if (gpsMark) kaart.panTo(gpsMark.getLatLng()); gpsKnop(); return; }
